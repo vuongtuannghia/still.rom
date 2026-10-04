@@ -73,7 +73,7 @@ export const MIX_PRESETS = [
   { id: "warm", label: "Đêm bên lửa", detail: "Lửa + mưa mái", levels: { fireplace: 40, roof: 19 } },
   { id: "cafe", label: "Quán vắng", detail: "Cà phê + piano", levels: { cafe: 26, lofi: 28 } },
   { id: "deep", label: "Tập trung sâu", detail: "Brown noise + biển", levels: { brown: 38, ocean: 18 } },
-  { id: "storm", label: "Mưa giông", detail: "Mưa lớn + sấm xa", levels: { storm-rain: 28, thunder: 12 } },
+  { id: "storm", label: "Mưa giông", detail: "Mưa lớn + sấm xa", levels: { "storm-rain": 28, thunder: 12 } },
 ] as const;
 
 function clamp(value: number, min: number, max: number) {
