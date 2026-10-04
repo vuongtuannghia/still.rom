@@ -63,6 +63,11 @@ export function AccountControl({ data, onChanged }: {
       });
       const payload = await response.json().catch(() => ({})) as { account?: DashboardData["account"]; hasSnapshot?: boolean; error?: string };
       if (!response.ok || !payload.account) throw new Error(payload.error || "Đăng nhập Google thất bại.");
+      setStatus((current) => ({
+        account: payload.account!,
+        google: current?.google ?? { configured: true, clientId: null, reason: null },
+        hasSnapshot: Boolean(payload.hasSnapshot),
+      }));
 
       if (!payload.hasSnapshot) {
         const raw = localStorage.getItem(PENDING_IMPORT_KEY);
@@ -135,7 +140,7 @@ export function AccountControl({ data, onChanged }: {
       window.google.accounts.id.renderButton(buttonRef.current, {
         theme: "outline",
         size: "large",
-        width: Math.min(210, buttonRef.current.clientWidth || 210),
+        width: Math.max(120, Math.min(180, buttonRef.current.clientWidth || 180)),
         text: "signin_with",
         shape: "rectangular",
         logo_alignment: "left",
@@ -178,6 +183,7 @@ export function AccountControl({ data, onChanged }: {
     setMessage("");
     try {
       await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" });
+      setStatus((current) => current ? { ...current, account: null, hasSnapshot: false } : current);
       try {
         localStorage.removeItem(LOCAL_DATA_KEY);
         localStorage.removeItem(PENDING_IMPORT_KEY);
