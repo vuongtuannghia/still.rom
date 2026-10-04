@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { SOUND_CATALOG, emptyLevels, prepareLoop, synthesizeSound, type MixerLevels, type SoundId } from "@/lib/sound-engine";
 import { isRecord } from "@/lib/focus-domain";
 
-type Channel = { source: AudioBufferSourceNode; gain: GainNode };
+type Channel = { source: AudioBufferSourceNode; filter: BiquadFilterNode; gain: GainNode };
 type Engine = { context: AudioContext; master: GainNode; channels: Map<SoundId, Channel>; buffers: Map<SoundId, AudioBuffer>; pending: Map<SoundId, Promise<void>>; controller: AbortController };
 export function useAmbientMixer(workspaceId: string | null) {
   const [levels, setLevelsState] = useState<MixerLevels>(() => ({ ...emptyLevels(), lofi: 18 }));
@@ -19,7 +19,7 @@ export function useAmbientMixer(workspaceId: string | null) {
   const remembered = useRef<Partial<MixerLevels>>({});
   const generation = useRef(0);
   const mounted = useRef(false);
-  const key = workspaceId ? `stillroom.mixer.v3:${workspaceId}` : "";
+  const key = workspaceId ? `stillroom.mixer.v4:${workspaceId}` : "";
   const invalidatePending = useCallback(() => { generation.current += 1; }, []);
 
   useEffect(() => {
@@ -43,7 +43,7 @@ export function useAmbientMixer(workspaceId: string | null) {
       mounted.current = false; invalidatePending();
       const active = engine.current; engine.current = null;
       active?.controller.abort();
-      for (const channel of active?.channels.values() ?? []) { try { channel.source.stop(); } catch { /* Already stopped. */ } channel.source.disconnect(); channel.gain.disconnect(); }
+      for (const channel of active?.channels.values() ?? []) { try { channel.source.stop(); } catch { /* Already stopped. */ } channel.source.disconnect(); channel.filter.disconnect(); channel.gain.disconnect(); }
       void active?.context.close().catch(() => {});
     };
   }, [workspaceId, key, invalidatePending]);
@@ -59,10 +59,20 @@ export function useAmbientMixer(workspaceId: string | null) {
     const buffer = active.buffers.get(id); if (!buffer) return;
     const source = active.context.createBufferSource(); source.buffer = buffer; source.loop = true;
     const gain = active.context.createGain(); gain.gain.setValueAtTime(0, active.context.currentTime);
-    source.connect(gain).connect(active.master);
-    source.onended = () => { source.disconnect(); gain.disconnect(); };
+    const filter = active.context.createBiquadFilter();
+    filter.type = "lowpass";
+    const cutoff: Record<SoundId, number> = {
+      lofi: 9000, rain: 8500, roof: 8200, thunder: 3600, ocean: 7600, river: 8200, wind: 6500,
+      forest: 7600, birds: 6500, fireplace: 7000, cafe: 7800, keyboard: 6500, chimes: 7000, purr: 4800,
+      "forest-night": 7200, waterfall: 8200, "storm-rain": 5200, "mountain-stream": 8200,
+      white: 6500, pink: 7200, brown: 4200,
+    };
+    filter.frequency.value = cutoff[id];
+    filter.Q.value = 0.25;
+    source.connect(filter).connect(gain).connect(active.master);
+    source.onended = () => { source.disconnect(); filter.disconnect(); gain.disconnect(); };
     source.start(); active.channels.set(id, { source, gain });
-    gain.gain.setTargetAtTime(gainFor(id), active.context.currentTime, 0.12);
+    gain.gain.setTargetAtTime(gainFor(id), active.context.currentTime, 0.28);
   }
   function ensureChannel(active: Engine, id: SoundId) {
     if (active.buffers.has(id)) { startChannel(active, id); return; }
@@ -93,10 +103,10 @@ export function useAmbientMixer(workspaceId: string | null) {
     for (const sound of SOUND_CATALOG) {
       const channel = active.channels.get(sound.id);
       if (latest.current.levels[sound.id] > 0) {
-        if (channel) channel.gain.gain.setTargetAtTime(gainFor(sound.id), active.context.currentTime, 0.1);
+        if (channel) channel.gain.gain.setTargetAtTime(gainFor(sound.id), active.context.currentTime, 0.22);
         else if (latest.current.playing) ensureChannel(active, sound.id);
       } else if (channel) {
-        channel.gain.gain.setTargetAtTime(0, active.context.currentTime, 0.07);
+        channel.gain.gain.setTargetAtTime(0, active.context.currentTime, 0.20);
         channel.source.stop(active.context.currentTime + 0.4); active.channels.delete(sound.id);
       }
     }
@@ -110,11 +120,11 @@ export function useAmbientMixer(workspaceId: string | null) {
       if (!engine.current) {
         const context = new Constructor({ sampleRate: 32000, latencyHint: "playback" });
         const compressor = context.createDynamicsCompressor();
-        compressor.threshold.value = -18;
-        compressor.knee.value = 24;
-        compressor.ratio.value = 2.2;
-        compressor.attack.value = 0.035;
-        compressor.release.value = 0.45;
+        compressor.threshold.value = -20;
+        compressor.knee.value = 26;
+        compressor.ratio.value = 1.8;
+        compressor.attack.value = 0.045;
+        compressor.release.value = 0.55;
         const masterGain = context.createGain(); masterGain.gain.value = 0; masterGain.connect(compressor).connect(context.destination);
         engine.current = { context, master: masterGain, channels: new Map(), buffers: new Map(), pending: new Map(), controller: new AbortController() };
       }
