@@ -61,9 +61,14 @@ export async function GET(_: Request, context: { params: Promise<{ userId: strin
     const focus = await db.select({ total: sql<number>`coalesce(sum(${focusSessions.durationMinutes}),0)` })
       .from(focusSessions).where(eq(focusSessions.workspaceId, account.workspaceId));
 
-    let relationship: "self" | "friend" | "incoming" | "outgoing" | "none" = viewer === userId ? "self" : "none";
+    let relationship: "self" | "friend" | "incoming" | "outgoing" | "blocked" | "none" = viewer === userId ? "self" : "none";
     let relationshipRequestId: number | null = null;
     if (viewer && viewer !== userId) {
+      const [blockedByMe] = await db.select({ id: accountBlocks.id }).from(accountBlocks)
+        .where(and(eq(accountBlocks.blockerId, viewer), eq(accountBlocks.blockedId, userId))).limit(1);
+      const [blockedYou] = await db.select({ id: accountBlocks.id }).from(accountBlocks)
+        .where(and(eq(accountBlocks.blockerId, userId), eq(accountBlocks.blockedId, viewer))).limit(1);
+      if (blockedByMe || blockedYou) relationship = "blocked";
       const [a, b] = orderedAccountPair(viewer, userId);
       const [friend] = await db.select({ id: friendships.id }).from(friendships)
         .where(and(eq(friendships.accountAId, a), eq(friendships.accountBId, b))).limit(1);
