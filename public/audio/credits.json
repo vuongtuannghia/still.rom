@@ -1,0 +1,51 @@
+[
+  {
+    "id": "rain",
+    "file": "rain.mp3",
+    "source": "https://freesound.org/s/81818/",
+    "license": "CC0 1.0",
+    "author": "Silencyo"
+  },
+  {
+    "id": "ocean",
+    "file": "ocean.mp3",
+    "source": "https://freesound.org/s/156598/",
+    "license": "CC0 1.0",
+    "author": "Rmutt"
+  },
+  {
+    "id": "birds",
+    "file": "birds.mp3",
+    "source": "https://freesound.org/s/578523/",
+    "license": "CC0 1.0",
+    "author": "SamsterBirdies"
+  },
+  {
+    "id": "fireplace",
+    "file": "fireplace.mp3",
+    "source": "https://archive.org/details/Red_Library_Fire",
+    "license": "CC0 1.0",
+    "author": "Archive.org source"
+  },
+  {
+    "id": "stream",
+    "file": "stream.mp3",
+    "source": "https://archive.org/details/GOLD_TAPE_53_54_Water",
+    "license": "CC0 1.0",
+    "author": "Archive.org source"
+  },
+  {
+    "id": "wind",
+    "file": "wind.mp3",
+    "source": "https://archive.org/details/GOLD_TAPE_55_56_Weather-Wind",
+    "license": "CC0 1.0",
+    "author": "Archive.org source"
+  },
+  {
+    "id": "thunder",
+    "file": "thunder.mp3",
+    "source": "https://archive.org/details/1HourThunderstorm",
+    "license": "Public Domain",
+    "author": "Archive.org source"
+  }
+]
