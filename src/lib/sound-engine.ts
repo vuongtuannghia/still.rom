@@ -13,20 +13,15 @@ const RAW_AUDIO = "https://raw.githubusercontent.com/euuuuuuan/todak-public/main
  * project. Procedural synthesis remains only for sound types without a suitable recording.
  */
 const RECORDING_SOURCES: Record<string, Recording> = {
-  lofi: { src: RAW_AUDIO.replace("/assets/ambience", "/assets/music/lofi") + "/Chill_lofi_inspired_loop_edit.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "Todak / CC0 music ledger", license: "CC0" },
   roof: { src: RAW_AUDIO + "/rain_downpour.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "CC0 ambience ledger", license: "CC0" },
   rain: { src: RAW_AUDIO + "/rain_soft.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "joedeshon (re-rendered by Todak)", license: "CC0" },
   thunder: { src: RAW_AUDIO + "/storm_far.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "nickmaysoundmusic (re-rendered by Todak)", license: "CC0" },
   ocean: { src: RAW_AUDIO + "/waves_calm.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "profispiesser (re-rendered by Todak)", license: "CC0" },
   river: { src: RAW_AUDIO + "/stream_brook.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "cher1101 (re-rendered by Todak)", license: "CC0" },
-  birds: { src: RAW_AUDIO + "/birds_dawn.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "resaural (re-rendered by Todak)", license: "CC0" },
+  forest: { src: RAW_AUDIO + "/birds_dawn.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "resaural (re-rendered by Todak)", license: "CC0" },
   fireplace: { src: RAW_AUDIO + "/fire_hearth.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "uniuniversal (re-rendered by Todak)", license: "CC0" },
   cafe: { src: RAW_AUDIO + "/cafe.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "arpeggio1980 (re-rendered by Todak)", license: "CC0" },
-  forest: { src: RAW_AUDIO + "/birds_dawn.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "resaural (re-rendered by Todak)", license: "CC0" },
   "forest-night": { src: RAW_AUDIO + "/crickets.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "felixblume (re-rendered by Todak)", license: "CC0" },
-  waterfall: { src: RAW_AUDIO + "/stream_brook.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "cher1101 (re-rendered by Todak)", license: "CC0" },
-  "storm-rain": { src: RAW_AUDIO + "/storm_far.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "nickmaysoundmusic (re-rendered by Todak)", license: "CC0" },
-  "mountain-stream": { src: RAW_AUDIO + "/stream_brook.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "cher1101 (re-rendered by Todak)", license: "CC0" },
 };
 
 function recorded(id: string): Recording | undefined {
