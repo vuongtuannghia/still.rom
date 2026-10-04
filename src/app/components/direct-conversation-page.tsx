@@ -125,6 +125,22 @@ export function DirectConversationPage() {
     } catch (error) { setNotice(error instanceof Error ? error.message : "Không thể gửi lời mời."); }
   }
 
+  async function respondToIncoming(action: "accept" | "reject") {
+    if (!person?.requestId) return;
+    try {
+      const response = await fetch("/api/friends/requests/" + person.requestId, {
+        method: "PATCH", credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const payload = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) throw new Error(payload.error || "Không thể xử lý lời mời.");
+      setRelationship(action === "accept" ? "friend" : "lookup");
+      setPerson(current => current ? { ...current, relationship: action === "accept" ? "friend" : "lookup", requestId: undefined } : current);
+      setNotice(action === "accept" ? "Đã kết bạn." : "Đã từ chối lời mời.");
+    } catch (error) { setNotice(error instanceof Error ? error.message : "Không thể xử lý lời mời."); }
+  }
+
   async function cancelRequest() {
     if (!person?.requestId) return;
     try {
@@ -182,6 +198,7 @@ export function DirectConversationPage() {
             <button type="button" className="button-secondary" onClick={() => router.push("/nguoi-dung/" + person.id)}>Xem hồ sơ</button>
             {relationship === "friend" ? <button type="button" className="button-secondary" onClick={() => void unfriend()}>Hủy kết bạn</button> :
              relationship === "outgoing" ? <button type="button" className="button-secondary" onClick={() => void cancelRequest()}>Hủy lời mời</button> :
+             relationship === "incoming" ? <button type="button" className="button-secondary" onClick={() => void respondToIncoming("accept")}>Chấp nhận</button> :
              relationship !== "blocked" && <button type="button" className="button-secondary" onClick={() => void sendFriendRequest()}>Kết bạn</button>}
             <button type="button" className="chat-block-btn" onClick={() => void toggleBlock()} disabled={blockStatus === "blocked_you"}>{blockStatus === "blocked_by_me" ? "Bỏ chặn" : "Chặn"}</button>
           </div>
