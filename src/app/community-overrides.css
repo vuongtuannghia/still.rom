@@ -451,3 +451,47 @@
   .direct-bubble{max-width:85%}
   .direct-chat-composer{padding:8px}
 }
+
+/* Focus leaderboard + Messenger-style pending inbox */
+.pending-inbox-card{border:1px solid #deddd7;border-radius:12px;background:#fff;overflow:hidden}
+.pending-inbox-trigger{display:grid;grid-template-columns:34px minmax(0,1fr) auto auto;align-items:center;gap:10px;width:100%;padding:12px 14px;border:0;background:#fff;color:#222;text-align:left;cursor:pointer}
+.pending-inbox-trigger:hover{background:#f8f8f4}
+.pending-inbox-icon{display:grid;width:34px;height:34px;place-items:center;border:1px solid #deddd7;border-radius:50%;background:#f3f3ee;color:#555}
+.pending-inbox-copy{display:flex;min-width:0;flex-direction:column;gap:3px}
+.pending-inbox-copy strong{font-size:10px;line-height:1.2}
+.pending-inbox-copy small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#888;font-size:8px}
+.pending-inbox-count{display:grid;min-width:20px;height:20px;padding-inline:5px;place-items:center;border-radius:999px;background:#222;color:#fff;font-size:7px;font-weight:700}
+.pending-inbox-chevron{width:18px;text-align:center;color:#888;font-size:12px}
+.pending-inbox-card.open .pending-inbox-trigger{border-bottom:1px solid #e7e6e0;background:#fbfbf8}
+.pending-inbox-list{display:grid}
+.pending-inbox-list .message-row{border-bottom:1px solid #efeee9}
+.pending-inbox-list .message-row:last-child{border-bottom:0}
+
+.focus-leaderboard{margin:16px 0 0;padding:18px}
+.focus-leaderboard-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.focus-leaderboard-head h2{margin:6px 0 5px;font-size:20px;letter-spacing:-.035em}
+.focus-leaderboard-head p{margin:0;max-width:620px;color:#85857f;font-size:9px;line-height:1.6}
+.focus-leaderboard-tabs{display:flex;gap:5px;margin-top:14px;padding:3px;border:1px solid #e1e0da;border-radius:9px;background:#f4f4ef;width:max-content}
+.focus-leaderboard-tabs button{min-width:70px;padding:7px 10px;border:0;border-radius:7px;background:transparent;color:#777;font-size:9px;cursor:pointer}
+.focus-leaderboard-tabs button.active{background:#222;color:#fff}
+.focus-leaderboard-body{margin-top:10px}
+.focus-leaderboard-list{display:grid}
+.focus-rank-row{display:grid;grid-template-columns:26px 36px minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid #efeee9}
+.focus-rank-row:last-child{border-bottom:0}
+.focus-rank-row.me{margin-inline:-5px;padding-inline:9px;border-radius:9px;background:#f5f5f0}
+.focus-rank-number{font-size:10px;font-weight:700;text-align:center;color:#8a8a84}
+.focus-rank-number.rank-1,.focus-rank-number.rank-2,.focus-rank-number.rank-3{color:#222}
+.focus-rank-avatar{display:grid;width:36px;height:36px;place-items:center;overflow:hidden;border:1px solid #deddd7;border-radius:50%;background:#ecece7;color:#222;font-size:9px;font-weight:700}
+.focus-rank-avatar img{width:100%;height:100%;object-fit:cover}
+.focus-rank-person{display:flex;min-width:0;flex-direction:column;gap:3px}
+.focus-rank-person strong{display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}
+.focus-rank-person strong em{display:inline-flex;align-items:center;padding:2px 5px;border-radius:999px;background:#222;color:#fff;font-size:6px;font-style:normal;font-weight:700}
+.focus-rank-person small{color:#999;font-size:7px}
+.focus-rank-time{font-size:9px;white-space:nowrap}
+.focus-rank-me{display:flex;align-items:center;gap:8px;margin-top:10px;padding:9px 10px;border:1px solid #deddd7;border-radius:8px;background:#f8f8f4;color:#666;font-size:8px}
+.focus-rank-me strong{margin-left:auto;color:#222;font-size:11px}.focus-rank-me b{color:#222;font-size:9px}
+.focus-leaderboard-empty{display:flex;min-height:110px;align-items:center;justify-content:center;flex-direction:column;gap:5px;text-align:center;color:#999;font-size:8px}
+.focus-leaderboard-empty strong{color:#333;font-size:10px}
+@media(max-width:700px){
+  .focus-leaderboard{padding:14px}.focus-rank-row{grid-template-columns:22px 32px minmax(0,1fr) auto;gap:8px}.focus-rank-avatar{width:32px;height:32px}.focus-rank-time{font-size:8px}
+}
