@@ -202,15 +202,18 @@ export function DirectMessagesPage() {
                 <div><span className="small-label">TIN NHẮN CHỜ</span><h3>Người lạ</h3></div>
                 <span>{pendingThreads.length}</span>
               </div>
-              {pendingThreads.map(thread => <div className="message-row pending" role="button" tabIndex={0} key={thread.threadId}
-                onClick={() => router.push("/tin-nhan/" + encodeURIComponent(thread.other.id))}
-                onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") router.push("/tin-nhan/" + encodeURIComponent(thread.other.id)); }}>
-                <ProfileActionMenu person={{ id: thread.other.id, name: thread.other.name, picture: thread.other.picture }}>
-                  <span className="community-avatar">{thread.other.picture ? <img src={thread.other.picture} alt="" /> : initial(thread.other.name)}</span>
-                </ProfileActionMenu>
-                <span className="message-row-copy"><strong>{thread.other.name}</strong><small>{thread.lastBody}</small></span>
-                <span className="message-row-meta"><span>{timeLabel(thread.lastCreatedAt)}</span>{thread.unreadCount > 0 && <b>{thread.unreadCount}</b>}</span>
-              </div>)}
+              {(() => {
+                const latest = pendingThreads[0];
+                return <div className="message-row pending pending-single" role="button" tabIndex={0}
+                  onClick={() => router.push("/tin-nhan/" + encodeURIComponent(latest.other.id))}
+                  onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") router.push("/tin-nhan/" + encodeURIComponent(latest.other.id)); }}>
+                  <ProfileActionMenu person={{ id: latest.other.id, name: latest.other.name, picture: latest.other.picture }}>
+                    <span className="community-avatar">{latest.other.picture ? <img src={latest.other.picture} alt="" /> : initial(latest.other.name)}</span>
+                  </ProfileActionMenu>
+                  <span className="message-row-copy"><strong>{latest.other.name}</strong><small>{latest.lastBody}</small></span>
+                  <span className="message-row-meta"><span>{timeLabel(latest.lastCreatedAt)}</span>{latest.unreadCount > 0 && <b>{latest.unreadCount}</b>}</span>
+                </div>;
+              })()}
             </section>}
           </main>
 
