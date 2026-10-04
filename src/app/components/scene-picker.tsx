@@ -131,21 +131,21 @@ export function SceneBanner({ room, onChange, onEnter, onChoose }: SceneProps & 
       <small><span className="tiny-dot" />Đang chọn: {youtube?.title ?? still.title}</small>
     </div>
     {youtube ? (
-      <div className="scene-banner-preview scene-banner-youtube-preview">
-        <YouTubeScenePlayer
-          scene={youtube}
-          loop={room.loop}
-          muted={room.youtubeMuted}
-          onMuted={(value) => void onChange({ youtubeMuted: value })}
-          onFallback={() => void onChange({ selectedId: "quiet-window" })}
-          ambientView
-          sessionRole="preview"
-        />
-        <div className="scene-preview-caption">
-          <div>
-            <span>YOUTUBE SCENE · XEM NGAY</span>
-            <strong>{youtube.title}</strong>
-          </div>
+      <div className="scene-banner-youtube-preview-wrap">
+        <div className="scene-banner-preview scene-banner-youtube-preview">
+          <YouTubeScenePlayer
+            scene={youtube}
+            loop={room.loop}
+            muted={room.youtubeMuted}
+            onMuted={(value) => void onChange({ youtubeMuted: value })}
+            onFallback={() => void onChange({ selectedId: "quiet-window" })}
+            ambientView
+            sessionRole="preview"
+          />
+        </div>
+        <div className="scene-preview-meta">
+          <span>YOUTUBE SCENE · XEM NGAY</span>
+          <strong>{youtube.title}</strong>
         </div>
       </div>
     ) : (
