@@ -128,3 +128,45 @@
   .ambient-room-screen[data-panels-open="true"] .ambient-room-workspace, .ambient-room-screen[data-dock-side="right"][data-panels-open="true"] .ambient-room-workspace { overflow-y: auto; grid-template-rows: 270px 320px; }
 }
 @media (prefers-reduced-motion: reduce) { .scene-ambient-backdrop, .ambient-backdrop-image { transition: none !important; } }
+
+
+/* Ambient YouTube: use the available room as a real background-sized player.
+   The player stays in the normal study window; fullscreen is optional. */
+.ambient-player .youtube-stage {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 200px !important;
+  min-height: 200px !important;
+  max-width: none !important;
+  max-height: none !important;
+  flex: 1 1 auto !important;
+  align-self: stretch !important;
+  aspect-ratio: auto !important;
+  border-radius: 12px !important;
+}
+.ambient-player .youtube-stage > iframe {
+  width: 100% !important;
+  height: 100% !important;
+}
+.youtube-autoplay-overlay {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 3;
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 15px;
+  border: 1px solid rgba(255,255,255,.8);
+  border-radius: 999px;
+  background: rgba(20,20,18,.82);
+  color: #fff;
+  box-shadow: 0 12px 30px rgba(0,0,0,.22);
+  font-size: 10px;
+  font-weight: 700;
+  transform: translate(-50%, -50%);
+  backdrop-filter: blur(8px);
+}
+.youtube-autoplay-overlay:hover { background: rgba(20,20,18,.94); }
