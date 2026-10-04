@@ -16,11 +16,13 @@ export function ProfileActionMenu({ person, children, placement = "left", self =
 }) {
   const router = useRouter();
   const ref = useRef<HTMLDivElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [relationship, setRelationship] = useState<Relationship>("none");
   const [requestId, setRequestId] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0 });
+  const [popoverReady, setPopoverReady] = useState(false);
 
   useEffect(() => {
     if (!open || self) return;
@@ -47,25 +49,38 @@ export function ProfileActionMenu({ person, children, placement = "left", self =
   }, [open, self, person.id]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setPopoverReady(false);
+      return;
+    }
 
     const updatePosition = () => {
       const trigger = ref.current?.querySelector<HTMLElement>(".profile-action-trigger");
-      if (!trigger) return;
+      const popover = popoverRef.current;
+      if (!trigger || !popover) return;
       const rect = trigger.getBoundingClientRect();
-      const width = 210;
+      const popoverRect = popover.getBoundingClientRect();
       const gap = 8;
+      const width = popoverRect.width || 210;
+      const height = popoverRect.height || 0;
+
       const left = placement === "left"
-        ? Math.max(8, rect.right - width)
-        : Math.min(window.innerWidth - width - 8, rect.left);
-      const estimatedHeight = 300;
-      const top = rect.bottom + gap + estimatedHeight <= window.innerHeight
-        ? rect.bottom + gap
-        : Math.max(8, rect.top - estimatedHeight - gap);
+        ? Math.max(8, Math.min(window.innerWidth - width - 8, rect.right - width))
+        : Math.max(8, Math.min(window.innerWidth - width - 8, rect.left));
+
+      const roomBelow = window.innerHeight - rect.bottom - gap;
+      const roomAbove = rect.top - gap;
+      const top = roomBelow >= height || roomBelow >= roomAbove
+        ? Math.max(8, Math.min(window.innerHeight - height - 8, rect.bottom + gap))
+        : Math.max(8, rect.top - height - gap);
+
       setPopoverPosition({ top, left });
+      setPopoverReady(true);
     };
 
-    updatePosition();
+    setPopoverReady(false);
+    requestAnimationFrame(updatePosition);
+
     const close = (event: PointerEvent) => {
       const target = event.target as Node;
       if (ref.current?.contains(target)) return;
@@ -176,8 +191,15 @@ export function ProfileActionMenu({ person, children, placement = "left", self =
     {open && typeof document !== "undefined" && createPortal(
       <div
         className={"profile-action-popover " + placement}
+        ref={popoverRef}
         role="menu"
-        style={{ position: "fixed", top: popoverPosition.top, left: popoverPosition.left, zIndex: 9999 }}
+        style={{
+          position: "fixed",
+          top: popoverPosition.top,
+          left: popoverPosition.left,
+          zIndex: 9999,
+          visibility: popoverReady ? "visible" : "hidden",
+        }}
       >
       <div className="profile-action-person">
         <strong>{person.name}</strong>
