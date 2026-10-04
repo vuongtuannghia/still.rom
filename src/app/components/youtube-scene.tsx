@@ -1,0 +1,131 @@
+"use client";
+
+import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
+import { Icon } from "../icons";
+import { buildYouTubeEmbed, isVideoId, youtubeWatchUrl, type YouTubeScene } from "@/lib/scene-domain";
+
+type Player = { playVideo: () => void; pauseVideo: () => void; mute: () => void; unMute: () => void; setVolume: (value: number) => void; destroy: () => void; getVideoData?: () => { video_id?: string } };
+type PlayerEvent = { target: Player; data?: number };
+type YouTubeAPI = { Player: new (element: HTMLElement, options: { events: { onReady: (event: PlayerEvent) => void; onError: (event: PlayerEvent) => void; onStateChange: (event: PlayerEvent) => void; onAutoplayBlocked: () => void } }) => Player };
+type YouTubeWindow = Window & { YT?: YouTubeAPI; onYouTubeIframeAPIReady?: () => void };
+let apiPromise: Promise<YouTubeAPI> | null = null;
+function loadYouTubeAPI() {
+  const scope = window as YouTubeWindow;
+  if (scope.YT?.Player) return Promise.resolve(scope.YT);
+  if (apiPromise) return apiPromise;
+  apiPromise = new Promise<YouTubeAPI>((resolve, reject) => {
+    const previous = scope.onYouTubeIframeAPIReady;
+    const fail = () => { apiPromise = null; reject(new Error("Điều khiển nhanh chưa tải được. Nút ▶ bên trong video vẫn có thể dùng.")); };
+    const timeout = window.setTimeout(fail, 16000);
+    scope.onYouTubeIframeAPIReady = () => {
+      window.clearTimeout(timeout); previous?.();
+      if (scope.YT?.Player) resolve(scope.YT); else fail();
+    };
+    document.getElementById("stillroom-youtube-api")?.remove();
+    const script = document.createElement("script"); script.id = "stillroom-youtube-api"; script.src = "https://www.youtube.com/iframe_api"; script.async = true; script.referrerPolicy = "strict-origin-when-cross-origin";
+    script.onerror = () => { window.clearTimeout(timeout); fail(); };
+    document.head.appendChild(script);
+  });
+  return apiPromise;
+}
+const errorMessages: Record<number, string> = {
+  2: "Đường dẫn video/playlist không hợp lệ.",
+  5: "Trình duyệt chưa phát được video này. Có thể thử trình phát tiêu chuẩn bên dưới.",
+  100: "Video đã bị xóa hoặc đặt riêng tư. Hãy chọn một video công khai khác.",
+  101: "Chủ video không cho phép nhúng. Hãy dùng video khác hoặc mở trên YouTube.",
+  150: "Chủ video không cho phép nhúng. Hãy dùng video khác hoặc mở trên YouTube.",
+  153: "YouTube chưa nhận được nguồn trang trong khung preview. Thử trình phát tiêu chuẩn hoặc mở website trong tab riêng.",
+};
+
+type Props = { scene: YouTubeScene; loop: boolean; muted: boolean; onMuted: (value: boolean) => void; onFallback: () => void; onPause?: () => void; onVideoChange?: (videoId: string) => void; ambientView?: boolean; edgeToEdge?: boolean; showControls?: boolean };
+function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVideoChange, ambientView = false, edgeToEdge = false, showControls = false, standard, onRetry, onStandard }: Props & { standard: boolean; onRetry: () => void; onStandard: () => void }) {
+  const root = useRef<HTMLDivElement>(null);
+  const info = useRef<HTMLDivElement>(null);
+  const host = useRef<HTMLDivElement>(null);
+  const [fit, setFit] = useState({ width: 0, height: 0 });
+  const frame = useRef<HTMLIFrameElement | null>(null);
+  const player = useRef<Player | null>(null);
+  const preferences = useRef({ muted, onPause, onVideoChange });
+  const [ready, setReady] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const [status, setStatus] = useState("Nhấn ▶ trên video nếu trình duyệt không tự phát.");
+  const [fatal, setFatal] = useState("");
+  const [apiNotice, setApiNotice] = useState("");
+  const id = useId().replaceAll(":", "");
+  useEffect(() => {
+    preferences.current = { muted, onPause, onVideoChange };
+    if (player.current && ready) {
+      if (muted) player.current.mute(); else { player.current.setVolume(35); player.current.unMute(); }
+    }
+  }, [muted, ready, onPause, onVideoChange]);
+  useEffect(() => {
+    if (!ambientView || !root.current) return;
+    const element = root.current;
+    const observer = new ResizeObserver(() => {
+      const availableWidth = Math.max(200, element.clientWidth);
+      const availableHeight = Math.max(200, element.clientHeight - (info.current?.offsetHeight ?? 0));
+      const width = Math.floor(Math.min(availableWidth, availableHeight * 16 / 9));
+      const height = Math.max(200, Math.floor(width * 9 / 16));
+      setFit((current) => current.width === width && current.height === height ? current : { width, height });
+    });
+    observer.observe(element);
+    if (info.current) observer.observe(info.current);
+    return () => observer.disconnect();
+  }, [ambientView]);
+  useEffect(() => {
+    const container = host.current; if (!container) return;
+    let disposed = false, becameReady = false, hasPlayed = false;
+    const iframe = document.createElement("iframe");
+    iframe.id = `youtube-${id}`; iframe.title = `Quang cảnh YouTube: ${scene.title}`;
+    iframe.src = buildYouTubeEmbed({ id, title: scene.title, videoId: scene.videoId, startSeconds: scene.startSeconds, playlistId: scene.playlistId }, window.location.origin, loop, muted, standard);
+    iframe.referrerPolicy = "strict-origin-when-cross-origin";
+    iframe.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
+    iframe.allowFullscreen = true; frame.current = iframe; container.appendChild(iframe);
+    const timeout = window.setTimeout(() => { if (!disposed && !becameReady) setApiNotice("Điều khiển nhanh đang tải chậm. Bạn có thể nhấn ▶ trực tiếp trong video, không cần chờ nút phía dưới."); }, 11000);
+    function reportVideo(target: Player) {
+      try { const videoId = target.getVideoData?.().video_id; if (isVideoId(videoId)) preferences.current.onVideoChange?.(videoId); } catch { /* A queued playlist can have no current id yet. */ }
+    }
+    // The native iframe always exists. Failure to load the optional API does not disable it.
+    void loadYouTubeAPI().then((api) => {
+      if (disposed) return;
+      player.current = new api.Player(iframe, { events: {
+        onReady: (event) => {
+          if (disposed) return;
+          becameReady = true; window.clearTimeout(timeout); setReady(true); setApiNotice("");
+          reportVideo(event.target); event.target.mute(); event.target.playVideo();
+          if (!preferences.current.muted) { event.target.setVolume(35); event.target.unMute(); }
+        },
+        onStateChange: (event) => {
+          if (disposed) return;
+          setPlaying(event.data === 1);
+          if (event.data === 1) { reportVideo(event.target); hasPlayed = true; setFatal(""); setStatus("Video đang phát"); }
+          else if (event.data === 2) { setStatus("Video đang tạm dừng"); if (hasPlayed) preferences.current.onPause?.(); }
+          else if (event.data === 3) setStatus("Đang tải video…");
+          else if (event.data === 0) setStatus("Video đã kết thúc");
+        },
+        onError: (event) => { if (!disposed) { setFatal(errorMessages[event.data ?? 0] ?? "Video chưa phát được. Thử một link khác hoặc mở trên YouTube."); setPlaying(false); } },
+        onAutoplayBlocked: () => { if (!disposed) { setStatus("Tự phát bị chặn. Nhấn Phát video hoặc ▶ trực tiếp trong video."); setPlaying(false); } },
+      } });
+    }).catch((reason) => { if (!disposed) setApiNotice(reason instanceof Error ? reason.message : "Bạn có thể nhấn ▶ trực tiếp trong video."); });
+    return () => { disposed = true; window.clearTimeout(timeout); try { player.current?.destroy(); } catch { /* Native frame may already be gone. */ } player.current = null; frame.current = null; container.replaceChildren(); };
+  }, [scene.videoId, scene.playlistId, scene.startSeconds, scene.title, loop, id, standard]);
+  function playPause() {
+    if (ready && player.current) { if (playing) player.current.pauseVideo(); else player.current.playVideo(); }
+    else { frame.current?.focus(); setApiNotice("Bấm nút ▶ của YouTube trong vùng video phía trên. Nếu khung B chặn YouTube, hãy thử Mở website riêng."); }
+  }
+  return <div ref={root} className={`youtube-scene-player ${ambientView ? "ambient-player" : edgeToEdge ? "edge-player" : ""}`} style={ambientView && fit.width ? { "--ambient-frame-width": `${fit.width}px`, "--ambient-frame-height": `${fit.height}px` } as CSSProperties : undefined} data-player-view={ambientView ? "ambient" : edgeToEdge ? "edge" : "studio"}>
+    <div className="youtube-stage" ref={host} data-video-id={scene.videoId} />
+    <div ref={info} className="youtube-player-info" hidden={(edgeToEdge || ambientView) && !showControls && !fatal && !apiNotice}>
+    <div className="youtube-controls"><span className="youtube-status" role="status"><span className={playing ? "live-dot" : "tiny-dot"} />{status}</span><div><button type="button" className="button-secondary" disabled={Boolean(fatal)} onClick={playPause}><Icon name={playing ? "pause" : "play"} size={15} />{playing ? "Dừng video" : "Phát video"}</button><button type="button" className="button-secondary" aria-pressed={!muted} onClick={() => { onMuted(!muted); if (!ready) setApiNotice("Bạn có thể bật hoặc tắt tiếng bằng nút loa của YouTube trong video."); }}><Icon name="volume" size={15} />{muted ? "Bật tiếng video" : "Tắt tiếng video"}</button></div></div>
+    {apiNotice && !fatal && <p className="youtube-api-notice" role="status">{apiNotice}</p>}
+    {fatal && <div className="youtube-error" role="alert"><p>{fatal}</p><div><button type="button" className="button-secondary" onClick={onRetry}>Thử lại</button>{!standard && <button type="button" className="button-secondary" onClick={onStandard}>Thử trình phát tiêu chuẩn</button>}<button type="button" className="button-secondary" onClick={onFallback}>Dùng cảnh tĩnh</button></div></div>}
+    <div className="youtube-external-actions"><a href={youtubeWatchUrl(scene)} target="_blank" rel="noopener" className="text-button">Mở trên YouTube <Icon name="arrow" size={13} /><span className="sr-only">, tab mới</span></a><a href="/" target="_blank" rel="noopener" className="text-button">Mở website riêng <Icon name="arrow" size={13} /><span className="sr-only">, tab mới</span></a></div>
+    <p className="youtube-disclosure">Video phát từ YouTube, có thể có quảng cáo/hạn chế nhúng. Điều khiển và thương hiệu YouTube được giữ nguyên. Nền mờ mở rộng từ ảnh đại diện; video chính và điều khiển không bị cắt.</p>
+    </div>
+  </div>;
+}
+export function YouTubeScenePlayer(props: Props) {
+  const [attempt, setAttempt] = useState(0);
+  const [standard, setStandard] = useState(false);
+  return <VideoSession {...props} key={`${attempt}:${standard}`} standard={standard} onRetry={() => setAttempt(attempt + 1)} onStandard={() => setStandard(true)} />;
+}
