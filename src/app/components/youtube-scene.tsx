@@ -97,6 +97,18 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
   }, [muted, ready]);
 
   useEffect(() => {
+    const restoreAudioAfterFullscreen = () => {
+      if (!player.current || !ready || userMuted.current) return;
+      try {
+        player.current.setVolume(35);
+        player.current.unMute();
+      } catch {}
+    };
+    document.addEventListener("fullscreenchange", restoreAudioAfterFullscreen);
+    return () => document.removeEventListener("fullscreenchange", restoreAudioAfterFullscreen);
+  }, [ready]);
+
+  useEffect(() => {
     const container = host.current; if (!container) return;
     let disposed = false, becameReady = false, hasPlayed = false;
     const channelName = `stillroom-youtube-${scene.videoId || scene.playlistId || scene.id}`;
@@ -148,8 +160,12 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
         onReady: (event) => {
           if (disposed) return;
           becameReady = true; window.clearTimeout(timeout); setReady(true); setApiNotice(""); reportVideo(event.target);
-          channel?.postMessage({ type: "claim", role: sessionRole });
-          event.target.mute();
+          channel?.postMessage({ type: "claim", role: sessionRole, muted: userMuted.current });
+          if (userMuted.current) event.target.mute();
+          else {
+            event.target.setVolume(35);
+            try { event.target.unMute(); } catch {}
+          }
           const resumeAt = Math.max(savedProgress.current, scene.startSeconds);
           if (resumeAt > 0 && event.target.seekTo) event.target.seekTo(resumeAt, true);
           globalThis.requestAnimationFrame(() => { if (disposed || !document.documentElement.contains(container)) return; try { event.target.playVideo(); } catch { setAutoplayBlocked(true); } });
@@ -198,6 +214,7 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
         const nextMuted = !userMuted.current; userMuted.current = nextMuted; preferences.current.muted = nextMuted; setPlayerMuted(nextMuted);
         try { sessionStorage.setItem(`stillroom.youtube.muted:${scene.videoId || scene.playlistId || scene.id}`, nextMuted ? "1" : "0"); } catch {}
         onMuted(nextMuted);
+        try { sessionStorage.setItem(`stillroom.youtube.muted:${scene.videoId || scene.playlistId || scene.id}`, nextMuted ? "1" : "0"); } catch {}
         if (ready && player.current) { if (nextMuted) player.current.mute(); else { player.current.setVolume(35); player.current.unMute(); player.current.playVideo(); audioUnlocked.current = true; } }
         else setApiNotice("Bạn có thể bật hoặc tắt tiếng bằng nút loa của YouTube trong video.");
       }}><Icon name="volume" size={15} />{playerMuted ? "Bật tiếng video" : "Tắt tiếng video"}</button></div></div>
