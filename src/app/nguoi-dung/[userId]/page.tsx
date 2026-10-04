@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Icon } from "@/app/icons";
+import type { DashboardData } from "@/lib/focus-domain";
 import { ProfileActionMenu } from "@/app/components/profile-action-menu";
 import { ProfileAvatarMenu } from "@/app/components/profile-avatar-menu";
 
@@ -76,6 +77,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const userId = params.userId;
   const [data, setData] = useState<ProfileData | null>(null);
+  const [viewer, setViewer] = useState<DashboardData["account"]>(null);
   const [tab, setTab] = useState<"activity" | "photos" | "friends">("activity");
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState("");
@@ -116,7 +118,13 @@ export default function ProfilePage() {
     }
   }
 
-  useEffect(() => { void load(); }, [userId]);
+  useEffect(() => {
+    void load();
+    fetch("/api/account/status", { cache: "no-store", credentials: "same-origin" })
+      .then(response => response.ok ? response.json() as Promise<{ account: DashboardData["account"] }> : null)
+      .then(payload => setViewer(payload?.account ?? null))
+      .catch(() => {});
+  }, [userId]);
 
   async function sendFriendRequest() {
     if (!data) return;
@@ -400,6 +408,7 @@ export default function ProfilePage() {
               <div className="profile-post-top">{!isSelf ? <ProfileActionMenu person={{ id: data.profile.id, name: data.profile.name, picture: displayPicture }}>{avatar(data.profile.name, displayPicture, "small")}</ProfileActionMenu> : avatar(data.profile.name, displayPicture, "small")}<div><strong>{data.profile.name}</strong><span>{timeLabel(post.createdAt)}</span></div>{isSelf && <button type="button" className="profile-delete-btn" onClick={() => void deletePhotoPost(post.id)}><Icon name="close" size={14} /></button>}</div>
               {post.body && <p>{post.body}</p>}
               {post.imageData && <img className="profile-post-image" src={post.imageData} alt="" />}
+              <ProfilePostComments postId={post.id} viewer={viewer} />
             </article>)}
         </section>
       : <section className="profile-activity-grid">
@@ -410,6 +419,7 @@ export default function ProfilePage() {
                     <div className="profile-post-top">{!isSelf ? <ProfileActionMenu person={{ id: data.profile.id, name: data.profile.name, picture: displayPicture }}>{avatar(data.profile.name, displayPicture, "small")}</ProfileActionMenu> : avatar(data.profile.name, displayPicture, "small")}<div><strong>{data.profile.name}</strong><span>{timeLabel(item.post.createdAt)}</span></div></div>
                     {item.post.body && <p>{item.post.body}</p>}
                     {item.post.imageData && <img className="profile-post-image" src={item.post.imageData} alt="" />}
+                    <ProfilePostComments postId={item.post.id} viewer={viewer} />
                   </article>
                 : <article className="profile-forum-card" key={"forum-" + item.post.id}>
                     <div className="profile-forum-kicker"><Icon name="book" size={13} /> {item.post.pinned ? "Được ghim" : "Bài diễn đàn"} · {timeLabel(item.post.createdAt)}</div>
@@ -423,4 +433,94 @@ export default function ProfilePage() {
           </aside>
         </section>}
   </main>;
+}
+
+type ProfileComment = {
+  id: number; postId: number; parentId: number | null; body: string; createdAt: string;
+  authorId: string; authorName: string; authorPicture: string | null;
+};
+
+function ProfilePostComments({ postId, viewer }: { postId: number; viewer: DashboardData["account"] }) {
+  const [open, setOpen] = useState(false);
+  const [comments, setComments] = useState<ProfileComment[]>([]);
+  const [draft, setDraft] = useState("");
+  const [replyId, setReplyId] = useState<number | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  async function loadComments() {
+    try {
+      const response = await fetch("/api/profile/posts/" + postId + "/comments", { cache: "no-store", credentials: "same-origin" });
+      if (!response.ok) throw new Error();
+      setComments(await response.json() as ProfileComment[]);
+      setLoaded(true);
+    } catch {}
+  }
+
+  async function toggle() {
+    setOpen(current => !current);
+    if (!loaded) await loadComments();
+  }
+
+  async function send() {
+    const body = draft.trim();
+    if (!viewer || !body || busy) return;
+    setBusy(true);
+    try {
+      const response = await fetch("/api/profile/posts/" + postId + "/comments", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body, parentId: replyId }),
+      });
+      const payload = await response.json().catch(() => ({})) as { comment?: ProfileComment; error?: string };
+      if (!response.ok || !payload.comment) throw new Error(payload.error || "Không thể bình luận.");
+      setComments(current => [...current, payload.comment!]);
+      setDraft("");
+      setReplyId(null);
+      setLoaded(true);
+    } catch {}
+    finally { setBusy(false); }
+  }
+
+  async function deleteComment(id: number) {
+    if (!window.confirm("Xóa bình luận này?")) return;
+    try {
+      const response = await fetch("/api/profile/posts/comments/" + id, { method: "DELETE", credentials: "same-origin" });
+      if (response.ok) setComments(current => current.filter(item => item.id !== id && item.parentId !== id));
+    } catch {}
+  }
+
+  const top = comments.filter(item => !item.parentId);
+  const isAdmin = Boolean(viewer && (viewer.role === "admin" || viewer.email.toLowerCase() === "vuongtuannghia585@gmail.com"));
+
+  return <div className="profile-comments">
+    <button type="button" className="profile-comment-toggle" onClick={() => void toggle()}>
+      <Icon name="book" size={13} /> Bình luận {loaded && comments.length > 0 ? "· " + comments.length : ""}
+    </button>
+    {open && <div className="profile-comments-body">
+      {top.length === 0 && loaded ? <span className="profile-comment-muted">Chưa có bình luận.</span> :
+       top.map(comment => <div className="profile-comment-thread" key={comment.id}>
+         <ProfileCommentItem comment={comment} viewerId={viewer?.id} isAdmin={isAdmin} onReply={setReplyId} onDelete={deleteComment} />
+         <div className="profile-comment-replies">{comments.filter(item => item.parentId === comment.id).map(reply => <ProfileCommentItem key={reply.id} comment={reply} viewerId={viewer?.id} isAdmin={isAdmin} compact onReply={setReplyId} onDelete={deleteComment} />)}</div>
+       </div>)}
+      {viewer ? <div className="profile-comment-composer">
+        {replyId && <div className="replying">Đang trả lời <button type="button" onClick={() => setReplyId(null)}>Hủy</button></div>}
+        <div className="profile-comment-input"><span className="community-avatar small">{viewer.picture ? <img src={viewer.picture} alt="" /> : viewer.name.slice(0,1).toUpperCase()}</span><input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void send(); } }} placeholder="Viết bình luận…" maxLength={2000} /><button type="button" className="icon-button" onClick={() => void send()} disabled={!draft.trim() || busy}><Icon name="arrow" size={14} /></button></div>
+      </div> : <div className="profile-comment-login">Đăng nhập Google để bình luận.</div>}
+    </div>}
+  </div>;
+}
+
+function ProfileCommentItem({ comment, viewerId, isAdmin, compact = false, onReply, onDelete }: { comment: ProfileComment; viewerId?: string; isAdmin: boolean; compact?: boolean; onReply: (id: number) => void; onDelete: (id: number) => void }) {
+  return <div className={compact ? "profile-comment-item compact" : "profile-comment-item"}>
+    <ProfileActionMenu person={{ id: comment.authorId, name: comment.authorName, picture: comment.authorPicture }}>
+      <span className="community-avatar small">{comment.authorPicture ? <img src={comment.authorPicture} alt="" /> : comment.authorName.slice(0,1).toUpperCase()}</span>
+    </ProfileActionMenu>
+    <div className="profile-comment-content">
+      <div className="profile-comment-meta"><a href={"/nguoi-dung/" + comment.authorId}>{comment.authorName}</a><span>{timeLabel(comment.createdAt)}</span></div>
+      <p>{comment.body}</p>
+      <div className="profile-comment-actions"><button type="button" onClick={() => onReply(comment.id)}>Trả lời</button>{(viewerId === comment.authorId || isAdmin) && <button type="button" onClick={() => onDelete(comment.id)}>Xóa</button>}</div>
+    </div>
+  </div>;
 }
