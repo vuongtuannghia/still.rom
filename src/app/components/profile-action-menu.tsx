@@ -208,6 +208,8 @@ export function ProfileActionMenu({ person, children, placement = "left", self =
       {self && <button type="button" role="menuitem" onClick={() => router.push("/nguoi-dung/" + encodeURIComponent(person.id))}>
         <Icon name="layout" size={14} /> Xem trang cá nhân
       </button>}
-    </div>}
+      </div>,
+      document.body
+    )}
   </div>;
 }
