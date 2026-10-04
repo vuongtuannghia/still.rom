@@ -16,6 +16,8 @@ type Comment = {
 type Person = { id: string; name: string; picture: string | null };
 type Message = { id: number; senderId: string; body: string; createdAt: string; readAt: string | null };
 
+const ADMIN = "vuongtuannghia585@gmail.com";
+
 function initials(name: string) { return name.trim().split(/\s+/).at(-1)?.[0]?.toUpperCase() ?? "U"; }
 function avatar(name: string, picture: string | null) { return picture ? <img src={picture} alt="" /> : initials(name); }
 function timeLabel(value: string) {
@@ -112,6 +114,28 @@ export function ForumPage() {
     finally { setPosting(false); }
   }
 
+  async function deletePost(postId: number) {
+    if (account?.email !== ADMIN) return;
+    if (!window.confirm("Xóa bài đăng này và toàn bộ bình luận?")) return;
+    try {
+      const response = await fetch(`/api/forum/posts/${postId}`, {
+        method: "DELETE",
+        credentials: "same-origin",
+      });
+      const payload = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) throw new Error(payload.error || "Không thể xóa bài đăng.");
+      setPosts((current) => current.filter(post => post.id !== postId));
+      setComments((current) => {
+        const next = { ...current };
+        delete next[postId];
+        return next;
+      });
+      if (expandedPost === postId) setExpandedPost(null);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Không thể xóa bài đăng.");
+    }
+  }
+
   async function addComment(postId: number) {
     if (!account) { setNotice("Đăng nhập Google để bình luận."); return; }
     const body = commentDraft[postId]?.trim();
@@ -190,7 +214,7 @@ export function ForumPage() {
             <div className="forum-post-author"><span className="community-avatar">{avatar(post.authorName, post.authorPicture)}</span><div><strong>{post.authorName}</strong><span>{timeLabel(post.createdAt)}</span></div></div>
             <h3>{post.title}</h3><p className="forum-post-body">{post.body}</p>
             {post.meetTitle && post.meetUrl && <a className="forum-meet-chip" href={post.meetUrl} target="_blank" rel="noreferrer"><Icon name="radio" size={14} /><span>{post.meetTitle}</span><Icon name="arrow" size={13} /></a>}
-            <div className="forum-post-actions"><button type="button" onClick={() => void openPost(post.id)}><Icon name="book" size={14} /> {post.commentCount ? `${post.commentCount} bình luận` : "Bình luận"}</button><button type="button" onClick={() => openDirect({ id: post.authorId, name: post.authorName, picture: post.authorPicture })}><Icon name="arrow" size={14} /> Nhắn riêng</button></div>
+            <div className="forum-post-actions"><button type="button" onClick={() => void openPost(post.id)}><Icon name="book" size={14} /> {post.commentCount ? `${post.commentCount} bình luận` : "Bình luận"}</button><button type="button" onClick={() => openDirect({ id: post.authorId, name: post.authorName, picture: post.authorPicture })}><Icon name="arrow" size={14} /> Nhắn riêng</button>{account?.email === ADMIN && <button type="button" className="forum-delete-button" onClick={() => void deletePost(post.id)}><Icon name="close" size={14} /> Xóa bài</button>}</div>
             {expandedPost === post.id && <ForumComments account={account} comments={comments[post.id] ?? []} draft={commentDraft[post.id] ?? ""} replyId={replyTo[post.id] ?? null} onDraft={(value) => setCommentDraft(current => ({ ...current, [post.id]: value }))} onReply={(id) => setReplyTo(current => ({ ...current, [post.id]: id }))} onSend={() => void addComment(post.id)} onDirect={(person) => void openDirect(person)} />}
           </article>)
         }
