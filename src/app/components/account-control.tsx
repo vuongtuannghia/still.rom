@@ -38,6 +38,7 @@ export function AccountControl({ data, onChanged }: {
   const [message, setMessage] = useState("");
   const buttonRef = useRef<HTMLDivElement>(null);
   const initializedClientId = useRef<string | null>(null);
+  const activeAccount = status?.account ?? data?.account ?? null;
 
   async function loadStatus() {
     try {
@@ -112,7 +113,7 @@ export function AccountControl({ data, onChanged }: {
 
 
   useEffect(() => {
-    if (status?.account) {
+    if (activeAccount) {
       if (buttonRef.current) buttonRef.current.innerHTML = "";
       initializedClientId.current = null;
       return;
@@ -156,7 +157,7 @@ export function AccountControl({ data, onChanged }: {
     }
     script.addEventListener("load", render);
     return () => { cancelled = true; script.removeEventListener("load", render); };
-  }, [status?.google.clientId, status?.account]);
+  }, [status?.google.clientId, activeAccount]);
 
   function rememberGuestBackup() {
     if (!data) return;
@@ -191,18 +192,17 @@ export function AccountControl({ data, onChanged }: {
     }
   }
 
-  const account = status?.account ?? data?.account ?? null;
   const configured = status?.google.configured ?? false;
 
   return <div className="account-control">
-    {account ? <div className="account-connected account-sidebar">
-      <span className="account-avatar">{account.picture ? <img src={account.picture} alt="" /> : account.name.slice(0, 1).toUpperCase()}</span>
-      <div className="account-user-meta"><strong>{account.name}</strong><span>{account.email}</span><small><Icon name="check" size={12} /> Đã sao lưu tiến độ</small></div>
+    {activeAccount ? <div className="account-connected account-sidebar">
+      <span className="account-avatar">{activeAccount.picture ? <img src={activeAccount.picture} alt="" /> : activeAccount.name.slice(0, 1).toUpperCase()}</span>
+      <div className="account-user-meta"><strong>{activeAccount.name}</strong><span>{activeAccount.email}</span><small><Icon name="check" size={12} /> Đã sao lưu tiến độ</small></div>
       <button type="button" className="button-secondary account-logout" disabled={busy} onClick={() => void logout()}>{busy ? "Đang đăng xuất…" : "Đăng xuất"}</button>
     </div> : <div className="account-sidebar-login">
       <div><strong>Sao lưu tiến độ</strong><span>{configured ? "Đăng nhập Google để dùng trên mọi thiết bị." : "Cần cấu hình Google OAuth để bật đăng nhập."}</span></div>
-      <div ref={buttonRef} className="google-signin-button" aria-label="Đăng nhập bằng Google" />
-      {configured && !buttonRef.current && <button type="button" className="button-secondary" disabled={busy} onClick={rememberGuestBackup}>Đăng nhập Google</button>}
+      {configured && <div ref={buttonRef} className="google-signin-button" aria-label="Đăng nhập bằng Google" />}
+      {!configured && <button type="button" className="button-secondary" disabled={busy} onClick={rememberGuestBackup}>Đăng nhập Google</button>}
     </div>}
     {message && <p className="account-feedback" role="alert">{message}</p>}
   </div>;
