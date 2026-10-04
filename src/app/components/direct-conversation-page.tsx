@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import type { DashboardData } from "@/lib/focus-domain";
 import { Icon } from "../icons";
-import { ProfileAvatarMenu } from "./profile-avatar-menu";
+import { ProfileActionMenu } from "./profile-action-menu";
 
 type Relationship = "friend" | "lookup" | "incoming" | "outgoing" | "conversation" | "blocked";
 type Person = { id: string; name: string; email: string; picture: string | null; relationship?: Relationship; requestId?: number };
@@ -191,7 +191,7 @@ export function DirectConversationPage() {
       <div className="direct-chat-card">
         <header className="direct-chat-header">
           <div className="direct-chat-person">
-            <ProfileAvatarMenu id={person.id} name={person.name} picture={person.picture} size="large" />
+            <ProfileActionMenu person={{ id: person.id, name: person.name, picture: person.picture }}><span className="community-avatar large">{person.picture ? <img src={person.picture} alt="" /> : person.name.slice(0, 1).toUpperCase()}</span></ProfileActionMenu>
             <div><h2>{person.name}</h2><span>{relationship === "friend" ? "Bạn bè · tin nhắn chính" : "Tin nhắn chờ · chưa kết bạn"}</span></div>
           </div>
           <div className="direct-chat-actions">
