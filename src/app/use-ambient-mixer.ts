@@ -77,10 +77,10 @@ export function useAmbientMixer(workspaceId: string | null) {
     const filter = active.context.createBiquadFilter();
     filter.type = "lowpass";
     const cutoff: Record<SoundId, number> = {
-      lofi: 9000, rain: 8500, roof: 8200, thunder: 3600, ocean: 7600, river: 8200, wind: 6500,
-      forest: 7600, birds: 6500, fireplace: 7000, cafe: 7800, keyboard: 6500, chimes: 7000, purr: 4800,
-      "forest-night": 7200, waterfall: 8200, "storm-rain": 5200, "mountain-stream": 8200,
-      white: 6500, pink: 7200, brown: 4200,
+      lofi: 7000, rain: 6500, roof: 6000, thunder: 3200, ocean: 6500, river: 7000, wind: 5600,
+      forest: 6000, birds: 5600, fireplace: 5600, cafe: 5600, keyboard: 5200, chimes: 5600, purr: 4000,
+      "forest-night": 5600, waterfall: 7000, "storm-rain": 5000, "mountain-stream": 7000,
+      white: 5200, pink: 5800, brown: 3600,
     };
     filter.frequency.value = cutoff[id];
     filter.Q.value = 0.22;
