@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { and, count, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { accounts, accountSessions, friendships, friendRequests, forumPosts, profilePosts, focusSessions } from "@/db/schema";
+import { accountBlocks, accounts, accountSessions, friendships, friendRequests, forumPosts, profilePosts, focusSessions } from "@/db/schema";
 import { apiError, json, ApiError, readBody } from "@/lib/server-api";
 import { accountSummary } from "@/lib/account-sessions";
 import { orderedAccountPair } from "@/lib/friendship";
@@ -27,6 +27,14 @@ export async function GET(_: Request, context: { params: Promise<{ userId: strin
     if (!account) throw new ApiError(404, "Không tìm thấy tài khoản.");
 
     const viewer = await viewerId();
+    let blockStatus: "none" | "blocked_by_me" | "blocked_you" = "none";
+    if (viewer && viewer !== userId) {
+      const [mine] = await db.select({ id: accountBlocks.id }).from(accountBlocks)
+        .where(and(eq(accountBlocks.blockerId, viewer), eq(accountBlocks.blockedId, userId))).limit(1);
+      const [theirs] = await db.select({ id: accountBlocks.id }).from(accountBlocks)
+        .where(and(eq(accountBlocks.blockerId, userId), eq(accountBlocks.blockedId, viewer))).limit(1);
+      blockStatus = mine ? "blocked_by_me" : theirs ? "blocked_you" : "none";
+    }
 
     const friendshipRows = await db.select({ a: friendships.accountAId, b: friendships.accountBId })
       .from(friendships).where(or(eq(friendships.accountAId, userId), eq(friendships.accountBId, userId)));
@@ -79,6 +87,7 @@ export async function GET(_: Request, context: { params: Promise<{ userId: strin
     }
 
     return json({
+      blockStatus,
       profile: {
         id: account.id, name: account.name, email: viewer === userId || relationship === "friend" ? account.email : null,
         picture: account.customPicture || account.picture, coverPicture: account.coverPicture, bio: account.bio,
