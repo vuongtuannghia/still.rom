@@ -34,6 +34,19 @@ const NAV_ITEMS = [
 
 const PREVIEW_WORKSPACE_ID = "00000000-0000-4000-8000-000000000001";
 const PREVIEW_TODAY = dateKey(new Date());
+const LOCAL_DATA_KEY = "stillroom.progress.v4";
+function readLocalDashboard(): DashboardData | null {
+  try {
+    const raw = localStorage.getItem(LOCAL_DATA_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<DashboardData>;
+    if (!parsed || typeof parsed !== "object") return null;
+    if (!Array.isArray(parsed.tasks) || !Array.isArray(parsed.habits) || !Array.isArray(parsed.sessions) || !parsed.room || !parsed.preferences) return null;
+    return { ...PREVIEW_DATA, ...parsed } as DashboardData;
+  } catch {
+    return null;
+  }
+}
 const PREVIEW_YESTERDAY = dateKey(new Date(Date.now() - 86400000));
 const PREVIEW_DATA: DashboardData = {
   account: null, workspaceId: PREVIEW_WORKSPACE_ID,
@@ -63,6 +76,7 @@ export default function DashboardClient() {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [loadError, setLoadError] = useState("");
+  const [storageReady, setStorageReady] = useState(false);
   const [online, setOnline] = useState(true);
   const [clock, setClock] = useState({ day: "", time: "", greeting: "Xin chào" });
   const [activeNav, setActiveNav] = useState("overview");
@@ -135,10 +149,25 @@ export default function DashboardClient() {
     }
   }, []);
   useEffect(() => {
-    if (window.location.hostname.endsWith(".manus.computer")) setData(previewDataWithStoredRoom());
+    const stored = readLocalDashboard();
+    if (stored) {
+      setData(stored);
+      setLoadError("");
+    } else if (window.location.hostname.endsWith(".manus.computer")) {
+      setData(previewDataWithStoredRoom());
+    }
+    setStorageReady(true);
     void reload();
     return () => controller.current?.abort();
   }, [reload]);
+  useEffect(() => {
+    if (!storageReady || !data) return;
+    try {
+      localStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(data));
+    } catch {
+      // Best effort: the app stays usable in-memory when storage is blocked.
+    }
+  }, [data, storageReady]);
   useEffect(() => {
     if (!window.location.hostname.endsWith(".manus.computer") || !data) return;
     try { localStorage.setItem("stillroom.preview.data", JSON.stringify(data)); } catch { /* Preview storage may be unavailable. */ }
@@ -280,9 +309,14 @@ export default function DashboardClient() {
         try { localStorage.setItem("stillroom.preview.room", JSON.stringify(nextRoom)); } catch { /* Preview storage may be disabled. */ }
         return;
       }
-      const result = await requestJson<{ room: RoomSettings }>("/api/room", { method: "PATCH", body: JSON.stringify(patch) });
-      epoch.current += 1;
-      setData((current) => current ? { ...current, room: result.room } : current);
+      try {
+        const result = await requestJson<{ room: RoomSettings }>("/api/room", { method: "PATCH", body: JSON.stringify(patch) });
+        epoch.current += 1;
+        setData((current) => current ? { ...current, room: result.room } : current);
+      } catch {
+        setData((current) => current ? { ...current, room: nextRoom } : current);
+        notice("Đã lưu thay đổi phòng học trên thiết bị này.");
+      }
     } finally { locks.current.delete("room"); }
   }
   async function addTask(event: FormEvent<HTMLFormElement>) {
@@ -295,9 +329,16 @@ export default function DashboardClient() {
         const task = { id: Date.now(), clientId: draftIntent.current.clientId, title, completed: false, createdAt: new Date().toISOString(), completedAt: null } as Task;
         applyEntity("task", task); chooseTask(task.id); setTaskDraft(""); draftIntent.current = null; notice("Đã thêm nhiệm vụ. Chọn một việc rồi bắt đầu."); return;
       }
-      const result = await requestJson<{ task: Task }>("/api/tasks", { method: "POST", body: JSON.stringify(draftIntent.current) });
-      applyEntity("task", result.task); chooseTask(result.task.id); setTaskDraft(""); draftIntent.current = null;
-      notice("Đã thêm nhiệm vụ. Chọn một việc rồi bắt đầu.");
+      try {
+        const result = await requestJson<{ task: Task }>("/api/tasks", { method: "POST", body: JSON.stringify(draftIntent.current) });
+        applyEntity("task", result.task); chooseTask(result.task.id);
+      } catch {
+        const now = new Date().toISOString();
+        const task = { id: Date.now(), clientId: draftIntent.current.clientId, title, completed: false, completedAt: null, createdAt: now } as Task;
+        applyEntity("task", task); chooseTask(task.id);
+        notice("Đã lưu nhiệm vụ trên thiết bị này.");
+      }
+      setTaskDraft(""); draftIntent.current = null;
     } catch (error) { notice(errorMessage(error), true); }
     finally { locks.current.delete("new-task"); setAddingTask(false); }
   }
@@ -308,9 +349,18 @@ export default function DashboardClient() {
       if (window.location.hostname.endsWith(".manus.computer")) {
         setData((current) => current ? { ...current, tasks: current.tasks.map((item) => item.id === task.id ? { ...item, completed: !item.completed, completedAt: !item.completed ? new Date().toISOString() : null } : item) } : current); return;
       }
-      const result = await requestJson<TaskTreeResult>(`/api/tasks/${task.id}`, { method: "PATCH", body: JSON.stringify({ completed: !task.completed }) });
-      applyTaskTree(result);
-    } catch (error) { notice(errorMessage(error), true); }
+      try {
+        const result = await requestJson<TaskTreeResult>(`/api/tasks/${task.id}`, { method: "PATCH", body: JSON.stringify({ completed: !task.completed }) });
+        applyTaskTree(result);
+      } catch {
+        setData((current) => current ? {
+          ...current,
+          tasks: current.tasks.map((item) => item.id === task.id
+            ? { ...item, completed: !item.completed, completedAt: !item.completed ? new Date().toISOString() : null }
+            : item),
+        } : current);
+        notice("Đã cập nhật nhiệm vụ trên thiết bị này.");
+      }
     finally { locks.current.delete(key); setPendingTasks((current) => { const next = new Set(current); next.delete(task.id); return next; }); }
   }
   function deleteEntity(kind: "task" | "habit", entity: Task | Habit) {
@@ -337,13 +387,21 @@ export default function DashboardClient() {
           return { ...current, checkIns: completed ? [...rest, { habitId: habit.id, date: day }] : rest };
         }); return;
       }
-      const result = await requestJson<{ completed: boolean }>("/api/habit-check-ins", { method: "POST", body: JSON.stringify({ habitId: habit.id, date: day, completed }) });
-      setData((current) => {
-        if (!current) return current;
-        const rest = current.checkIns.filter((item) => item.habitId !== habit.id || item.date !== day);
-        return { ...current, checkIns: result.completed ? [...rest, { habitId: habit.id, date: day }] : rest };
-      });
-    } catch (error) { notice(errorMessage(error), true); }
+      try {
+        const result = await requestJson<{ completed: boolean }>("/api/habit-check-ins", { method: "POST", body: JSON.stringify({ habitId: habit.id, date: day, completed }) });
+        setData((current) => {
+          if (!current) return current;
+          const rest = current.checkIns.filter((item) => item.habitId !== habit.id || item.date !== day);
+          return { ...current, checkIns: result.completed ? [...rest, { habitId: habit.id, date: day }] : rest };
+        });
+      } catch {
+        setData((current) => {
+          if (!current) return current;
+          const rest = current.checkIns.filter((item) => item.habitId !== habit.id || item.date !== day);
+          return { ...current, checkIns: completed ? [...rest, { habitId: habit.id, date: day }] : rest };
+        });
+        notice("Đã lưu tiến độ thói quen trên thiết bị này.");
+      }
     finally { locks.current.delete(lock); setPendingChecks((current) => { const next = new Set(current); next.delete(key); return next; }); }
   }
   function exportCsv() {
