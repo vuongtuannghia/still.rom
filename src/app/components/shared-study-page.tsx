@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { DashboardData } from "@/lib/focus-domain";
 import { Icon } from "../icons";
-import { ProfileActionMenu } from "./profile-action-menu";
 
 type Room = {
   id: number; title: string; meetUrl: string; pinned: boolean; createdAt: string;
