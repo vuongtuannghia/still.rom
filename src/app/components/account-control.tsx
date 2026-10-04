@@ -211,7 +211,7 @@ export function AccountControl({ data, onChanged }: {
   return <div className="account-control">
     {activeAccount ? <div className="account-connected account-sidebar">
       <ProfileAvatarMenu id={activeAccount.id} name={activeAccount.name} picture={activeAccount.picture} size="normal" self />
-      <a className="account-user-meta account-profile-link" href={"/nguoi-dung/" + activeAccount.id}><strong>{activeAccount.name}</strong><span>{activeAccount.email}</span><small><Icon name="check" size={12} /> Đã sao lưu tiến độ · Xem hồ sơ</small></a>
+      <a className="account-user-meta account-profile-link" href={"/nguoi-dung/" + activeAccount.id}><strong>{activeAccount.name}</strong><span>{activeAccount.email}</span>{activeAccount.role === "admin" && <b className="account-admin-badge">♛ QUẢN TRỊ VIÊN</b>}<small><Icon name="check" size={12} /> Đã sao lưu tiến độ</small></a>
       <button type="button" className="button-secondary account-logout" disabled={busy} onClick={() => void logout()}>{busy ? "Đang đăng xuất…" : "Đăng xuất"}</button>
     </div> : <div className="account-sidebar-login">
       <div><strong>Sao lưu tiến độ</strong><span>{configured ? "Đăng nhập Google để dùng trên mọi thiết bị." : "Cần cấu hình Google OAuth để bật đăng nhập."}</span></div>
