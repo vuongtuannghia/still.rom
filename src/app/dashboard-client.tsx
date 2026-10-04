@@ -27,6 +27,7 @@ const NAV_ITEMS = [
   { id: "overview", title: "Tổng quan", icon: "layout", widget: null },
   { id: "study-room", title: "Học chung", icon: "radio", widget: null },
   { id: "forum", title: "Diễn đàn", icon: "book", widget: null },
+  { id: "messages", title: "Tin nhắn", icon: "arrow", widget: null },
   { id: "analytics", title: "Thống kê", icon: "chart", widget: "chart" },
   { id: "habits", title: "Thói quen", icon: "habit", widget: "habits" },
   { id: "tasks", title: "Nhiệm vụ", icon: "tasks", widget: "tasks" },
@@ -248,6 +249,7 @@ export default function DashboardClient() {
   function navigate(id: string) {
     if (id === "study-room") { window.location.href = "/hoc-chung"; return; }
     if (id === "forum") { window.location.href = "/dien-dan"; return; }
+    if (id === "messages") { window.location.href = "/tin-nhan"; return; }
     setActiveNav(id);
     document.getElementById(id)?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
   }
