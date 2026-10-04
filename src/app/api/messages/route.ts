@@ -79,21 +79,24 @@ export async function POST(request: Request) {
     }
     if (!thread) throw new ApiError(500, "Không tạo được cuộc trò chuyện.");
 
-    const [message] = await db.insert(directMessages).values({
-      threadId: thread.id, senderId: current.id, body: body.body.trim(),
-    }).returning();
-
-    await db.insert(notifications).values({
-      accountId: other.id,
-      actorId: current.id,
-      type: "message",
-      title: "Tin nhắn mới",
-      body: `${current.name} đã gửi cho bạn một tin nhắn.`,
-      threadId: thread.id,
+    const result = await db.transaction(async tx => {
+      const [message] = await tx.insert(directMessages).values({
+        threadId: thread.id, senderId: current.id, body: body.body.trim(),
+      }).returning();
+      if (!message) throw new ApiError(500, "Không thể lưu tin nhắn.");
+      await tx.insert(notifications).values({
+        accountId: other.id,
+        actorId: current.id,
+        type: "message",
+        title: "Tin nhắn mới",
+        body: `${current.name} đã gửi cho bạn một tin nhắn.`,
+        threadId: thread.id,
+      });
+      return message;
     });
 
     return json({
-      message: { ...message, createdAt: message.createdAt.toISOString(), readAt: null },
+      message: { ...result, createdAt: result.createdAt.toISOString(), readAt: null },
       other,
     }, 201);
   } catch (error) { return apiError(error); }
