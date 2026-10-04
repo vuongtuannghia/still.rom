@@ -1,7 +1,7 @@
 import { db } from "@/db";
 import { forumPosts } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { ApiError, apiError, json, positiveId } from "@/lib/server-api";
+import { ApiError, apiError, json, positiveId, readBody } from "@/lib/server-api";
 import { isWebAdmin } from "@/lib/study-room";
 import { requireAccount } from "@/lib/community-auth";
 
@@ -12,7 +12,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ postI
     const account = await requireAccount(request);
     if (!isWebAdmin(account.email)) throw new ApiError(403, "Chỉ quản trị viên mới được ghim bài đăng.");
     const postId = positiveId((await context.params).postId);
-    const body = await request.json().catch(() => ({})) as { pinned?: boolean };
+    const body = await readBody(request) as { pinned?: boolean };
     if (typeof body.pinned !== "boolean") throw new ApiError(400, "Trạng thái ghim không hợp lệ.");
 
     await db.transaction(async tx => {
