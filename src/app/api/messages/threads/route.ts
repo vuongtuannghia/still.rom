@@ -33,11 +33,6 @@ export async function GET(request: Request) {
     const latestRows = Array.from(latestByThread.values());
     const otherIds = [...new Set(latestRows.map(row => row.accountAId === current.id ? row.accountBId : row.accountAId))];
 
-    const people = otherIds.length
-      ? await db.select({ id: accounts.id, name: accounts.name, email: accounts.email, picture: accounts.customPicture, googlePicture: accounts.picture })
-          .from(accounts).where(inArray(accounts.id, availableOtherIds))
-      : [];
-
     const blockRows = otherIds.length
       ? await db.select({ blockerId: accountBlocks.blockerId, blockedId: accountBlocks.blockedId })
           .from(accountBlocks)
@@ -47,12 +42,17 @@ export async function GET(request: Request) {
 
     const availableOtherIds = otherIds.filter(id => !blockedIds.has(id));
 
+    const people = availableOtherIds.length
+      ? await db.select({ id: accounts.id, name: accounts.name, email: accounts.email, picture: accounts.customPicture, googlePicture: accounts.picture })
+          .from(accounts).where(inArray(accounts.id, availableOtherIds))
+      : [];
+
     const friendshipRows = availableOtherIds.length
       ? await db.select({ a: friendships.accountAId, b: friendships.accountBId })
           .from(friendships)
           .where(or(eq(friendships.accountAId, current.id), eq(friendships.accountBId, current.id)))
       : [];
-    const friendIds = new Set(friendshipRows.flatMap(row => [row.a, row.b]).filter(id => id !== current.id));
+    const friendIds = new Set(friendshipRows.flatMap(row => [row.a, row.b]).filter(id => id !== current.id && !blockedIds.has(id)));
     const peopleById = new Map(people.map(person => [person.id, person]));
 
     const visibleRows = latestRows.filter(row => !blockedIds.has(row.accountAId === current.id ? row.accountBId : row.accountAId));
