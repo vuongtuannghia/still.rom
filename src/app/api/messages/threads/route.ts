@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { accounts, directMessages, directThreads } from "@/db/schema";
-import { and, asc, desc, eq, ne, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, ne, or, isNull } from "drizzle-orm";
 import { apiError, json } from "@/lib/server-api";
 import { requireAccount } from "@/lib/community-auth";
 
@@ -12,59 +12,58 @@ export async function GET(request: Request) {
 
     const rows = await db.select({
       threadId: directThreads.id,
-      otherId: sql<string>`CASE WHEN ${directThreads.accountAId} = ${current.id} THEN ${directThreads.accountBId} ELSE ${directThreads.accountAId} END`,
-      otherName: sql<string>`CASE WHEN a.id = ${current.id} THEN b.name ELSE a.name END`,
-      otherEmail: sql<string>`CASE WHEN a.id = ${current.id} THEN b.email ELSE a.email END`,
-      otherPicture: sql<string | null>`CASE WHEN a.id = ${current.id} THEN b.picture ELSE a.picture END`,
-      lastBody: directMessages.body,
-      lastSenderId: directMessages.senderId,
-      lastCreatedAt: directMessages.createdAt,
-      unreadCount: sql<number>`COUNT(CASE WHEN ${directMessages.senderId} <> ${current.id} AND ${directMessages.readAt} IS NULL THEN 1 END)`,
+      accountAId: directThreads.accountAId,
+      accountBId: directThreads.accountBId,
+      messageId: directMessages.id,
+      senderId: directMessages.senderId,
+      body: directMessages.body,
+      createdAt: directMessages.createdAt,
     })
       .from(directThreads)
-      .innerJoin(accounts.as("a"), eq(sql`${directThreads.accountAId}`, sql`a.id`))
-      .innerJoin(accounts.as("b"), eq(sql`${directThreads.accountBId}`, sql`b.id`))
-      .innerJoin(
-        directMessages,
-        eq(directMessages.threadId, directThreads.id)
-      )
+      .innerJoin(directMessages, eq(directMessages.threadId, directThreads.id))
       .where(or(eq(directThreads.accountAId, current.id), eq(directThreads.accountBId, current.id)))
-      .groupBy(
-        directThreads.id,
-        directThreads.accountAId,
-        directThreads.accountBId,
-        sql`a.id`,
-        sql`b.id`,
-        sql`b.name`,
-        sql`a.name`,
-        sql`b.email`,
-        sql`a.email`,
-        sql`b.picture`,
-        sql`a.picture`,
-        directMessages.id,
-        directMessages.body,
-        directMessages.senderId,
-        directMessages.createdAt
-      )
       .orderBy(desc(directMessages.createdAt), desc(directMessages.id));
 
-    // Keep only the newest message per thread.
-    const seen = new Set<number>();
-    const threads = [];
+    const latestByThread = new Map<number, typeof rows[number]>();
     for (const row of rows) {
-      if (seen.has(row.threadId)) continue;
-      seen.add(row.threadId);
-      threads.push({
-        threadId: row.threadId,
-        other: { id: row.otherId, name: row.otherName, email: row.otherEmail, picture: row.otherPicture },
-        lastBody: row.lastBody,
-        lastSenderId: row.lastSenderId,
-        lastCreatedAt: row.lastCreatedAt.toISOString(),
-        unreadCount: Number(row.unreadCount),
-      });
+      if (!latestByThread.has(row.threadId)) latestByThread.set(row.threadId, row);
     }
 
-    return json(threads.slice(0, 50));
+    const latestRows = Array.from(latestByThread.values());
+    const otherIds = [...new Set(latestRows.map(row => row.accountAId === current.id ? row.accountBId : row.accountAId))];
+
+    const people = otherIds.length
+      ? await db.select({ id: accounts.id, name: accounts.name, email: accounts.email, picture: accounts.picture })
+          .from(accounts).where(inArray(accounts.id, otherIds))
+      : [];
+    const peopleById = new Map(people.map(person => [person.id, person]));
+
+    const threadIds = latestRows.map(row => row.threadId);
+    const unreadRows = threadIds.length
+      ? await db.select({ threadId: directMessages.threadId, count: directMessages.id })
+          .from(directMessages)
+          .where(and(
+            inArray(directMessages.threadId, threadIds),
+            ne(directMessages.senderId, current.id),
+            isNull(directMessages.readAt),
+          ))
+      : [];
+
+    const unreadCounts = new Map<number, number>();
+    for (const row of unreadRows) unreadCounts.set(row.threadId, (unreadCounts.get(row.threadId) ?? 0) + 1);
+
+    return json(latestRows.map(row => {
+      const otherId = row.accountAId === current.id ? row.accountBId : row.accountAId;
+      const other = peopleById.get(otherId);
+      return {
+        threadId: row.threadId,
+        other: other ? { ...other, relationship: "conversation" as const } : null,
+        lastBody: row.body,
+        lastSenderId: row.senderId,
+        lastCreatedAt: row.createdAt.toISOString(),
+        unreadCount: unreadCounts.get(row.threadId) ?? 0,
+      };
+    }).filter(row => row.other).slice(0, 50));
   } catch (error) {
     return apiError(error);
   }
