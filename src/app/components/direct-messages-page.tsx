@@ -70,6 +70,7 @@ export function DirectMessagesPage() {
       setOutgoing(payload.outgoing);
       setSelected(current => current ? (payload.friends.some(friend => friend.id === current.id) ? { ...current, relationship: "friend" } : current) : current);
       setLookup(current => current ? (payload.friends.some(friend => friend.id === current.id) ? { ...current, relationship: "friend" } : current) : current);
+      setSearchResults(current => current.map(person => payload.friends.some(friend => friend.id === person.id) ? { ...person, relationship: "friend" } : person));
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Không tải được bạn bè.");
     } finally { setLoading(false); }
@@ -162,6 +163,7 @@ export function DirectMessagesPage() {
       if (!response.ok) throw new Error(payload.error || "Không thể gửi lời mời.");
       setLookup(person.id === lookup?.id ? { ...person, relationship: "outgoing", requestId: payload.request?.id } : lookup);
       setSelected(selected?.id === person.id ? { ...selected, relationship: "outgoing", requestId: payload.request?.id } : selected);
+      setSearchResults(current => current.map(item => item.id === person.id ? { ...item, relationship: "outgoing", requestId: payload.request?.id } : item));
       setOutgoing(current => payload.request ? [payload.request, ...current] : current);
       setNotice("Đã gửi lời mời kết bạn.");
       void loadFriends();
