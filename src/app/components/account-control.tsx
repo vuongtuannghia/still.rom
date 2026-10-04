@@ -112,8 +112,13 @@ export function AccountControl({ data, onChanged }: {
 
 
   useEffect(() => {
+    if (status?.account) {
+      if (buttonRef.current) buttonRef.current.innerHTML = "";
+      initializedClientId.current = null;
+      return;
+    }
     const clientId = status?.google.clientId;
-    if (!clientId || status?.account || !buttonRef.current || initializedClientId.current === clientId) return;
+    if (!clientId || !buttonRef.current || initializedClientId.current === clientId) return;
 
     let cancelled = false;
     const render = () => {
@@ -192,7 +197,7 @@ export function AccountControl({ data, onChanged }: {
   return <div className="account-control">
     {account ? <div className="account-connected account-sidebar">
       <span className="account-avatar">{account.picture ? <img src={account.picture} alt="" /> : account.name.slice(0, 1).toUpperCase()}</span>
-      <div><strong>{account.name}</strong><span>{account.email}</span><small><Icon name="check" size={12} /> Đã sao lưu tiến độ</small></div>
+      <div className="account-user-meta"><strong>{account.name}</strong><span>{account.email}</span><small><Icon name="check" size={12} /> Đã sao lưu tiến độ</small></div>
       <button type="button" className="button-secondary account-logout" disabled={busy} onClick={() => void logout()}>{busy ? "Đang đăng xuất…" : "Đăng xuất"}</button>
     </div> : <div className="account-sidebar-login">
       <div><strong>Sao lưu tiến độ</strong><span>{configured ? "Đăng nhập Google để dùng trên mọi thiết bị." : "Cần cấu hình Google OAuth để bật đăng nhập."}</span></div>
