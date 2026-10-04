@@ -36,7 +36,7 @@ function rawRequestBody(request: Request): Promise<Record<string, unknown>> {
   const value = (async () => {
     if (!request.headers.get("content-type")?.includes("application/json")) throw new ApiError(415, "Dữ liệu phải ở định dạng JSON.");
     const declared = Number(request.headers.get("content-length"));
-    if (Number.isFinite(declared) && declared > 32768) throw new ApiError(413, "Dữ liệu quá lớn.");
+    if (Number.isFinite(declared) && declared > 262144) throw new ApiError(413, "Dữ liệu quá lớn.");
     // Read one bounded clone, and share the result between validation and authorization.
     const reader = request.clone().body?.getReader();
     if (!reader) throw new ApiError(400, "Dữ liệu JSON chưa có nội dung.");
@@ -45,7 +45,7 @@ function rawRequestBody(request: Request): Promise<Record<string, unknown>> {
       while (true) {
         const next = await reader.read(); if (next.done) break;
         bytes += next.value.byteLength;
-        if (bytes > 32768) { void reader.cancel(); throw new ApiError(413, "Dữ liệu quá lớn."); }
+        if (bytes > 262144) { void reader.cancel(); throw new ApiError(413, "Dữ liệu quá lớn."); }
         text += decoder.decode(next.value, { stream: true });
       }
       text += decoder.decode();
