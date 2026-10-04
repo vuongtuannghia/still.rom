@@ -116,3 +116,5 @@
 .messages-search{min-height:37px}.messages-people-list{max-height:390px}
 @media(max-width:900px){.global-notification{top:10px;right:10px}.notification-popover{right:-2px;width:315px}.community-shell .page-content{padding:22px 16px 35px}.forum-layout{grid-template-columns:1fr}.forum-sidebar{order:-1}.forum-hero h2{font-size:31px}.forum-compose{padding:12px}.forum-post-card{padding:14px}.forum-sidebar{grid-template-columns:repeat(2,minmax(0,1fr))}.forum-sidebar .dark-card{grid-column:1/-1}}
 @media(max-width:600px){.forum-sidebar{grid-template-columns:1fr}.study-share-form{grid-template-columns:1fr!important}.study-room-grid{grid-template-columns:1fr!important}.global-notification-button{width:34px;height:34px}}
+
+.forum-action-link,.comment-direct-link{display:inline-flex;align-items:center;gap:5px;padding:5px 7px;border:0;border-radius:6px;background:transparent;color:#81817a;font-size:8px;text-decoration:none;cursor:pointer}.forum-action-link:hover,.comment-direct-link:hover{background:#f0f0eb;color:#222}
