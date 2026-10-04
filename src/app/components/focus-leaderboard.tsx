@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Icon } from "../icons";
+import { ProfileActionMenu } from "./profile-action-menu";
 
 type Mode = "day" | "week" | "month";
 type Row = { rank: number; id: string; name: string; picture: string | null; seconds: number; label: string; me: boolean };
@@ -62,7 +63,7 @@ export function FocusLeaderboard() {
         <div className="focus-leaderboard-list">
           {board.rows.map(row => <div className={"focus-rank-row" + (row.me ? " me" : "")} key={row.id}>
             <span className={"focus-rank-number rank-" + Math.min(row.rank, 4)}>{row.rank}</span>
-            <div className="focus-rank-avatar">{row.picture ? <img src={row.picture} alt="" /> : initial(row.name)}</div>
+            <ProfileActionMenu person={{ id: row.id, name: row.name, picture: row.picture }}><span className="focus-rank-avatar">{row.picture ? <img src={row.picture} alt="" /> : initial(row.name)}</span></ProfileActionMenu>
             <div className="focus-rank-person"><strong>{row.name}{row.me && <em>Bạn</em>}</strong><small>{row.rank === 1 ? "Dẫn đầu" : "Thời gian tập trung"}</small></div>
             <strong className="focus-rank-time">{row.label}</strong>
           </div>)}
