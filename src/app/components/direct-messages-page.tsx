@@ -82,16 +82,6 @@ export function DirectMessagesPage() {
           requestId: incomingRequest?.id ?? outgoingRequest?.id,
         };
       }));
-      setSelected(current => {
-        if (!current) return current;
-        if ((payload.blocks ?? []).includes(current.id)) return { ...current, relationship: "blocked" };
-        if (payload.friends.some(friend => friend.id === current.id)) return { ...current, relationship: "friend" };
-        const outgoing = payload.outgoing.find(item => item.recipientId === current.id);
-        if (outgoing) return { ...current, relationship: "outgoing", requestId: outgoing.id };
-        const incoming = payload.incoming.find(item => item.senderId === current.id);
-        if (incoming) return { ...current, relationship: "incoming", requestId: incoming.id };
-        return { ...current, relationship: "conversation" };
-      });
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Không tải được kết nối.");
     } finally { setLoading(false); }
