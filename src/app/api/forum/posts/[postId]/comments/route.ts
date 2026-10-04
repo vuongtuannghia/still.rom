@@ -21,6 +21,8 @@ export async function POST(request: Request, context: { params: Promise<{ postId
   try {
     const account = await requireAccount(request);
     const postId = positiveId((await context.params).postId);
+    const [post] = await db.select({ accountId: forumPosts.accountId }).from(forumPosts).where(eq(forumPosts.id, postId)).limit(1);
+    if (!post) throw new ApiError(404, "Không tìm thấy chủ đề.");
     const body = await readBody(request);
     if (typeof body.body !== "string" || !body.body.trim() || body.body.trim().length > 2000) throw new ApiError(400, "Bình luận phải từ 1 đến 2000 ký tự.");
     let parentId: number | null = null;
