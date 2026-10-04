@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { accountBlocks, accounts, friendRequests, friendships } from "@/db/schema";
-import { and, asc, eq, ilike, inArray, ne, or } from "drizzle-orm";
+import { and, asc, eq, inArray, ne, or } from "drizzle-orm";
 import { apiError, json } from "@/lib/server-api";
 import { requireAccount } from "@/lib/community-auth";
 
@@ -39,7 +39,6 @@ export async function GET(request: Request) {
             .orderBy(asc(accounts.name))
         : [];
     } else {
-      const pattern = "%" + q + "%";
       rows = await db.select({
         id: accounts.id,
         name: accounts.name,
@@ -48,11 +47,10 @@ export async function GET(request: Request) {
         googlePicture: accounts.picture,
       }).from(accounts)
         .where(and(
-          or(eq(accounts.email, q), ilike(accounts.name, pattern)),
+          eq(accounts.email, q),
           ne(accounts.id, current.id),
         ))
-        .orderBy(asc(accounts.name))
-        .limit(20);
+        .limit(1);
     }
 
     rows = rows.filter(person => !blockedIds.has(person.id));
