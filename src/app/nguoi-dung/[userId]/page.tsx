@@ -246,6 +246,11 @@ export default function ProfilePage() {
   return <main className="profile-page">
     {notice && <div className="community-alert profile-alert"><Icon name="signal" size={15} /><span>{notice}</span><button type="button" onClick={() => setNotice("")}><Icon name="close" size={14} /></button></div>}
 
+    <div className="profile-top-actions">
+      <button type="button" className="profile-back-btn" onClick={() => router.back()}><Icon name="arrow" size={13} /> Quay lại</button>
+      <button type="button" className="profile-share-btn" onClick={() => { void navigator.clipboard?.writeText(window.location.href); setNotice("Đã sao chép liên kết trang cá nhân."); }}><Icon name="arrow" size={13} /> Chia sẻ hồ sơ</button>
+    </div>
+
     <section className="profile-cover">
       {displayCover ? <img src={displayCover} alt="" /> : <div className="profile-cover-placeholder"><span>STILL / ROOM</span></div>}
       {isSelf && <button className="profile-cover-edit" type="button" onClick={() => coverInput.current?.click()}><Icon name="sliders" size={14} /> Ảnh bìa</button>}
