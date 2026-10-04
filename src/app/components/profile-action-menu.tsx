@@ -208,9 +208,9 @@ export function ProfileActionMenu({ person, children, placement = "left", self =
         <span>Tùy chọn nhanh</span>
       </div>
       {!self && <>
-        <button type="button" role="menuitem" onClick={() => router.push("/tin-nhan/" + encodeURIComponent(person.id))}>
+        {relationship !== "blocked_by_me" && relationship !== "blocked_you" && <button type="button" role="menuitem" onClick={() => router.push("/tin-nhan/" + encodeURIComponent(person.id))}>
           <Icon name="arrow" size={14} /> Nhắn tin riêng
-        </button>
+        </button>}
         <button type="button" role="menuitem" onClick={() => router.push("/nguoi-dung/" + encodeURIComponent(person.id))}>
           <Icon name="layout" size={14} /> Xem trang cá nhân
         </button>
