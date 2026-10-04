@@ -1,11 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState, type ComponentProps, type ReactNode } from "react";
-import { Dialog } from "./dialogs";
 import { FocusPanel } from "./focus-panel";
 import { AmbientPlayer } from "./ambient-player";
 import { SceneChoices } from "./scene-picker";
-import { YouTubeScenePlayer } from "./youtube-scene";
 import { WorkspaceAccessBar } from "./workspace-access";
 import { SceneBackdrop } from "./scene-backdrop";
 import { RoomAppearance } from "./room-appearance";
@@ -86,7 +84,24 @@ export function StudyRoom({ room, onChange, onClose, focusProps, mixer, tasksPan
     finally { setViewBusy(false); }
   }
   const currentVideoId = playingVideo.sceneId === room.selectedId ? playingVideo.id : youtube?.videoId;
-  return <Dialog title="Một việc tại một thời điểm." onClose={() => { if (videoOnly) revealControls(); else void closeRoom(); }} hideHeading className="study-room-dialog ambient-room-dialog">
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !fullscreen) void closeRoom();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [fullscreen]);
+
+  return <div className="study-room-overlay" role="dialog" aria-modal="true" aria-label="Phòng học"
+    onMouseDown={(event) => {
+      if (event.target === event.currentTarget && !videoOnly) void closeRoom();
+    }}>
+    <div className="room-dialog ambient-room-dialog study-room-dialog">
     <div ref={screen} className="room-screen ambient-room-screen" data-video-view={youtube ? room.videoView : "still"} data-dock-side={dock.side} data-panels-open={String(Boolean(tool))} data-video-only={String(videoOnly)} data-drag-side={dock.target ?? "none"}>
       <SceneBackdrop room={backdropRoom} currentVideoId={currentVideoId} />
       <div className="ambient-room-workspace">
@@ -118,7 +133,7 @@ export function StudyRoom({ room, onChange, onClose, focusProps, mixer, tasksPan
         </aside>}
         <section className="study-room-scene ambient-media-column" aria-label="Quang cảnh trong phòng học">
           {!videoOnly && <header className="ambient-scene-heading"><div><span className="eyebrow">STILL / ROOM · {room.videoView === "studio" ? "VỪA KHUNG" : "AMBIENT VIEW"}</span><h3>{youtube?.title ?? still.title}</h3></div><span className="ambient-room-clock">{time}<small>{date}</small></span></header>}
-          <div className="ambient-video-area">{youtube ? <YouTubeScenePlayer key={`${youtube.id}:${room.loop}`} scene={youtube} loop={room.loop} muted={room.youtubeMuted} onMuted={(value) => void change({ youtubeMuted: value })} onFallback={() => void change({ selectedId: "quiet-window" })} edgeToEdge={videoOnly} ambientView={!videoOnly} sessionRole="room" showControls={videoTools} onPause={videoOnly ? revealControls : undefined} onVideoChange={(videoId) => setPlayingVideo((previous) => previous.sceneId === room.selectedId && previous.id === videoId ? previous : { sceneId: room.selectedId, id: videoId })} /> : <div className="ambient-still-scene"><div className="still-scene-caption"><span className="eyebrow">Ở ĐÂY, KHÔNG CẦN VỘI.</span><h3>Một khoảng yên<br />cho điều quan trọng.</h3><p>Mở video YouTube hoặc để ánh sáng ngoài cửa sổ<br />đồng hành với một nhịp tập trung.</p></div></div>}</div>
+          <div className="ambient-video-area">{youtube ? <div className="youtube-single-player-slot room-youtube-slot" data-youtube-slot="room" data-video-id={youtube.videoId} aria-label="Video YouTube đang phát" /> : <div className="ambient-still-scene"><div className="still-scene-caption"><span className="eyebrow">Ở ĐÂY, KHÔNG CẦN VỘI.</span><h3>Một khoảng yên<br />cho điều quan trọng.</h3><p>Mở video YouTube hoặc để ánh sáng ngoài cửa sổ<br />đồng hành với một nhịp tập trung.</p></div></div>}</div>
           {!videoOnly && <div className="ambient-scene-footer"><span><span className="tiny-dot" />{dock.target ? `Thả để neo công cụ sang ${dock.target === "left" ? "trái" : "phải"}` : "Nền mở rộng từ ảnh đại diện · video chính không bị cắt"}</span><button className="text-button" type="button" onClick={() => setPanel({ sceneId: room.selectedId, tool: "appearance" })}>Chỉnh nền <Icon name="sliders" size={13} /></button></div>}
           {(changeError || dock.error) && <p className="form-error" role="alert">{changeError || dock.error}</p>}
           {fullscreenNotice && <div className="room-fullscreen-notice" role="status"><span>{fullscreenNotice}</span><a href="/" target="_blank" rel="noopener" className="text-button">Mở website riêng <Icon name="arrow" size={13} /></a><button className="icon-button" type="button" aria-label="Đóng hướng dẫn toàn màn hình" onClick={() => setFullscreenNotice("")}><Icon name="close" size={13} /></button></div>}
@@ -126,5 +141,6 @@ export function StudyRoom({ room, onChange, onClose, focusProps, mixer, tasksPan
       </div>
       {videoOnly && <button type="button" className="video-only-keyboard-return" aria-label="Hiện thanh công cụ video" onFocus={revealControls} onClick={revealControls}>Hiện thanh công cụ — Back, Tab hoặc pause video.</button>}
     </div>
-  </Dialog>;
+  </div>;
+
 }
