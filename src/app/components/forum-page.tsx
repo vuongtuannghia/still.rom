@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { DashboardData } from "@/lib/focus-domain";
 import { Icon } from "../icons";
-import { ProfileActionMenu } from "./profile-action-menu";
 
 const ADMIN = "vuongtuannghia585@gmail.com";
 
