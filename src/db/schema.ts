@@ -115,6 +115,46 @@ export const directThreads = pgTable("direct_threads", {
   uniqueIndex("direct_threads_pair_idx").on(table.accountAId, table.accountBId),
 ]);
 
+export const friendRequests = pgTable("friend_requests", {
+  id: serial("id").primaryKey(),
+  senderId: uuid("sender_id").notNull().references(() => accounts.id, { onDelete: "cascade" }),
+  recipientId: uuid("recipient_id").notNull().references(() => accounts.id, { onDelete: "cascade" }),
+  status: varchar("status", { length: 20 }).default("pending").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  respondedAt: timestamp("responded_at", { withTimezone: true }),
+}, (table) => [
+  uniqueIndex("friend_requests_pair_idx").on(table.senderId, table.recipientId),
+  index("friend_requests_recipient_status_idx").on(table.recipientId, table.status, table.createdAt),
+  index("friend_requests_sender_status_idx").on(table.senderId, table.status, table.createdAt),
+]);
+
+export const friendships = pgTable("friendships", {
+  id: serial("id").primaryKey(),
+  accountAId: uuid("account_a_id").notNull().references(() => accounts.id, { onDelete: "cascade" }),
+  accountBId: uuid("account_b_id").notNull().references(() => accounts.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("friendships_pair_idx").on(table.accountAId, table.accountBId),
+  index("friendships_account_a_idx").on(table.accountAId),
+  index("friendships_account_b_idx").on(table.accountBId),
+]);
+
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  accountId: uuid("account_id").notNull().references(() => accounts.id, { onDelete: "cascade" }),
+  actorId: uuid("actor_id").references(() => accounts.id, { onDelete: "set null" }),
+  type: varchar("type", { length: 40 }).notNull(),
+  title: varchar("title", { length: 160 }).notNull(),
+  body: varchar("body", { length: 500 }),
+  requestId: integer("request_id").references(() => friendRequests.id, { onDelete: "set null" }),
+  threadId: integer("thread_id").references(() => directThreads.id, { onDelete: "set null" }),
+  readAt: timestamp("read_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index("notifications_account_created_idx").on(table.accountId, table.createdAt),
+  index("notifications_unread_idx").on(table.accountId, table.readAt, table.createdAt),
+]);
+
 export const directMessages = pgTable("direct_messages", {
   id: serial("id").primaryKey(),
   threadId: integer("thread_id").notNull().references(() => directThreads.id, { onDelete: "cascade" }),
