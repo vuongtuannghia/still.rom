@@ -6,7 +6,7 @@ import { Icon } from "../icons";
 
 type Person = {
   id: string; name: string; email: string; picture: string | null;
-  relationship?: "friend" | "lookup" | "incoming" | "outgoing"; requestId?: number;
+  relationship?: "friend" | "lookup" | "incoming" | "outgoing" | "conversation"; requestId?: number;
 };
 type Message = { id: number; senderId: string; body: string; createdAt: string; readAt: string | null };
 type FriendRequest = { id: number; senderId?: string; recipientId?: string; senderName?: string; senderEmail?: string; recipientName?: string; recipientEmail?: string; senderPicture?: string | null; recipientPicture?: string | null; createdAt: string };
@@ -30,6 +30,7 @@ function timeLabel(value: string) {
 export function DirectMessagesPage() {
   const [account, setAccount] = useState<DashboardData["account"]>(null);
   const [friends, setFriends] = useState<Person[]>([]);
+  const [threads, setThreads] = useState<Array<{ threadId: number; other: Person; lastBody: string; lastSenderId: string; lastCreatedAt: string; unreadCount: number }>>([]);
   const [incoming, setIncoming] = useState<FriendRequest[]>([]);
   const [outgoing, setOutgoing] = useState<FriendRequest[]>([]);
   const [query, setQuery] = useState("");
@@ -50,6 +51,14 @@ export function DirectMessagesPage() {
     } catch {}
   }
 
+  async function loadThreads() {
+    try {
+      const response = await fetch("/api/messages/threads", { cache: "no-store", credentials: "same-origin" });
+      if (!response.ok) return;
+      setThreads(await response.json() as Array<{ threadId: number; other: Person; lastBody: string; lastSenderId: string; lastCreatedAt: string; unreadCount: number }>);
+    } catch {}
+  }
+
   async function loadFriends() {
     try {
       const response = await fetch("/api/friends", { cache: "no-store", credentials: "same-origin" });
@@ -64,7 +73,13 @@ export function DirectMessagesPage() {
   }
 
   useEffect(() => { void loadStatus(); }, []);
-  useEffect(() => { if (account) void loadFriends(); }, [account?.id]);
+  useEffect(() => {
+    if (!account) return;
+    void loadFriends();
+    void loadThreads();
+    const timer = window.setInterval(() => { void loadThreads(); }, 5000);
+    return () => window.clearInterval(timer);
+  }, [account?.id]);
 
   // By default / empty search only shows friends. Typing anything searches by exact email.
   useEffect(() => {
@@ -81,18 +96,28 @@ export function DirectMessagesPage() {
   }, [query, account?.id]);
 
   useEffect(() => {
-    const id = new URLSearchParams(window.location.search).get("user");
-    const email = new URLSearchParams(window.location.search).get("email") ?? "";
-    if (!id || !account) return;
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("user");
+    const email = params.get("email") ?? "";
+    if (!account || (!id && !email)) return;
     (async () => {
       try {
         const response = await fetch(`/api/messages/users?q=${encodeURIComponent(email)}`, { cache: "no-store", credentials: "same-origin" });
-        if (!response.ok) return;
-        const found = (await response.json() as Person[]).find(item => item.id === id);
-        if (found) void openConversation(found);
+        if (response.ok) {
+          const found = (await response.json() as Person[]).find(item => !id || item.id === id);
+          if (found) {
+            if (!found.relationship) found.relationship = "lookup";
+            void openConversation(found);
+            return;
+          }
+        }
+        if (id) {
+          const thread = threads.find(item => item.other.id === id);
+          if (thread) void openConversation({ ...thread.other, relationship: "conversation" });
+        }
       } catch {}
     })();
-  }, [account?.id]);
+  }, [account?.id, threads.length]);
 
   async function openConversation(person: Person) {
     setSelected(person);
@@ -111,18 +136,19 @@ export function DirectMessagesPage() {
     } finally { setLoadingChat(false); }
   }
 
-  async function sendFriendRequest() {
-    if (!lookup) return;
+  async function sendFriendRequestFor(person: Person) {
     try {
       const response = await fetch("/api/friends", {
         method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: lookup.email }),
+        body: JSON.stringify({ email: person.email }),
       });
       const payload = await response.json().catch(() => ({})) as { request?: FriendRequest; error?: string };
       if (!response.ok) throw new Error(payload.error || "Không thể gửi lời mời.");
-      setLookup({ ...lookup, relationship: "outgoing", requestId: payload.request?.id });
+      setLookup(person.id === lookup?.id ? { ...person, relationship: "outgoing", requestId: payload.request?.id } : lookup);
+      setSelected(selected?.id === person.id ? { ...selected, relationship: "outgoing", requestId: payload.request?.id } : selected);
       setOutgoing(current => payload.request ? [payload.request, ...current] : current);
       setNotice("Đã gửi lời mời kết bạn.");
+      void loadFriends();
     } catch (error) { setNotice(error instanceof Error ? error.message : "Không thể gửi lời mời."); }
   }
 
@@ -151,6 +177,7 @@ export function DirectMessagesPage() {
       if (!response.ok || !payload.message) throw new Error(payload.error || "Không thể gửi tin nhắn.");
       setMessages(current => [...current, payload.message!]);
       setDraft("");
+      void loadThreads();
     } catch (error) { setNotice(error instanceof Error ? error.message : "Không thể gửi tin nhắn."); }
     finally { setSending(false); }
   }
@@ -183,7 +210,7 @@ export function DirectMessagesPage() {
                 {lookup.relationship === "friend" ? <span className="relationship-label">Bạn bè</span> :
                  lookup.relationship === "outgoing" ? <span className="relationship-label">Đã gửi lời mời</span> :
                  lookup.relationship === "incoming" ? <div className="lookup-actions"><button type="button" onClick={() => void respondToRequest(lookup.requestId!, "accept")}>Chấp nhận</button><button type="button" onClick={() => void respondToRequest(lookup.requestId!, "reject")}>Từ chối</button></div> :
-                 <button className="button-primary" type="button" onClick={() => void sendFriendRequest()}>Kết bạn</button>}
+                 <button className="button-primary" type="button" onClick={() => void sendFriendRequestFor(lookup!)}>Kết bạn</button>}
               </div>
             }
           </div>}
@@ -193,6 +220,16 @@ export function DirectMessagesPage() {
             {outgoing.length > 0 && <div className="friend-outgoing"><span className="small-label">ĐÃ GỬI</span>{outgoing.map(request => <div key={request.id}>{request.recipientName} · đang chờ</div>)}</div>}
           </div>}
 
+          <div className="message-inbox-box">
+            <div className="messages-subheading"><span className="small-label">HỘP THƯ</span><strong>Cuộc trò chuyện</strong></div>
+            {threads.length === 0 ? <p className="messages-muted">Chưa có tin nhắn nào.</p> :
+              threads.map(thread => <button type="button" key={thread.threadId} className={selected?.id === thread.other.id ? "message-thread active" : "message-thread"} onClick={() => void openConversation({ ...thread.other, relationship: "conversation" })}>
+                <span className="community-avatar small">{avatar(thread.other)}</span>
+                <span className="message-thread-copy"><strong>{thread.other.name}</strong><small>{thread.lastBody}</small></span>
+                {thread.unreadCount > 0 && <span className="message-unread">{thread.unreadCount}</span>}
+              </button>)
+            }
+          </div>
           <div className="messages-people-list">
             {loading ? <p className="messages-muted">Đang tải…</p> :
               shownFriends.length === 0 ? <p className="messages-muted">{query.trim() ? "Tìm bằng email để kết nối với người khác." : "Chưa có bạn bè. Nhập đúng email để tìm người."}</p> :
@@ -205,7 +242,7 @@ export function DirectMessagesPage() {
 
         <section className="messages-chat panel">
           {selected ? <>
-            <header className="messages-chat-head"><div className="message-person-head"><span className="community-avatar">{avatar(selected)}</span><div><h3>{selected.name}</h3><span>Cuộc trò chuyện riêng</span></div></div></header>
+            <header className="messages-chat-head"><div className="message-person-head"><span className="community-avatar">{avatar(selected)}</span><div><h3>{selected.name}</h3><span>{selected.relationship === "friend" ? "Bạn bè · trò chuyện riêng" : "Trò chuyện riêng bằng email"}</span></div></div>{selected.relationship !== "friend" && selected.relationship !== "outgoing" && <button type="button" className="button-secondary chat-add-friend" onClick={() => void sendFriendRequestFor(selected)}><Icon name="arrow" size={13} /> Kết bạn</button>}{selected.relationship === "outgoing" && <span className="relationship-label">Đã gửi lời mời</span>}</header>
             <div className="messages-list">
               {loadingChat ? <div className="messages-muted centered">Đang mở cuộc trò chuyện…</div> :
                 messages.length === 0 ? <div className="messages-empty"><div className="empty-orbit">+</div><strong>Bắt đầu bằng một câu đơn giản.</strong><span>Chào người bạn muốn học cùng.</span></div> :
