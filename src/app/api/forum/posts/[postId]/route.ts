@@ -2,7 +2,7 @@ import { db } from "@/db";
 import { forumPosts } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { ApiError, apiError, json, positiveId, readBody } from "@/lib/server-api";
-import { isWebAdmin } from "@/lib/study-room";
+import { isAdminAccount } from "@/lib/admin";
 import { requireAccount } from "@/lib/community-auth";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export async function PATCH(request: Request, context: { params: Promise<{ postId: string }> }) {
   try {
     const account = await requireAccount(request);
-    if (!isWebAdmin(account.email)) throw new ApiError(403, "Chỉ quản trị viên mới được ghim bài đăng.");
+    if (!isAdminAccount(account)) throw new ApiError(403, "Chỉ quản trị viên mới được ghim bài đăng.");
     const postId = positiveId((await context.params).postId);
     const body = await readBody(request) as { pinned?: boolean };
     if (typeof body.pinned !== "boolean") throw new ApiError(400, "Trạng thái ghim không hợp lệ.");
@@ -29,7 +29,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ postI
 export async function DELETE(request: Request, context: { params: Promise<{ postId: string }> }) {
   try {
     const account = await requireAccount(request);
-    if (!isWebAdmin(account.email)) throw new ApiError(403, "Chỉ quản trị viên mới được xóa bài đăng.");
+    if (!isAdminAccount(account)) throw new ApiError(403, "Chỉ quản trị viên mới được xóa bài đăng.");
 
     const postId = positiveId((await context.params).postId);
     const [deleted] = await db.delete(forumPosts)
