@@ -187,7 +187,6 @@ export default function ProfilePage() {
     const method = data.blockStatus === "blocked_by_me" ? "DELETE" : "POST";
     setBlocking(true);
     try {
-      setBlocking(true);
       const response = await fetch("/api/blocks", {
         method, credentials: "same-origin", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: data.profile.id }),
@@ -346,7 +345,6 @@ export default function ProfilePage() {
         : data.relationship === "incoming" ? <div className="profile-action-group"><button className="button-primary" type="button" onClick={() => void respondToFriend("accept")}>Chấp nhận</button><button className="button-secondary" type="button" onClick={() => void respondToFriend("reject")}>Từ chối</button></div>
         : data.relationship === "outgoing" ? <button className="button-secondary" type="button" onClick={() => void cancelFriendRequest()}>Hủy lời mời</button>
         : <button className="button-primary" type="button" onClick={() => void sendFriendRequest()}>Kết bạn</button>}
-        {}
         {!isSelf && <button className="profile-block-btn" type="button" onClick={() => void toggleBlock()} disabled={blocking}>{data.relationship === "blocked" ? "Bỏ chặn" : "Chặn"}</button>}
       </div>
     </section>
