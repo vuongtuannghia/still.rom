@@ -117,7 +117,8 @@ export async function DELETE(request: Request) {
   try {
     const current = await requireAccount(request);
     const body = await readBody(request);
-    const userId = typeof body.userId === "string" ? body.userId : "";
+    const queryUserId = new URL(request.url).searchParams.get("userId") ?? "";
+    const userId = typeof body.userId === "string" ? body.userId : queryUserId;
     if (!/^[0-9a-f-]{36}$/i.test(userId) || userId === current.id) throw new ApiError(400, "Tài khoản không hợp lệ.");
     const a = current.id < userId ? current.id : userId;
     const b = current.id < userId ? userId : current.id;
