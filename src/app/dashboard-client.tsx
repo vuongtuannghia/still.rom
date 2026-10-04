@@ -16,7 +16,6 @@ import { SceneBanner, ScenePickerDialog } from "./components/scene-picker";
 import { StudyRoom } from "./components/study-room";
 import { SceneBackdrop } from "./components/scene-backdrop";
 import { AccountControl } from "./components/account-control";
-import { SharedStudyRoom } from "./components/shared-study-room";
 import type { RoomSettings } from "@/lib/scene-domain";
 import {
   DEFAULT_PREFERENCES, MODE_LABELS, dateKey, dateRange, focusStreak, formatMinutes, labelDate,
@@ -26,7 +25,8 @@ import { DEFAULT_ROOM } from "@/lib/scene-domain";
 
 const NAV_ITEMS = [
   { id: "overview", title: "Tổng quan", icon: "layout", widget: null },
-  { id: "study-room", title: "Phòng học", icon: "leaf", widget: null },
+  { id: "study-room", title: "Học chung", icon: "radio", widget: null },
+  { id: "forum", title: "Diễn đàn", icon: "book", widget: null },
   { id: "analytics", title: "Thống kê", icon: "chart", widget: "chart" },
   { id: "habits", title: "Thói quen", icon: "habit", widget: "habits" },
   { id: "tasks", title: "Nhiệm vụ", icon: "tasks", widget: "tasks" },
@@ -246,6 +246,8 @@ export default function DashboardClient() {
   }, [dataReady, preferences.widgets]);
 
   function navigate(id: string) {
+    if (id === "study-room") { window.location.href = "/hoc-chung"; return; }
+    if (id === "forum") { window.location.href = "/dien-dan"; return; }
     setActiveNav(id);
     document.getElementById(id)?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
   }
@@ -527,7 +529,6 @@ export default function DashboardClient() {
       <section className="hero-grid" id="overview"><FocusPanel {...focusProps} /><article className="goal-card"><div className="goal-top"><span className="eyebrow">MỤC TIÊU HÔM NAY</span><Icon name="target" size={22} /></div><h2>Một ngày<br />đủ đầy.</h2><p>Mỗi phút hiện diện đều đáng giá.</p><div className="goal-visual"><div className="goal-ring" style={{ "--goal-progress": `${goalProgress * 360}deg` } as CSSProperties}><div><strong>{Math.round(goalProgress * 100)}<small>%</small></strong><span>HOÀN THÀNH</span></div></div><div><strong>{formatMinutes(stats.minutes)}</strong><span>trên {formatMinutes(preferences.dailyGoalMinutes)}</span></div></div><div className="goal-bottom"><Icon name={goalProgress === 1 ? "check" : "spark"} size={16} /><span>{goalProgress === 1 ? "Bạn đã chạm mục tiêu. Làm tốt lắm." : `Còn ${formatMinutes(preferences.dailyGoalMinutes - stats.minutes)} để chạm mục tiêu.`}</span></div></article></section>
       {loading ? <div className="dashboard-skeleton" role="status" aria-label="Đang tải dữ liệu"><div /><div /><div /></div> : data && today && <>
         <section className="metric-grid" aria-label="Tiến độ hôm nay"><article className="panel metric-card"><span className="stat-icon"><Icon name="clock" size={20} /></span><div><span className="small-label">TẬP TRUNG HÔM NAY</span><strong data-testid="today-minutes">{formatMinutes(stats.minutes)}</strong><small>Chỉ tính phiên đã hoàn thành</small></div></article><article className="panel metric-card"><span className="stat-icon"><Icon name="target" size={20} /></span><div><span className="small-label">PHIÊN HOÀN THÀNH</span><strong data-testid="today-sessions">{stats.sessions}<em> phiên</em></strong><small>{stats.doneTasks} nhiệm vụ đã xong hôm nay</small></div></article><article className="panel metric-card"><span className="stat-icon"><Icon name="fire" size={20} /></span><div><span className="small-label">CHUỖI TẬP TRUNG</span><strong>{stats.streak}<em> ngày</em></strong><small>{stats.streak ? "Giữ một nhịp cho mỗi ngày" : "Phiên đầu tiên là một khởi đầu"}</small></div></article></section>
-        <SharedStudyRoom account={data.account} onNotice={notice} />
         <SceneBanner room={data.room} onChange={saveRoom} onEnter={() => setImmersive(true)} onChoose={() => setScenesOpen(true)} />
         {widgets.chart && <ProgressCharts sessions={data.sessions} habits={data.habits} checkIns={data.checkIns} today={today} goal={preferences.dailyGoalMinutes} onExport={exportCsv} />}
         {widgets.habits && <HabitMatrix habits={data.habits} checkIns={data.checkIns} today={today} pending={pendingChecks} onToggle={(habit, day, completed) => void checkHabit(habit, day, completed)} onAdd={() => setEditor({ kind: "habit", entity: null })} onEdit={(habit) => setEditor({ kind: "habit", entity: habit })} onDelete={(habit) => deleteEntity("habit", habit)} />}
