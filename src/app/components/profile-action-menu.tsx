@@ -125,6 +125,7 @@ export function ProfileActionMenu({ person, children, placement = "left", self =
       if (response.ok) {
         setRelationship(action === "accept" ? "friend" : "none");
         setRequestId(null);
+        setOpen(false);
       }
     } finally { setBusy(false); }
   }
@@ -137,6 +138,7 @@ export function ProfileActionMenu({ person, children, placement = "left", self =
       if (response.ok) {
         setRelationship("none");
         setRequestId(null);
+        setOpen(false);
       }
     } finally { setBusy(false); }
   }
