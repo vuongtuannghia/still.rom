@@ -16,7 +16,7 @@ export async function GET(request: Request) {
       createdAt: notifications.createdAt, actorId: accounts.id, actorName: accounts.name, actorPicture: accounts.picture,
     }).from(notifications)
       .leftJoin(accounts, eq(accounts.id, notifications.actorId))
-      .where(and(eq(notifications.accountId, current.id), unreadOnly ? isNull(notifications.readAt) : undefined))
+      .where(unreadOnly ? and(eq(notifications.accountId, current.id), isNull(notifications.readAt)) : eq(notifications.accountId, current.id))
       .orderBy(desc(notifications.createdAt)).limit(40);
 
     const unreadCount = rows.filter(row => row.readAt === null).length;
