@@ -25,9 +25,11 @@ export function ProfileActionMenu({ person, children, placement = "left" }: {
   }, [open]);
 
   return <div className="profile-action-menu" ref={rootRef}>
-    <button type="button" className="profile-action-trigger" aria-label={"Tùy chọn " + person.name} aria-expanded={open} onClick={(event) => { event.stopPropagation(); setOpen(current => !current); }}>
+    <span className="profile-action-trigger" role="button" tabIndex={0} aria-label={"Tùy chọn " + person.name} aria-expanded={open}
+      onClick={(event) => { event.stopPropagation(); setOpen(current => !current); }}
+      onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); event.stopPropagation(); setOpen(current => !current); } }}>
       {children}
-    </button>
+    </span>
     {open && <div className={"profile-action-popover " + placement} role="menu">
       <div className="profile-action-person"><strong>{person.name}</strong><span>Tùy chọn nhanh</span></div>
       <button type="button" role="menuitem" onClick={() => router.push("/nguoi-dung/" + person.id)}>
