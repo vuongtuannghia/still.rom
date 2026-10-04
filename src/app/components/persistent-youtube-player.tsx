@@ -28,7 +28,7 @@ function readPersisted(): Persisted | null {
 export function PersistentYouTubePlayer() {
   const pathname = usePathname();
   const [persisted, setPersisted] = useState<Persisted | null>(null);
-  const [target, setTarget] = useState<"dashboard" | "room" | "mini">("mini");
+  const [target, setTarget] = useState<"dashboard" | "room" | "mini">(() => pathname === "/" ? "dashboard" : "mini");
   const [rect, setRect] = useState<Rect | null>(null);
 
   useEffect(() => {
@@ -91,7 +91,7 @@ export function PersistentYouTubePlayer() {
     };
   }, [pathname]);
 
-  const style = useMemo<React.CSSProperties | undefined>(() => {
+  const style = useMemo<CSSProperties | undefined>(() => {
     if ((target === "dashboard" || target === "room") && rect) {
       return {
         position: "fixed",
