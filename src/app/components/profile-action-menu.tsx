@@ -58,7 +58,10 @@ export function ProfileActionMenu({ person, children, placement = "left", self =
       const left = placement === "left"
         ? Math.max(8, rect.right - width)
         : Math.min(window.innerWidth - width - 8, rect.left);
-      const top = Math.min(window.innerHeight - 12, rect.bottom + gap);
+      const estimatedHeight = 300;
+      const top = rect.bottom + gap + estimatedHeight <= window.innerHeight
+        ? rect.bottom + gap
+        : Math.max(8, rect.top - estimatedHeight - gap);
       setPopoverPosition({ top, left });
     };
 
