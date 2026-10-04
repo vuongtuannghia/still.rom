@@ -195,7 +195,6 @@ export function DirectConversationPage() {
             <div><h2>{person.name}</h2><span>{relationship === "friend" ? "Bạn bè · tin nhắn chính" : "Tin nhắn chờ · chưa kết bạn"}</span></div>
           </div>
           <div className="direct-chat-actions">
-            <button type="button" className="button-secondary" onClick={() => router.push("/nguoi-dung/" + person.id)}>Xem hồ sơ</button>
             {relationship === "friend" ? <button type="button" className="button-secondary" onClick={() => void unfriend()}>Hủy kết bạn</button> :
              relationship === "outgoing" ? <button type="button" className="button-secondary" onClick={() => void cancelRequest()}>Hủy lời mời</button> :
              relationship === "incoming" ? <div className="profile-action-group"><button type="button" className="button-primary" onClick={() => void respondToIncoming("accept")}>Chấp nhận</button><button type="button" className="button-secondary" onClick={() => void respondToIncoming("reject")}>Từ chối</button></div> :
