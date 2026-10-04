@@ -16,6 +16,7 @@ import { SceneBanner, ScenePickerDialog } from "./components/scene-picker";
 import { StudyRoom } from "./components/study-room";
 import { SceneBackdrop } from "./components/scene-backdrop";
 import { WorkspaceAccessBar } from "./components/workspace-access";
+import { AccountControl } from "./components/account-control";
 import type { RoomSettings } from "@/lib/scene-domain";
 import {
   DEFAULT_PREFERENCES, MODE_LABELS, dateKey, dateRange, focusStreak, formatMinutes, labelDate,
@@ -172,6 +173,24 @@ export default function DashboardClient() {
     if (!window.location.hostname.endsWith(".manus.computer") || !data) return;
     try { localStorage.setItem("stillroom.preview.data", JSON.stringify(data)); } catch { /* Preview storage may be unavailable. */ }
   }, [data]);
+  useEffect(() => {
+    if (!storageReady || !data?.account) return;
+    const timer = window.setTimeout(() => {
+      const backup = {
+        format: "stillroom-backup", version: 1, exportedAt: new Date().toISOString(),
+        preferences: data.preferences, room: data.room, tasks: data.tasks, subtasks: data.subtasks,
+        habits: data.habits, checkIns: data.checkIns, sessions: data.sessions,
+      };
+      void fetch("/api/account/sync", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ backup }),
+      }).catch(() => {});
+    }, 900);
+    return () => window.clearTimeout(timer);
+  }, [data, storageReady]);
+
   useEffect(() => {
     const updateClock = () => {
       const now = new Date();
@@ -499,7 +518,7 @@ export default function DashboardClient() {
       <div className="workspace-label"><span className="workspace-icon"><Icon name="layout" size={19} /></span><div><strong>Không gian cá nhân</strong><span>Một nhịp cho riêng bạn</span></div><span className="workspace-badge">3.5</span></div>
       <span className="nav-label">KHÔNG GIAN</span><nav className="side-nav" aria-label="Điều hướng chính">{NAV_ITEMS.map((item) => <button key={item.id} className={`nav-link ${activeNav === item.id ? "active" : ""}`} type="button" disabled={item.widget !== null && !widgets[item.widget]} title={item.widget !== null && !widgets[item.widget] ? "Widget đang ẩn. Bật lại trong Tùy chỉnh." : item.title} aria-current={activeNav === item.id ? "page" : undefined} onClick={() => navigate(item.id)}><Icon name={item.icon} size={19} /><span>{item.title}</span>{item.id === "tasks" && <small>{todoCount}</small>}</button>)}</nav>
       <div className="sidebar-art"><div className="arch-art" aria-hidden="true"><i /><i /><i /></div><span className="small-label">LESS, BUT BETTER.</span><p>Ít hơn một chút.<br /><strong>Hiện diện nhiều hơn.</strong></p><button type="button" className="text-button" disabled={!timer.ready} onClick={() => setImmersive(true)}>Vào phòng tập trung <Icon name="arrow" size={15} /></button></div>
-      <div className="sidebar-bottom"><button className="sidebar-control" type="button" onClick={() => setHelpOpen(true)}><kbd>?</kbd><span>Phím tắt & dữ liệu</span></button><button className="sidebar-control" type="button" onClick={openSettings} disabled={!data}><Icon name="sliders" size={18} /><span>Tùy chỉnh không gian</span></button><div className="profile-row"><span className="profile-avatar">{initial}</span><div><strong>{preferences.name}</strong><span>Không gian riêng tư</span></div><button className="icon-button" type="button" aria-label="Cài đặt cá nhân" disabled={!data} onClick={openSettings}><Icon name="dots" size={17} /></button></div></div>
+      <div className="sidebar-bottom"><AccountControl data={data} onChanged={async () => { await reload(); }} /><button className="sidebar-control" type="button" onClick={() => setHelpOpen(true)}><kbd>?</kbd><span>Phím tắt & dữ liệu</span></button><button className="sidebar-control" type="button" onClick={openSettings} disabled={!data}><Icon name="sliders" size={18} /><span>Tùy chỉnh không gian</span></button><div className="profile-row"><span className="profile-avatar">{initial}</span><div><strong>{preferences.name}</strong><span>Không gian riêng tư</span></div><button className="icon-button" type="button" aria-label="Cài đặt cá nhân" disabled={!data} onClick={openSettings}><Icon name="dots" size={17} /></button></div></div>
     </aside>
     <main className="main-shell" id="main-content"><div className="mobile-topbar"><a href="#overview" className="brand"><span className="brand-mark" aria-hidden="true"><i /><i /><i /><i /></span><span>still<span className="brand-period">.</span><small>ROOM</small></span></a><button type="button" className="icon-button" disabled={!data} aria-label="Tùy chỉnh không gian" onClick={openSettings}><Icon name="sliders" /></button></div><nav className="mobile-nav" aria-label="Điều hướng trên di động">{NAV_ITEMS.map((item) => <button type="button" key={item.id} className={activeNav === item.id ? "active" : ""} aria-current={activeNav === item.id ? "page" : undefined} disabled={item.widget !== null && !widgets[item.widget]} onClick={() => navigate(item.id)}><Icon name={item.icon} size={16} />{item.title}</button>)}</nav>
       <div className="page-content"><header className="page-header"><div><span className="eyebrow"><span className="tiny-dot" /> MỖI NGÀY, TỐT HƠN MỘT CHÚT.</span><h1>{clock.greeting}, {name}<span className="heading-period">.</span></h1><p>Không cần làm nhiều hơn. Chỉ cần tập trung vào điều quan trọng.</p></div><div className="header-actions"><div className="header-date"><Icon name="calendar" size={17} /><span>{today ? labelDate(today, { weekday: "long", day: "numeric", month: "short" }) : "Hôm nay"}</span><strong>{clock.time || "—"}</strong></div><button className="button-secondary" type="button" disabled={!data} onClick={openSettings}><Icon name="sliders" size={16} /> Tùy chỉnh</button></div></header>
