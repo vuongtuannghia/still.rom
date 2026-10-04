@@ -159,6 +159,20 @@ export default function ProfilePage() {
     }
   }
 
+  async function unfriend() {
+    if (!data || data.relationship !== "friend") return;
+    if (!window.confirm("Hủy kết bạn với tài khoản này?")) return;
+    try {
+      const response = await fetch("/api/friends?userId=" + encodeURIComponent(data.profile.id), { method: "DELETE", credentials: "same-origin" });
+      const payload = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) throw new Error(payload.error || "Không thể hủy kết bạn.");
+      await load();
+      setNotice("Đã hủy kết bạn.");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Không thể hủy kết bạn.");
+    }
+  }
+
   async function respondToFriend(action: "accept" | "reject") {
     if (!data?.relationshipRequestId) return;
     try {
@@ -178,6 +192,7 @@ export default function ProfilePage() {
   async function toggleBlock() {
     if (!data || data.relationship === "self") return;
     const method = data.blockStatus === "blocked_by_me" ? "DELETE" : "POST";
+    setBlocking(true);
     try {
       setBlocking(true);
       const response = await fetch("/api/blocks", {
