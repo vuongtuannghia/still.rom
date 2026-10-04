@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Icon } from "@/app/icons";
+import { ProfileActionMenu } from "@/app/components/profile-action-menu";
 import { ProfileAvatarMenu } from "@/app/components/profile-avatar-menu";
 
 type ProfileData = {
@@ -333,10 +334,16 @@ export default function ProfilePage() {
     </section>
 
     <section className="profile-identity">
-      <button className="profile-avatar-wrap" type="button" onClick={() => isSelf && avatarInput.current?.click()} aria-label="Đổi ảnh đại diện">
-        {avatar(data.profile.name, displayPicture, "xl")}
-        {isSelf && <span className="avatar-edit-dot"><Icon name="sliders" size={12} /></span>}
-      </button>
+      {isSelf
+        ? <button className="profile-avatar-wrap" type="button" onClick={() => avatarInput.current?.click()} aria-label="Đổi ảnh đại diện">
+            {avatar(data.profile.name, displayPicture, "xl")}
+            <span className="avatar-edit-dot"><Icon name="sliders" size={12} /></span>
+          </button>
+        : <div className="profile-avatar-wrap">
+            <ProfileActionMenu person={{ id: data.profile.id, name: data.profile.name, picture: displayPicture }}>
+              <span className="profile-avatar xl">{displayPicture ? <img src={displayPicture} alt="" /> : initials(data.profile.name)}</span>
+            </ProfileActionMenu>
+          </div>}
       <input ref={avatarInput} hidden type="file" accept="image/*" onChange={e => void chooseAvatar(e.target.files?.[0])} />
       <div className="profile-main-info">
         <div className="profile-name-row"><h1>{data.profile.name}</h1>{data.profile.isAdmin && <span className="profile-role">ADMIN</span>}</div>
@@ -349,7 +356,7 @@ export default function ProfilePage() {
       <div className="profile-actions">
         {isSelf ? <button className="button-primary" type="button" onClick={() => setEditMode(current => !current)}><Icon name="sliders" size={14} /> {editMode ? "Đang chỉnh sửa" : "Chỉnh hồ sơ"}</button>
         : data.relationship === "blocked" ? <span className="profile-blocked-label">Đã chặn / bị chặn</span>
-        : data.relationship === "friend" ? <div className="profile-action-group"><button className="button-primary" type="button" onClick={() => router.push("/tin-nhan/" + encodeURIComponent(data.profile.id))}><Icon name="arrow" size={14} /> Nhắn tin</button><button className="button-secondary" type="button" onClick={() => void removeFriend()}>Hủy kết bạn</button></div>
+        : data.relationship === "friend" ? <div className="profile-action-group"><button className="button-primary" type="button" onClick={() => router.push("/tin-nhan?user=" + encodeURIComponent(data.profile.id))}><Icon name="arrow" size={14} /> Nhắn tin</button><button className="button-secondary" type="button" onClick={() => void removeFriend()}>Hủy kết bạn</button></div>
         : data.relationship === "incoming" ? <div className="profile-action-group"><button className="button-primary" type="button" onClick={() => void respondToFriend("accept")}>Chấp nhận</button><button className="button-secondary" type="button" onClick={() => void respondToFriend("reject")}>Từ chối</button></div>
         : data.relationship === "outgoing" ? <button className="button-secondary" type="button" onClick={() => void cancelFriendRequest()}>Hủy lời mời</button>
         : <button className="button-primary" type="button" onClick={() => void sendFriendRequest()}>Kết bạn</button>}
@@ -396,7 +403,9 @@ export default function ProfilePage() {
       ? <section className="profile-friends-grid">
           {data.friends.length === 0 ? <div className="profile-empty">Chưa có bạn bè công khai.</div> :
             data.friends.map(friend => <div key={friend.id} className="profile-friend-card">
-              <ProfileAvatarMenu id={friend.id} name={friend.name} picture={friend.picture} size="normal" />
+              <ProfileActionMenu person={{ id: friend.id, name: friend.name, picture: friend.picture }}>
+                <span className="profile-avatar small">{friend.picture ? <img src={friend.picture} alt="" /> : initials(friend.name)}</span>
+              </ProfileActionMenu>
               <button type="button" className="profile-friend-info" onClick={() => router.push("/nguoi-dung/" + friend.id)}><span><strong>{friend.name}</strong><small>{friend.bio || "Thành viên still.room"}</small></span><Icon name="arrow" size={14} /></button>
             </div>)}
         </section>
