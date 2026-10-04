@@ -50,9 +50,9 @@ export function useAmbientMixer(workspaceId: string | null) {
   function persist() { if (key) try { localStorage.setItem(key, JSON.stringify({ levels: latest.current.levels, master: latest.current.master })); } catch { /* Optional settings persistence. */ } }
   function gainFor(id: SoundId) {
     const count = Object.values(latest.current.levels).filter((level) => level > 0).length;
-    const raw = Math.pow(latest.current.levels[id] / 100, 1.05) * 0.22;
-    // Keep the sum of several ambient layers gentle and leave headroom for transients.
-    return raw / Math.sqrt(Math.max(1, count / 2.2));
+    const level = Math.max(0, Math.min(100, latest.current.levels[id] ?? 0)) / 100;
+    // Gentle perceptual curve + automatic headroom when several layers are stacked.
+    return Math.pow(level, 1.25) * 0.19 / Math.sqrt(Math.max(1, count * 0.72));
   }
   function startChannel(active: Engine, id: SoundId) {
     if (engine.current !== active || !latest.current.playing || latest.current.levels[id] <= 0 || active.channels.has(id)) return;
@@ -68,8 +68,12 @@ export function useAmbientMixer(workspaceId: string | null) {
       white: 6500, pink: 7200, brown: 4200,
     };
     filter.frequency.value = cutoff[id];
-    filter.Q.value = 0.25;
-    source.connect(filter).connect(gain).connect(active.master);
+    filter.Q.value = 0.22;
+    const highpass = active.context.createBiquadFilter();
+    highpass.type = "highpass";
+    highpass.frequency.value = id === "thunder" || id === "brown" ? 28 : 55;
+    highpass.Q.value = 0.16;
+    source.connect(highpass).connect(filter).connect(gain).connect(active.master);
     source.onended = () => { source.disconnect(); filter.disconnect(); gain.disconnect(); };
     source.start(); active.channels.set(id, { source, filter, gain });
     gain.gain.setTargetAtTime(gainFor(id), active.context.currentTime, 0.28);
@@ -86,7 +90,8 @@ export function useAmbientMixer(workspaceId: string | null) {
         const response = await fetch(definition.recording.src, { signal: AbortSignal.any([active.controller.signal, AbortSignal.timeout(25000)]), cache: "force-cache" });
         if (!response.ok) throw new Error("Tải bản thu chưa thành công. Kiểm tra mạng rồi thử lại.");
         const decoded = await active.context.decodeAudioData(await response.arrayBuffer());
-        buffer = decoded;
+        // Remove seam/cut clicks and normalize real recordings before looping.
+        buffer = prepareLoop(active.context, decoded);
       } else buffer = synthesizeSound(active.context, id);
       if (engine.current !== active || !mounted.current) return;
       active.buffers.set(id, buffer); startChannel(active, id);
@@ -118,7 +123,7 @@ export function useAmbientMixer(workspaceId: string | null) {
       const Constructor = window.AudioContext ?? (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!Constructor) throw new Error("Trình duyệt này chưa hỗ trợ Web Audio.");
       if (!engine.current) {
-        const context = new Constructor({ sampleRate: 32000, latencyHint: "playback" });
+        const context = new Constructor({ sampleRate: 44100, latencyHint: "playback" });
         const compressor = context.createDynamicsCompressor();
         compressor.threshold.value = -20;
         compressor.knee.value = 26;
