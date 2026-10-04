@@ -64,7 +64,10 @@ export function ProfileActionMenu({ person, children, placement = "left", self =
 
     updatePosition();
     const close = (event: PointerEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
+      const target = event.target as Node;
+      if (ref.current?.contains(target)) return;
+      if ((target as HTMLElement | null)?.closest?.(".profile-action-popover")) return;
+      setOpen(false);
     };
     document.addEventListener("pointerdown", close);
     window.addEventListener("resize", updatePosition);
