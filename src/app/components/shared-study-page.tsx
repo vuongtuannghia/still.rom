@@ -7,7 +7,7 @@ import { Icon } from "../icons";
 
 type Room = {
   id: number; title: string; meetUrl: string; pinned: boolean; createdAt: string;
-  creatorName: string; creatorEmail: string; admin: boolean;
+  creatorId: string; creatorName: string; creatorEmail: string; admin: boolean;
 };
 type Comment = {
   id: number; roomId: number; parentId: number | null; body: string; createdAt: string;
@@ -166,7 +166,7 @@ export function SharedStudyPage() {
 
     {pinned && <section className="study-feature-room">
       <div className="study-feature-badge"><Icon name="target" size={13} /> PHÒNG HỌC CHÍNH</div>
-      <div className="study-feature-main"><h3>{pinned.title}</h3><p>{pinned.creatorName} · được quản trị viên ghim</p></div>
+      <div className="study-feature-main"><h3>{pinned.title}</h3><p><a className="profile-inline-link" href={"/nguoi-dung/" + pinned.creatorId}>{pinned.creatorName}</a> · được quản trị viên ghim</p></div>
       <div className="study-feature-actions"><a className="button-primary" href={pinned.meetUrl} target="_blank" rel="noreferrer"><Icon name="radio" size={15} /> Vào học</a><button className="button-secondary" type="button" onClick={() => void toggleComments(pinned.id)}><Icon name="book" size={14} /> Bình luận</button>{account?.email === ADMIN && <button className="button-secondary" type="button" onClick={() => void pin(pinned.id, false)}>Bỏ ghim</button>}</div>
       {openComments === pinned.id && <CommentThread account={account} roomId={pinned.id} comments={comments[pinned.id] ?? []} loading={loadingComments === pinned.id} draft={drafts[pinned.id] ?? ""} replyId={replyingTo[pinned.id] ?? null} onDraft={(value) => setDrafts((current) => ({ ...current, [pinned.id]: value }))} onReply={(id) => setReplyingTo((current) => ({ ...current, [pinned.id]: id }))} onSend={() => void addComment(pinned.id)} onRefresh={() => void refreshComments(pinned.id)} />}</section>}
 
@@ -176,7 +176,7 @@ export function SharedStudyPage() {
       {publicRooms.length === 0 ? <div className="study-empty"><div className="empty-orbit">+</div><strong>Chưa có phòng nào.</strong><p>Hãy bấm “Tạo phòng Meet”, sau đó dán link vào đây.</p></div> :
         <div className="study-room-grid">{publicRooms.map((room) => <article className="study-room-card" key={room.id}>
           <div className="study-room-card-top"><span className="room-live"><i /> đang mở</span><span>{timeLabel(room.createdAt)}</span></div>
-          <div className="study-room-person"><span className="community-avatar">{avatar(room.creatorName, null)}</span><div><h4>{room.title}</h4><p>{room.creatorName}</p></div></div>
+          <div className="study-room-person"><span className="community-avatar">{avatar(room.creatorName, null)}</span><div><h4>{room.title}</h4><p><a className="profile-inline-link" href={"/nguoi-dung/" + room.creatorId}>{room.creatorName}</a></p></div></div>
           <div className="study-room-card-actions"><a className="button-primary" href={room.meetUrl} target="_blank" rel="noreferrer"><Icon name="radio" size={14} /> Vào học</a><button className="button-secondary" type="button" onClick={() => void toggleComments(room.id)}><Icon name="book" size={14} /> Bình luận{comments[room.id]?.length ? ` · ${comments[room.id].length}` : ""}</button></div>
           {account?.email === ADMIN && <div className="admin-room-actions"><button type="button" onClick={() => void pin(room.id, true)}><Icon name="target" size={13} /> Ghim</button><button type="button" onClick={() => void remove(room.id)}><Icon name="close" size={13} /> Xóa</button></div>}
           {openComments === room.id && <CommentThread account={account} roomId={room.id} comments={comments[room.id] ?? []} loading={loadingComments === room.id} draft={drafts[room.id] ?? ""} replyId={replyingTo[room.id] ?? null} onDraft={(value) => setDrafts((current) => ({ ...current, [room.id]: value }))} onReply={(id) => setReplyingTo((current) => ({ ...current, [room.id]: id }))} onSend={() => void addComment(room.id)} onRefresh={() => void refreshComments(room.id)} />}</article>)}</div>}
