@@ -66,28 +66,31 @@ export async function POST(request: Request) {
     const [existing] = await db.select().from(friendRequests)
       .where(and(eq(friendRequests.senderId, current.id), eq(friendRequests.recipientId, target.id))).limit(1);
     if (existing?.status === "pending") throw new ApiError(409, "Bạn đã gửi lời mời cho người này.");
-    let requestRow;
-    if (existing) {
-      [requestRow] = await db.update(friendRequests).set({
-        status: "pending",
-        createdAt: new Date(),
-        respondedAt: null,
-      }).where(eq(friendRequests.id, existing.id)).returning();
-    } else {
-      [requestRow] = await db.insert(friendRequests).values({
-        senderId: current.id,
-        recipientId: target.id,
-        status: "pending",
-      }).returning();
-    }
-
-    await db.insert(notifications).values({
-      accountId: target.id,
-      actorId: current.id,
-      type: "friend_request",
-      title: "Lời mời kết bạn mới",
-      body: `${current.name} muốn kết bạn với bạn.`,
-      requestId: requestRow.id,
+    const requestRow = await db.transaction(async tx => {
+      let row;
+      if (existing) {
+        [row] = await tx.update(friendRequests).set({
+          status: "pending",
+          createdAt: new Date(),
+          respondedAt: null,
+        }).where(eq(friendRequests.id, existing.id)).returning();
+      } else {
+        [row] = await tx.insert(friendRequests).values({
+          senderId: current.id,
+          recipientId: target.id,
+          status: "pending",
+        }).returning();
+      }
+      if (!row) throw new ApiError(500, "Không thể tạo lời mời kết bạn.");
+      await tx.insert(notifications).values({
+        accountId: target.id,
+        actorId: current.id,
+        type: "friend_request",
+        title: "Lời mời kết bạn mới",
+        body: `${current.name} muốn kết bạn với bạn.`,
+        requestId: row.id,
+      });
+      return row;
     });
 
     return json({ request: { id: requestRow.id, recipientId: target.id, recipientName: target.name, recipientEmail: target.email, status: requestRow.status } }, 201);
