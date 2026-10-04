@@ -62,6 +62,7 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
   }, [onPause, onVideoChange]);
 
   useEffect(() => {
+    audioUnlocked.current = false;
     try {
       const raw = sessionStorage.getItem(progressKey);
       const parsed = raw ? Number(raw) : 0;
@@ -77,15 +78,29 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
     } catch {
       savedProgress.current = 0;
       userMuted.current = false;
+      setPlayerMuted(false);
       preferences.current.muted = false;
     }
-  }, [progressKey, scene.videoId, scene.playlistId, scene.id, muted, onMuted]);
+  // The room's timer causes frequent parent renders; this should only initialize per video.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progressKey]);
 
   useEffect(() => {
     const container = host.current; if (!container) return;
     let disposed = false, becameReady = false, hasPlayed = false;
     container.replaceChildren();
     const timeout = window.setTimeout(() => { if (!disposed && !becameReady) setApiNotice("YouTube đang tải chậm. Bạn có thể nhấn ▶ trực tiếp trong video phía trên."); }, 11000);
+    const userGesture = () => {
+      if (disposed || userMuted.current || audioUnlocked.current || !player.current || !becameReady) return;
+      try {
+        player.current.setVolume(35);
+        player.current.unMute();
+        if (!hasPlayed) player.current.playVideo();
+        audioUnlocked.current = true;
+      } catch { /* Browser may still require direct interaction with the player. */ }
+    };
+    document.addEventListener("pointerdown", userGesture, true);
+    document.addEventListener("keydown", userGesture, true);
 
     function reportVideo(target: Player) {
       try { const videoId = target.getVideoData?.().video_id; if (isVideoId(videoId)) preferences.current.onVideoChange?.(videoId); } catch { /* Playlist may not expose an id immediately. */ }
@@ -133,14 +148,8 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
             try { event.target.playVideo(); } catch { setAutoplayBlocked(true); }
           };
           globalThis.requestAnimationFrame(startVisiblePlayback);
-          if (!userMuted.current) {
-            // The player starts muted to satisfy autoplay. When the room has already received
-            // a user gesture, immediately restore the user's sound preference.
-            if (document.hasFocus()) {
-              event.target.setVolume(35);
-              try { event.target.unMute(); } catch {}
-            }
-          }
+          // Start muted for autoplay reliability. A user gesture anywhere in the room
+          // will unlock sound once, without ever muting later interactions.
           progressTimer = window.setInterval(rememberProgress, 1000);
         },
         onStateChange: (event) => {
@@ -162,6 +171,8 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
       rememberProgress();
       if (progressTimer) window.clearInterval(progressTimer);
       document.removeEventListener("visibilitychange", saveOnVisibility);
+      document.removeEventListener("pointerdown", userGesture, true);
+      document.removeEventListener("keydown", userGesture, true);
 
       disposed = true; window.clearTimeout(timeout);
       try { player.current?.destroy(); } catch { /* Native frame may already be gone. */ }
@@ -173,7 +184,7 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
     if (ready && player.current) {
       if (playing) player.current.pauseVideo();
       else {
-        if (!muted) { player.current.setVolume(35); player.current.unMute(); }
+        if (!userMuted.current) { player.current.setVolume(35); player.current.unMute(); audioUnlocked.current = true; }
         player.current.playVideo();
       }
     } else {
@@ -190,9 +201,10 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
           setAutoplayBlocked(false);
           if (player.current) {
             try { player.current.mute(); player.current.playVideo(); } catch {}
-            if (!muted) {
+            if (!userMuted.current) {
               player.current.setVolume(35);
               player.current.unMute();
+              audioUnlocked.current = true;
             }
           }
         }}
