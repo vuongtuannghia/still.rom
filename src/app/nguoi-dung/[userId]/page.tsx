@@ -303,7 +303,7 @@ export default function ProfilePage() {
           : <button className="button-primary" type="button" onClick={() => void sendFriendRequest()}>Kết bạn</button>}
         {!isSelf && data.blockStatus !== "blocked_you" && <button className="button-secondary" type="button" onClick={() => router.push("/tin-nhan?user=" + encodeURIComponent(data.profile.id))}><Icon name="arrow" size={14} /> Nhắn riêng</button>}
         {!isSelf && data.blockStatus !== "blocked_you" && <button className="profile-block-button" type="button" onClick={() => void toggleBlock()}>{data.blockStatus === "blocked_by_me" ? "Bỏ chặn" : "Chặn"}</button>}
-        {!isSelf && data.blockStatus === "blocked_you" && <span className="relationship-label">Tài khoản này đã chặn bạn</span>
+        {!isSelf && data.blockStatus === "blocked_you" && <span className="relationship-label">Tài khoản này đã chặn bạn</span>}
       </div>
     </section>
 
