@@ -551,3 +551,93 @@
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
 }
+
+
+/* Persistent YouTube player: one iframe survives route changes. */
+.persistent-youtube-player {
+  position: fixed;
+  z-index: 80;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 12px;
+  background: #080808;
+  box-shadow: 0 20px 60px rgba(0,0,0,.28);
+  transition: opacity .18s ease, transform .18s ease;
+}
+.persistent-youtube-player.is-hidden {
+  left: -12000px !important;
+  top: -12000px !important;
+  width: 320px !important;
+  height: 180px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+.persistent-youtube-player.is-visible {
+  opacity: 1;
+}
+.persistent-youtube-player .youtube-scene-player {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: inherit !important;
+  overflow: hidden !important;
+  background: #000 !important;
+}
+.persistent-youtube-player .youtube-stage {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  aspect-ratio: auto !important;
+  border-radius: inherit !important;
+}
+.persistent-youtube-player .youtube-stage > iframe {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  border: 0 !important;
+}
+.persistent-youtube-player .youtube-player-info {
+  display: none !important;
+}
+.persistent-youtube-room .persistent-youtube-room-label {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  z-index: 4;
+  padding: 5px 7px;
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 999px;
+  background: rgba(17,17,15,.72);
+  color: #fff;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  pointer-events: none;
+  backdrop-filter: blur(6px);
+}
+.persistent-youtube-mini {
+  right: 18px;
+  bottom: 18px;
+  width: min(360px, calc(100vw - 36px));
+  aspect-ratio: 16 / 9;
+}
+.persistent-youtube-mini .youtube-autoplay-overlay {
+  z-index: 6;
+}
+@media (max-width: 760px) {
+  .persistent-youtube-mini {
+    right: 10px;
+    bottom: 10px;
+    width: min(300px, calc(100vw - 20px));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .persistent-youtube-player { transition: none; }
+}
