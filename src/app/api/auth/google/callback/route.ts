@@ -37,12 +37,12 @@ export async function GET(request: Request) {
     if (!savedState || !nonce || savedState !== state) throw new ApiError(403, "Phiên đăng nhập Google không hợp lệ. Hãy thử lại.");
 
     const identity = await verifyGoogleCode(code, nonce);
-    const guestWorkspace = await getWorkspace(request, true);
 
     const [existing] = await db.select().from(accounts).where(eq(accounts.googleSubject, identity.subject)).limit(1);
     let account = existing;
 
     if (!account) {
+      const guestWorkspace = await getWorkspace(request, true);
       [account] = await db.insert(accounts).values({
         googleSubject: identity.subject,
         email: identity.email,
@@ -51,6 +51,13 @@ export async function GET(request: Request) {
         workspaceId: guestWorkspace.id,
       }).returning();
     } else {
+      if (account.lockedUntil && account.lockedUntil.getTime() > Date.now()) {
+        const totalMinutes = Math.max(1, Math.ceil((account.lockedUntil.getTime() - Date.now()) / 60000));
+        const days = Math.floor(totalMinutes / 1440);
+        const hours = Math.floor((totalMinutes % 1440) / 60);
+        const remaining = days > 0 ? (hours > 0 ? days + " ngày " + hours + " giờ" : days + " ngày") : (hours > 0 ? hours + " giờ" : totalMinutes + " phút");
+        throw new ApiError(403, "Tài khoản đang bị khóa. Còn " + remaining + ".");
+      }
       await db.update(accounts).set({
         email: identity.email,
         name: identity.name,
