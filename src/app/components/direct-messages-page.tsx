@@ -202,7 +202,8 @@ export function DirectMessagesPage() {
       <div className="messages-layout">
         <aside className="messages-people panel">
           <div className="messages-panel-head"><div><span className="small-label">KẾT NỐI</span><h3>Bạn bè</h3></div><span>{friends.length}</span></div>
-          <div className="messages-search"><Icon name="target" size={14} /><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Nhập đúng email để tìm…" /></div>
+          <div className="friend-add-heading"><div><span className="small-label">THÊM BẠN</span><strong>Kết nối bằng email</strong></div><span>Chỉ tìm khi bạn nhập email</span></div>
+          <div className="messages-search"><Icon name="target" size={14} /><input value={query} onChange={e => setQuery(e.target.value)} placeholder="email@example.com" /></div>
 
           {query.trim() && <div className="friend-lookup">
             {!lookup ? <span className="messages-muted">Không tìm thấy tài khoản với email này.</span> :
@@ -232,7 +233,7 @@ export function DirectMessagesPage() {
           </div>
           <div className="messages-people-list">
             {loading ? <p className="messages-muted">Đang tải…</p> :
-              shownFriends.length === 0 ? <p className="messages-muted">{query.trim() ? "Tìm bằng email để kết nối với người khác." : "Chưa có bạn bè. Nhập đúng email để tìm người."}</p> :
+              shownFriends.length === 0 ? <p className="messages-muted">{query.trim() ? "Nhập đúng email ở trên để tìm người chưa là bạn." : "Chưa có bạn bè. Nhập đúng email để tìm người."}</p> :
               shownFriends.map(person => <button type="button" key={person.id} className={selected?.id === person.id ? "message-person active" : "message-person"} onClick={() => void openConversation(person)}>
                 <span className="community-avatar">{avatar(person)}</span><span><strong>{person.name}</strong><small>{person.email}</small></span><Icon name="arrow" size={13} />
               </button>)
