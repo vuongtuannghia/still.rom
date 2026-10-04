@@ -7,6 +7,7 @@ import "./account.css";
 import "./ui-fixes.css";
 import "./community.css";
 import "./community-overrides.css";
+import "./admin.css";
 import { NotificationBell } from "./components/notification-bell";
 
 export const viewport: Viewport = {
