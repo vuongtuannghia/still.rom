@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { DashboardData } from "@/lib/focus-domain";
 import { Icon } from "../icons";
 
@@ -29,6 +30,7 @@ function timeLabel(value: string) {
 }
 
 export function SharedStudyPage() {
+  const router = useRouter();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [account, setAccount] = useState<DashboardData["account"]>(null);
   const [title, setTitle] = useState("");
@@ -205,5 +207,5 @@ function CommentThread({ account, roomId, comments, loading, draft, replyId, onD
 }
 
 function CommentItem({ comment, compact = false, onReply }: { comment: Comment; compact?: boolean; onReply: (id: number | null) => void }) {
-  return <div className={compact ? "comment-item compact" : "comment-item"}><span className="community-avatar">{avatar(comment.authorName, comment.authorPicture)}</span><div className="comment-body"><div className="comment-meta"><strong>{comment.authorName}</strong><span>{timeLabel(comment.createdAt)}</span></div><p>{comment.body}</p><button type="button" className="comment-reply" onClick={() => onReply(comment.id)}>Trả lời</button><a className="comment-reply comment-direct-link" href={"/tin-nhan?user=" + encodeURIComponent(comment.authorId) + "&email=" + encodeURIComponent(comment.authorEmail)}>Nhắn riêng</a></div></div>;
+  return <div className={compact ? "comment-item compact" : "comment-item"}><span className="community-avatar">{avatar(comment.authorName, comment.authorPicture)}</span><div className="comment-body"><div className="comment-meta"><strong>{comment.authorName}</strong><span>{timeLabel(comment.createdAt)}</span></div><p>{comment.body}</p><button type="button" className="comment-reply" onClick={() => onReply(comment.id)}>Trả lời</button><button type="button" className="comment-reply comment-direct-link" onClick={() => router.push("/tin-nhan?user=" + encodeURIComponent(comment.authorId) + "&email=" + encodeURIComponent(comment.authorEmail))}>Nhắn riêng</button></div></div>;
 }
