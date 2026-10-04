@@ -8,11 +8,13 @@ type Recording = {
 const RAW_AUDIO = "https://cdn.jsdelivr.net/gh/euuuuuuan/todak-public@main/assets/ambience";
 
 /**
- * These curated ambience loops are CC0 recordings re-cut by Todak to calm, event-free
- * windows and seamless short loops. The runtime keeps procedural fallbacks for channels
- * that do not have a recorded asset.
+ * Curated ambience loops are sourced from a published CC0 asset register. The selected
+ * recordings were re-cut to calmer, event-free windows and seamless loops by the source
+ * project. Procedural synthesis remains only for sound types without a suitable recording.
  */
 const RECORDING_SOURCES: Record<string, Recording> = {
+  lofi: { src: RAW_AUDIO.replace("/assets/ambience", "/assets/music/lofi") + "/Chill_lofi_inspired_loop_edit.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "Todak / CC0 music ledger", license: "CC0" },
+  roof: { src: RAW_AUDIO + "/rain_downpour.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "CC0 ambience ledger", license: "CC0" },
   rain: { src: RAW_AUDIO + "/rain_soft.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "joedeshon (re-rendered by Todak)", license: "CC0" },
   thunder: { src: RAW_AUDIO + "/storm_far.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "nickmaysoundmusic (re-rendered by Todak)", license: "CC0" },
   ocean: { src: RAW_AUDIO + "/waves_calm.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "profispiesser (re-rendered by Todak)", license: "CC0" },
@@ -46,9 +48,9 @@ export type SoundDefinition = {
 };
 
 export const SOUND_CATALOG: SoundDefinition[] = [
-  { id: "lofi", label: "Lo-fi piano", detail: "Hợp âm piano mềm · không lời", icon: "headphones", group: "Không gian" },
+  { id: "lofi", label: "Lo-fi", detail: "Lo-fi thật · mềm và chậm", icon: "headphones", group: "Không gian", recording: recorded("lofi") },
   { id: "rain", label: "Mưa dịu", detail: "Mưa thật trong phòng · vòng lặp mượt", icon: "water", group: "Thiên nhiên", recording: recorded("rain") },
-  { id: "roof", label: "Mưa trên mái", detail: "Giọt mưa dày · nhịp rõ hơn", icon: "water", group: "Thiên nhiên" },
+  { id: "roof", label: "Mưa trên mái", detail: "Mưa dày · bản thu CC0", icon: "water", group: "Thiên nhiên", recording: recorded("roof") },
   { id: "thunder", label: "Sấm xa", detail: "Sấm thật · để âm lượng thấp", icon: "moon", group: "Thiên nhiên", recording: recorded("thunder") },
   { id: "ocean", label: "Sóng biển", detail: "Sóng Point Reyes · nền rộng", icon: "water", group: "Thiên nhiên", recording: recorded("ocean") },
   { id: "river", label: "Suối chảy", detail: "Dòng nước thật · đều và sáng", icon: "water", group: "Thiên nhiên", recording: recorded("river") },
