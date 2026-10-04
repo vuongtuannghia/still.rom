@@ -278,7 +278,7 @@ export default function DashboardClient() {
     };
     const route = routes[id];
     if (route) {
-      const scene = data?.room.scenes.find((item) => item.id === data.room.selectedId);
+      const scene = data?.room.scenes.find((item) => item.id === data?.room.selectedId);
       if (scene) {
         const detail = { scene, loop: data.room.loop, muted: data.room.youtubeMuted };
         try { localStorage.setItem(PERSISTENT_YOUTUBE_KEY, JSON.stringify(detail)); } catch {}
@@ -295,6 +295,20 @@ export default function DashboardClient() {
     setActiveNav(id);
     document.getElementById(id)?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
   }
+  const enterStudyRoom = useCallback(() => {
+    if (!data) {
+      setImmersive(true);
+      return;
+    }
+    const scene = data.room.scenes.find((item) => item.id === data.room.selectedId);
+    if (scene) {
+      const detail = { scene, loop: data.room.loop, muted: data.room.youtubeMuted };
+      try { localStorage.setItem(PERSISTENT_YOUTUBE_KEY, JSON.stringify(detail)); } catch {}
+      window.dispatchEvent(new CustomEvent("stillroom-youtube-handoff", { detail }));
+    }
+    setImmersive(true);
+  }, [data]);
+
   function chooseTask(id: number | null) {
     setActiveTaskId(id);
     if (data) try { localStorage.setItem(`stillroom.task.v2:${data.workspaceId}`, id === null ? "free" : String(id)); } catch { /* Task selection is not essential to recording sessions. */ }
