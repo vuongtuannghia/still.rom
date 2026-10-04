@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export async function GET(_: Request, context: { params: Promise<{ roomId: string }> }) {
   try {
     const roomId = positiveId((await context.params).roomId);
-    const [room] = await db.select({ id: sharedStudyRooms.id }).from(sharedStudyRooms).where(eq(sharedStudyRooms.id, roomId)).limit(1);
+    const [room] = await db.select({ id: sharedStudyRooms.id, accountId: sharedStudyRooms.accountId }).from(sharedStudyRooms).where(eq(sharedStudyRooms.id, roomId)).limit(1);
     if (!room) throw new ApiError(404, "Không tìm thấy phòng học.");
     const rows = await db.select({ id: meetRoomComments.id, roomId: meetRoomComments.roomId, parentId: meetRoomComments.parentId, body: meetRoomComments.body, createdAt: meetRoomComments.createdAt, authorId: accounts.id, authorName: accounts.name, authorEmail: accounts.email, authorPicture: accounts.picture })
       .from(meetRoomComments).innerJoin(accounts, eq(accounts.id, meetRoomComments.accountId)).where(eq(meetRoomComments.roomId, roomId)).orderBy(asc(meetRoomComments.createdAt), asc(meetRoomComments.id));
