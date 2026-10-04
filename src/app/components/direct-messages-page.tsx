@@ -35,6 +35,7 @@ export function DirectMessagesPage() {
   const [outgoing, setOutgoing] = useState<FriendRequest[]>([]);
   const [query, setQuery] = useState("");
   const [lookup, setLookup] = useState<Person | null>(null);
+  const [searchResults, setSearchResults] = useState<Person[]>([]);
   const [selected, setSelected] = useState<Person | null>(null);
   const [selectedEmail, setSelectedEmail] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -86,11 +87,12 @@ export function DirectMessagesPage() {
   // By default / empty search only shows friends. Typing anything searches by exact email.
   useEffect(() => {
     if (!account) return;
-    if (!query.trim()) { setLookup(null); return; }
+    if (!query.trim()) { setLookup(null); setSearchResults([]); return; }
     const timer = window.setTimeout(async () => {
       try {
         const response = await fetch(`/api/messages/users?q=${encodeURIComponent(query.trim())}`, { cache: "no-store", credentials: "same-origin" });
         const rows = response.ok ? await response.json() as Person[] : [];
+        setSearchResults(rows);
         setLookup(rows[0] ?? null);
       } catch { setLookup(null); }
     }, 300);
@@ -222,13 +224,16 @@ export function DirectMessagesPage() {
           <div className="messages-search"><Icon name="target" size={14} /><input value={query} onChange={e => setQuery(e.target.value)} placeholder="email@example.com" /></div>
 
           {query.trim() && <div className="friend-lookup">
-            {!lookup ? <span className="messages-muted">Không tìm thấy tài khoản với email này.</span> :
-              <div className="lookup-card"><span className="community-avatar">{avatar(lookup)}</span><div><strong>{lookup.name}</strong><small>{lookup.email}</small></div>
-                {lookup.relationship === "friend" ? <span className="relationship-label">Bạn bè</span> :
-                 lookup.relationship === "outgoing" ? <span className="relationship-label">Đã gửi lời mời</span> :
-                 lookup.relationship === "incoming" ? <div className="lookup-actions"><button type="button" onClick={() => void respondToRequest(lookup.requestId!, "accept")}>Chấp nhận</button><button type="button" onClick={() => void respondToRequest(lookup.requestId!, "reject")}>Từ chối</button></div> :
-                 <button className="button-primary" type="button" onClick={() => void sendFriendRequestFor(lookup!)}>Kết bạn</button>}
-              </div>
+            {searchResults.length === 0 ? <span className="messages-muted">Không tìm thấy người phù hợp.</span> :
+              searchResults.map(person => <div className="lookup-card" key={person.id}>
+                <button type="button" className="lookup-profile" onClick={() => window.location.href = "/nguoi-dung/" + person.id}>
+                  <span className="community-avatar">{avatar(person)}</span><span><strong>{person.name}</strong><small>{person.email}</small></span>
+                </button>
+                {person.relationship === "friend" ? <span className="relationship-label">Bạn bè</span> :
+                 person.relationship === "outgoing" ? <span className="relationship-label">Đã gửi lời mời</span> :
+                 person.relationship === "incoming" ? <div className="lookup-actions"><button type="button" onClick={() => void respondToRequest(person.requestId!, "accept")}>Chấp nhận</button><button type="button" onClick={() => void respondToRequest(person.requestId!, "reject")}>Từ chối</button></div> :
+                 <div className="lookup-actions"><button className="button-primary" type="button" onClick={() => void sendFriendRequestFor(person)}>Kết bạn</button><button type="button" onClick={() => window.location.href = "/nguoi-dung/" + person.id}>Xem hồ sơ</button></div>}
+              </div>)
             }
           </div>}
 
@@ -257,7 +262,7 @@ export function DirectMessagesPage() {
           </div>
           <div className="messages-people-list">
             {loading ? <p className="messages-muted">Đang tải…</p> :
-              shownFriends.length === 0 ? <p className="messages-muted">{query.trim() ? "Nhập đúng email ở trên để tìm người chưa là bạn." : "Chưa có bạn bè. Nhập đúng email để tìm người."}</p> :
+              shownFriends.length === 0 ? <p className="messages-muted">{query.trim() ? "Nhập tên hoặc email để tìm người chưa là bạn." : "Chưa có bạn bè. Nhập đúng email để tìm người."}</p> :
               shownFriends.map(person => <button type="button" key={person.id} className={selected?.id === person.id ? "message-person active" : "message-person"} onClick={() => void openConversation(person)}>
                 <span className="community-avatar">{avatar(person)}</span><span><strong>{person.name}</strong><small>{person.email}</small></span><Icon name="arrow" size={13} />
               </button>)
