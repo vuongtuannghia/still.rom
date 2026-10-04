@@ -1,23 +1,20 @@
 import { db } from "@/db";
-import { accounts, friendRequests, friendships } from "@/db/schema";
+import { accounts, friendRequests, friendships, notifications } from "@/db/schema";
 import { and, asc, desc, eq, or } from "drizzle-orm";
 import { ApiError, apiError, json, readBody } from "@/lib/server-api";
 import { requireAccount } from "@/lib/community-auth";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const current = await requireAccount(new Request("https://still-room.local/"));
+    const current = await requireAccount(request);
     const friendRows = await db.select({
       id: accounts.id, name: accounts.name, email: accounts.email, picture: accounts.picture,
       friendshipId: friendships.id, createdAt: friendships.createdAt,
     }).from(friendships)
       .innerJoin(accounts, or(eq(accounts.id, friendships.accountAId), eq(accounts.id, friendships.accountBId)))
-      .where(and(
-        or(eq(friendships.accountAId, current.id), eq(friendships.accountBId, current.id)),
-        // The OR join above includes both ends; exclude the current account below in memory.
-      ))
+.where(or(eq(friendships.accountAId, current.id), eq(friendships.accountBId, current.id)))
       .orderBy(asc(accounts.name));
 
     const friends = friendRows
