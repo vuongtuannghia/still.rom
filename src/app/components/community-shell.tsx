@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 import { AccountControl } from "./account-control";
 import { Icon } from "../icons";
 
-type Section = "home" | "study" | "forum";
+type Section = "home" | "study" | "forum" | "messages";
 
 export function CommunityShell({ active, title, eyebrow, description, children }: {
   active: Section; title: string; eyebrow: string; description: string; children: ReactNode;
