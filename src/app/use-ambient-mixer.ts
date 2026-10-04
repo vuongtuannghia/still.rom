@@ -78,7 +78,7 @@ export function useAmbientMixer(workspaceId: string | null) {
     filter.type = "lowpass";
     const cutoff: Record<SoundId, number> = {
       lofi: 7000, rain: 6500, roof: 6000, thunder: 3200, ocean: 6500, river: 7000, wind: 5600,
-      forest: 6000, birds: 5600, fireplace: 5600, cafe: 5600, keyboard: 5200, chimes: 5600, purr: 4000,
+      forest: 6000, fireplace: 5600, cafe: 5600, keyboard: 5200, chimes: 5600, purr: 4000,
       "forest-night": 5600, waterfall: 7000, "storm-rain": 5000, "mountain-stream": 7000,
       white: 5200, pink: 5800, brown: 3600,
     };
