@@ -68,24 +68,29 @@ export async function GET(_: Request, context: { params: Promise<{ userId: strin
         .where(and(eq(accountBlocks.blockerId, viewer), eq(accountBlocks.blockedId, userId))).limit(1);
       const [blockedYou] = await db.select({ id: accountBlocks.id }).from(accountBlocks)
         .where(and(eq(accountBlocks.blockerId, userId), eq(accountBlocks.blockedId, viewer))).limit(1);
-      if (blockedByMe || blockedYou) relationship = "blocked";
-      const [a, b] = orderedAccountPair(viewer, userId);
-      const [friend] = await db.select({ id: friendships.id }).from(friendships)
-        .where(and(eq(friendships.accountAId, a), eq(friendships.accountBId, b))).limit(1);
-      if (friend) relationship = "friend";
-      else {
-        const [outgoing] = await db.select({ id: friendRequests.id }).from(friendRequests)
-          .where(and(eq(friendRequests.senderId, viewer), eq(friendRequests.recipientId, userId), eq(friendRequests.status, "pending"))).limit(1);
-        if (outgoing) {
-          relationship = "outgoing";
-          relationshipRequestId = outgoing.id;
-        }
-        else {
-          const [incoming] = await db.select({ id: friendRequests.id }).from(friendRequests)
-            .where(and(eq(friendRequests.senderId, userId), eq(friendRequests.recipientId, viewer), eq(friendRequests.status, "pending"))).limit(1);
-          if (incoming) {
-            relationship = "incoming";
-            relationshipRequestId = incoming.id;
+
+      if (blockedByMe || blockedYou) {
+        relationship = "blocked";
+      } else {
+        const [a, b] = orderedAccountPair(viewer, userId);
+        const [friend] = await db.select({ id: friendships.id }).from(friendships)
+          .where(and(eq(friendships.accountAId, a), eq(friendships.accountBId, b))).limit(1);
+
+        if (friend) {
+          relationship = "friend";
+        } else {
+          const [outgoing] = await db.select({ id: friendRequests.id }).from(friendRequests)
+            .where(and(eq(friendRequests.senderId, viewer), eq(friendRequests.recipientId, userId), eq(friendRequests.status, "pending"))).limit(1);
+          if (outgoing) {
+            relationship = "outgoing";
+            relationshipRequestId = outgoing.id;
+          } else {
+            const [incoming] = await db.select({ id: friendRequests.id }).from(friendRequests)
+              .where(and(eq(friendRequests.senderId, userId), eq(friendRequests.recipientId, viewer), eq(friendRequests.status, "pending"))).limit(1);
+            if (incoming) {
+              relationship = "incoming";
+              relationshipRequestId = incoming.id;
+            }
           }
         }
       }
