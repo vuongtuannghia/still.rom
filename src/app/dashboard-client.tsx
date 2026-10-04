@@ -28,6 +28,7 @@ const NAV_ITEMS = [
   { id: "study-room", title: "Học chung", icon: "radio", widget: null },
   { id: "forum", title: "Diễn đàn", icon: "book", widget: null },
   { id: "messages", title: "Tin nhắn", icon: "arrow", widget: null },
+  { id: "profile", title: "Trang cá nhân", icon: "user", widget: null },
   { id: "analytics", title: "Thống kê", icon: "chart", widget: "chart" },
   { id: "habits", title: "Thói quen", icon: "habit", widget: "habits" },
   { id: "tasks", title: "Nhiệm vụ", icon: "tasks", widget: "tasks" },
@@ -250,6 +251,14 @@ export default function DashboardClient() {
     if (id === "study-room") { window.location.href = "/hoc-chung"; return; }
     if (id === "forum") { window.location.href = "/dien-dan"; return; }
     if (id === "messages") { window.location.href = "/tin-nhan"; return; }
+    if (id === "profile") {
+      if (data?.account?.id) {
+        window.location.href = "/nguoi-dung/" + encodeURIComponent(data.account.id);
+      } else {
+        setToast({ id: ++noticeIndex.current, text: "Đăng nhập Google để mở trang cá nhân.", error: false });
+      }
+      return;
+    }
     setActiveNav(id);
     document.getElementById(id)?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
   }
