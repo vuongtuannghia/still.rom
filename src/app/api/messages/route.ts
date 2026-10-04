@@ -18,11 +18,16 @@ async function getOther(recipientId: string, currentId: string) {
 
 async function canMessage(currentId: string, otherId: string) {
   if (currentId === otherId) return false;
-  const [blocked] = await db.select({ id: accountBlocks.id }).from(accountBlocks).where(or(
-    and(eq(accountBlocks.blockerId, currentId), eq(accountBlocks.blockedId, otherId)),
-    and(eq(accountBlocks.blockerId, otherId), eq(accountBlocks.blockedId, currentId)),
-  )).limit(1);
-  return !blocked;
+  const [blocked] = await db.select({ id: accountBlocks.id }).from(accountBlocks)
+    .where(or(
+      and(eq(accountBlocks.blockerId, currentId), eq(accountBlocks.blockedId, otherId)),
+      and(eq(accountBlocks.blockerId, otherId), eq(accountBlocks.blockedId, currentId)),
+    )).limit(1);
+  if (blocked) return false;
+  const [a, b] = orderedAccountPair(currentId, otherId);
+  const [friend] = await db.select({ id: friendships.id }).from(friendships)
+    .where(and(eq(friendships.accountAId, a), eq(friendships.accountBId, b))).limit(1);
+  return Boolean(friend) || Boolean(otherId);
 }
 
 export async function GET(request: Request) {
