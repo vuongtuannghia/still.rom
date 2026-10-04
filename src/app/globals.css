@@ -514,12 +514,12 @@ section[id] { scroll-margin-top: 28px; }
 
 /* Reference video layout: compact rail, metrics first, study-room canvas. */
 @media (min-width: 761px) {
-  .sidebar { width: 170px; padding: 24px 12px 16px; }
-  .main-shell { margin-left: 170px; padding-inline: 30px; }
+  .sidebar { width: 200px; padding: 24px 13px 16px; }
+  .main-shell { margin-left: 200px; padding-inline: 30px; }
   .page-content { max-width: 1390px; padding-top: 28px; }
   .workspace-label { margin: 23px 0 21px; padding: 9px 7px; }
-  .workspace-label strong { font-size: 10px; }
-  .workspace-label > div > span { font-size: 9px; }
+  .workspace-label strong { font-size: 10px; white-space: normal; overflow-wrap: anywhere; line-height: 1.25; }
+  .workspace-label > div > span { font-size: 9px; line-height: 1.35; overflow-wrap: anywhere; }
   .nav-link { height: 37px; gap: 8px; padding-inline: 8px; }
   .nav-link > span { font-size: 11px; }
   .nav-link > svg { width: 16px; height: 16px; }
