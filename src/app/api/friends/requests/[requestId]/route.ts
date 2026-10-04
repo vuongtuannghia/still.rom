@@ -58,3 +58,23 @@ export async function PATCH(request: Request, context: { params: Promise<{ reque
     return json({ ok: true, status: "accepted" });
   } catch (error) { return apiError(error); }
 }
+
+
+export async function DELETE(request: Request, context: { params: Promise<{ requestId: string }> }) {
+  try {
+    const current = await requireAccount(request);
+    const requestId = positiveId((await context.params).requestId);
+    const [row] = await db.select({ id: friendRequests.id }).from(friendRequests)
+      .where(and(
+        eq(friendRequests.id, requestId),
+        eq(friendRequests.senderId, current.id),
+        eq(friendRequests.status, "pending"),
+      )).limit(1);
+    if (!row) throw new ApiError(404, "Lời mời không còn chờ.");
+    await db.update(friendRequests).set({ status: "cancelled", respondedAt: new Date() })
+      .where(eq(friendRequests.id, requestId));
+    return json({ ok: true, status: "cancelled" });
+  } catch (error) {
+    return apiError(error);
+  }
+}
