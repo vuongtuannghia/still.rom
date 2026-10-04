@@ -260,3 +260,20 @@
 .profile-friend-card{display:flex;align-items:center;gap:9px}
 .profile-friend-info{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;flex:1;border:0;background:transparent;text-align:left;cursor:pointer}
 .profile-friend-info>span{display:flex;min-width:0;flex-direction:column;gap:3px}.profile-friend-info strong{font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.profile-friend-info small{color:#92928b;font-size:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Click any community avatar: profile + private-message actions */
+.avatar-menu-wrap{position:relative;display:inline-flex;align-items:center;flex:0 0 auto;z-index:20}
+.profile-avatar-menu-button{display:grid;place-items:center;padding:0;border:1px solid #d7d6cf;border-radius:50%;background:#ecece7;color:#222;overflow:hidden;cursor:pointer;font:inherit;font-weight:700;line-height:1}
+.profile-avatar-menu-button:hover{border-color:#222;box-shadow:0 0 0 3px #eeeeea}
+.profile-avatar-menu-button img{width:100%;height:100%;display:block;object-fit:cover}
+.avatar-tiny{width:28px;height:28px;font-size:8px}.avatar-small{width:34px;height:34px;font-size:9px}.avatar-normal{width:42px;height:42px;font-size:11px}.avatar-large{width:58px;height:58px;font-size:15px}
+.avatar-menu-wrap.size-tiny .profile-avatar-menu-button{width:28px;height:28px}.avatar-menu-wrap.size-small .profile-avatar-menu-button{width:34px;height:34px}.avatar-menu-wrap.size-normal .profile-avatar-menu-button{width:42px;height:42px}.avatar-menu-wrap.size-large .profile-avatar-menu-button{width:58px;height:58px}
+.avatar-action-popover{position:absolute;top:calc(100% + 7px);left:0;z-index:120;width:188px;padding:7px;border:1px solid #d2d1ca;border-radius:11px;background:#fff;box-shadow:0 18px 42px rgba(0,0,0,.15)}
+.avatar-action-popover strong{display:block;max-width:172px;padding:6px 8px 8px;border-bottom:1px solid #e8e7e1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#222;font-size:10px}
+.avatar-action-popover>button{display:flex;align-items:center;gap:7px;width:100%;padding:9px 8px;border:0;border-radius:7px;background:transparent;color:#494944;font-size:9px;text-align:left;cursor:pointer}
+.avatar-action-popover>button:hover{background:#f0f0eb;color:#111}
+.size-small .avatar-action-popover,.size-tiny .avatar-action-popover{left:-3px}.size-normal .avatar-action-popover{left:-2px}.size-large .avatar-action-popover{left:-6px}
+.friend-search-row .avatar-menu-wrap,.mini-request-row .avatar-menu-wrap,.message-row .avatar-menu-wrap,.study-room-person .avatar-menu-wrap,.forum-post-top .avatar-menu-wrap,.comment-line .avatar-menu-wrap,.comment-item .avatar-menu-wrap{z-index:30}
+@media(max-width:600px){
+  .avatar-action-popover{width:175px}.avatar-action-popover>button{padding:10px 8px;font-size:9px}
+}
