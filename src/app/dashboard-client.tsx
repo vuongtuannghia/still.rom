@@ -278,9 +278,10 @@ export default function DashboardClient() {
     };
     const route = routes[id];
     if (route) {
-      const scene = data?.room.scenes.find((item) => item.id === data?.room.selectedId);
-      if (scene) {
-        const detail = { scene, loop: data.room.loop, muted: data.room.youtubeMuted };
+      const room = data?.room;
+      const scene = room?.scenes.find((item) => item.id === room.selectedId);
+      if (scene && room) {
+        const detail = { scene, loop: room.loop, muted: room.youtubeMuted };
         try { localStorage.setItem(PERSISTENT_YOUTUBE_KEY, JSON.stringify(detail)); } catch {}
         window.dispatchEvent(new CustomEvent("stillroom-youtube-handoff", { detail }));
       }
