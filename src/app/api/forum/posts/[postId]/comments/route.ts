@@ -32,11 +32,17 @@ export async function POST(request: Request, context: { params: Promise<{ postId
       parentId = value;
     }
     const [comment] = await db.insert(forumComments).values({ postId, accountId: account.id, parentId, body: body.body.trim() }).returning();
-    if (parentId) {
-      const [parent] = await db.select({ accountId: forumComments.accountId }).from(forumComments).where(eq(forumComments.id, parentId)).limit(1);
-      if (parent && parent.accountId !== account.id) {
-        await db.insert(notifications).values({ accountId: parent.accountId, actorId: account.id, type: "comment_reply", title: "Có người trả lời bạn", body: account.name + " đã trả lời bình luận của bạn." });
-      }
+    const targetAccountId = parentId
+      ? (await db.select({ accountId: forumComments.accountId }).from(forumComments).where(eq(forumComments.id, parentId)).limit(1))[0]?.accountId ?? null
+      : post.accountId;
+    if (targetAccountId && targetAccountId !== account.id) {
+      await db.insert(notifications).values({
+        accountId: targetAccountId,
+        actorId: account.id,
+        type: parentId ? "comment_reply" : "post_comment",
+        title: parentId ? "Có người trả lời bạn" : "Bài viết có bình luận mới",
+        body: parentId ? account.name + " đã trả lời bình luận của bạn." : account.name + " đã bình luận bài viết của bạn.",
+      });
     }
     return json({ comment: { ...comment, createdAt: comment.createdAt.toISOString(), authorId: account.id, authorName: account.name, authorEmail: account.email, authorPicture: account.picture } }, 201);
   } catch (error) { return apiError(error); }
