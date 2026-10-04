@@ -541,3 +541,18 @@ section[id] { scroll-margin-top: 28px; }
 .app-shell.with-page-backdrop .tasks-card,
 .app-shell.with-page-backdrop .ambient-card,
 .app-shell.with-page-backdrop .history-card { background: color-mix(in srgb,var(--surface) 95%,transparent); backdrop-filter: blur(9px); }
+
+
+/* Account UI is intentionally surfaced near the workspace selector. */
+.sidebar-account { margin: -15px 0 18px; }
+.sidebar-account .account-control { margin: 0; }
+.sidebar-account .account-sidebar-login { padding: 10px; }
+.sidebar-account .account-sidebar-login > div > span { font-size: 9px; line-height: 1.45; }
+.sidebar-account .account-google-small { min-height: 32px; }
+.sidebar-bottom { margin-top: 0; }
+
+/* Technical connection/sync messages stay out of the main dashboard. */
+.account-sync-banner,
+.workspace-access-bar {
+  display: none !important;
+}
