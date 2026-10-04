@@ -343,52 +343,95 @@ export default function DashboardClient() {
     finally { locks.current.delete("new-task"); setAddingTask(false); }
   }
   async function toggleTask(task: Task) {
-    const key = `task:${task.id}`; if (locks.current.has(key)) return;
-    locks.current.add(key); epoch.current += 1; setPendingTasks((current) => new Set(current).add(task.id));
+    const key = `task:${task.id}`;
+    if (locks.current.has(key)) return;
+    locks.current.add(key);
+    epoch.current += 1;
+    setPendingTasks((current) => new Set(current).add(task.id));
     try {
-      if (window.location.hostname.endsWith(".manus.computer")) {
-        setData((current) => current ? { ...current, tasks: current.tasks.map((item) => item.id === task.id ? { ...item, completed: !item.completed, completedAt: !item.completed ? new Date().toISOString() : null } : item) } : current); return;
-      }
       try {
-        const result = await requestJson<TaskTreeResult>(`/api/tasks/${task.id}`, { method: "PATCH", body: JSON.stringify({ completed: !task.completed }) });
+        const result = await requestJson<TaskTreeResult>(`/api/tasks/${task.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ completed: !task.completed }),
+        });
         applyTaskTree(result);
       } catch {
         setData((current) => current ? {
           ...current,
-          tasks: current.tasks.map((item) => item.id === task.id
-            ? { ...item, completed: !item.completed, completedAt: !item.completed ? new Date().toISOString() : null }
-            : item),
+          tasks: current.tasks.map((item) =>
+            item.id === task.id
+              ? { ...item, completed: !item.completed, completedAt: !item.completed ? new Date().toISOString() : null }
+              : item
+          ),
         } : current);
         notice("Đã cập nhật nhiệm vụ trên thiết bị này.");
       }
-    finally { locks.current.delete(key); setPendingTasks((current) => { const next = new Set(current); next.delete(task.id); return next; }); }
+    } finally {
+      locks.current.delete(key);
+      setPendingTasks((current) => {
+        const next = new Set(current);
+        next.delete(task.id);
+        return next;
+      });
+    }
   }
+
   function deleteEntity(kind: "task" | "habit", entity: Task | Habit) {
-    setConfirmation({ title: `Xóa ${kind === "habit" ? "thói quen" : "nhiệm vụ"}?`, description: kind === "habit" ? `“${entity.title}” và tất cả check-in của thói quen này sẽ bị xóa. Các phiên tập trung vẫn được giữ nguyên.` : `“${entity.title}” sẽ bị xóa khỏi danh sách. Lịch sử tập trung không bị ảnh hưởng.`, label: "Xóa mục này", danger: true,
+    setConfirmation({
+      title: `Xóa ${kind === "habit" ? "thói quen" : "nhiệm vụ"}?`,
+      description: kind === "habit"
+        ? `“${entity.title}” và tất cả check-in của thói quen này sẽ bị xóa. Các phiên tập trung vẫn được giữ nguyên.`
+        : `“${entity.title}” sẽ bị xóa khỏi danh sách. Lịch sử tập trung không bị ảnh hưởng.`,
+      label: "Xóa mục này",
+      danger: true,
       action: async () => {
-        const key = `${kind}:${entity.id}`; if (locks.current.has(key)) return;
-        locks.current.add(key); epoch.current += 1;
+        const key = `${kind}:${entity.id}`;
+        if (locks.current.has(key)) return;
+        locks.current.add(key);
+        epoch.current += 1;
         try {
-          if (!window.location.hostname.endsWith(".manus.computer")) await requestJson(`/api/${kind === "habit" ? "habits" : "tasks"}/${entity.id}`, { method: "DELETE" });
-          setData((current) => current ? kind === "task" ? { ...current, tasks: current.tasks.filter((item) => item.id !== entity.id), subtasks: current.subtasks.filter((item) => item.taskId !== entity.id) } : { ...current, habits: current.habits.filter((item) => item.id !== entity.id), checkIns: current.checkIns.filter((item) => item.habitId !== entity.id) } : current);
+          try {
+            if (!window.location.hostname.endsWith(".manus.computer")) {
+              await requestJson(`/api/${kind === "habit" ? "habits" : "tasks"}/${entity.id}`, { method: "DELETE" });
+            }
+          } catch {
+            // Local-first fallback below remains authoritative for this browser.
+          }
+          setData((current) => current
+            ? kind === "task"
+              ? {
+                  ...current,
+                  tasks: current.tasks.filter((item) => item.id !== entity.id),
+                  subtasks: current.subtasks.filter((item) => item.taskId !== entity.id),
+                }
+              : {
+                  ...current,
+                  habits: current.habits.filter((item) => item.id !== entity.id),
+                  checkIns: current.checkIns.filter((item) => item.habitId !== entity.id),
+                }
+            : current);
           if (kind === "task" && activeTaskId === entity.id) chooseTask(null);
           notice("Đã xóa mục bạn chọn.");
-        } finally { locks.current.delete(key); }
-      } });
+        } finally {
+          locks.current.delete(key);
+        }
+      },
+    });
   }
+
   async function checkHabit(habit: Habit, day: string, completed: boolean) {
-    const key = `${habit.id}|${day}`; const lock = `check:${key}`; if (locks.current.has(lock)) return;
-    locks.current.add(lock); epoch.current += 1; setPendingChecks((current) => new Set(current).add(key));
+    const key = `${habit.id}|${day}`;
+    const lock = `check:${key}`;
+    if (locks.current.has(lock)) return;
+    locks.current.add(lock);
+    epoch.current += 1;
+    setPendingChecks((current) => new Set(current).add(key));
     try {
-      if (window.location.hostname.endsWith(".manus.computer")) {
-        setData((current) => {
-          if (!current) return current;
-          const rest = current.checkIns.filter((item) => item.habitId !== habit.id || item.date !== day);
-          return { ...current, checkIns: completed ? [...rest, { habitId: habit.id, date: day }] : rest };
-        }); return;
-      }
       try {
-        const result = await requestJson<{ completed: boolean }>("/api/habit-check-ins", { method: "POST", body: JSON.stringify({ habitId: habit.id, date: day, completed }) });
+        const result = await requestJson<{ completed: boolean }>("/api/habit-check-ins", {
+          method: "POST",
+          body: JSON.stringify({ habitId: habit.id, date: day, completed }),
+        });
         setData((current) => {
           if (!current) return current;
           const rest = current.checkIns.filter((item) => item.habitId !== habit.id || item.date !== day);
@@ -402,8 +445,16 @@ export default function DashboardClient() {
         });
         notice("Đã lưu tiến độ thói quen trên thiết bị này.");
       }
-    finally { locks.current.delete(lock); setPendingChecks((current) => { const next = new Set(current); next.delete(key); return next; }); }
+    } finally {
+      locks.current.delete(lock);
+      setPendingChecks((current) => {
+        const next = new Set(current);
+        next.delete(key);
+        return next;
+      });
+    }
   }
+
   function exportCsv() {
     if (!data || !today) return;
     const rows = [["Ngày", "Tập trung (phút)", "Số phiên", "Thói quen hoàn thành", "Nhiệm vụ hoàn thành"]];
