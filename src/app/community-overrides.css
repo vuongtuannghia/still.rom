@@ -242,3 +242,7 @@
   .profile-cover{height:175px}.profile-avatar.xl{width:72px;height:72px}
   .profile-stats{margin-top:10px}.profile-composer{padding:11px}
 }
+
+/* Final profile polish */
+.profile-page{animation:profile-in .28s ease both}.profile-cover{box-shadow:0 15px 45px rgba(0,0,0,.06)}.profile-identity{background:linear-gradient(180deg,transparent 0,#f7f7f4 44px);padding-top:0}.profile-actions .button-primary,.profile-actions .button-secondary,.profile-block-button{min-height:34px}.profile-forum-card,.profile-post-card,.profile-side-card,.profile-composer,.profile-edit-panel{transition:border-color .16s ease,box-shadow .16s ease,transform .16s ease}.profile-forum-card:hover,.profile-post-card:hover{border-color:#c9c8c0;box-shadow:0 10px 28px rgba(0,0,0,.045);transform:translateY(-1px)}.profile-tabs{position:sticky;top:0;z-index:4;background:rgba(247,247,244,.92);backdrop-filter:blur(10px);padding-top:5px}.profile-post-image{background:#efefea;object-fit:contain;max-height:620px}.profile-friend-card{transition:.16s ease}.profile-friend-card:hover{border-color:#c9c8c0;transform:translateY(-1px);box-shadow:0 9px 24px rgba(0,0,0,.04)}.profile-role{letter-spacing:.12em}.profile-block-button{color:#777}
+@keyframes profile-in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
