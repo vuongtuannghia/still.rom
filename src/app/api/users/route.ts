@@ -1,4 +1,4 @@
-import { asc, ilike, or, ne } from "drizzle-orm";
+import { and, asc, eq, ilike, or, ne } from "drizzle-orm";
 import { db } from "@/db";
 import { accounts } from "@/db/schema";
 import { apiError, json } from "@/lib/server-api";
