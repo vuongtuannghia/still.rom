@@ -202,3 +202,23 @@
 
 .profile-top-actions{display:flex;justify-content:space-between;align-items:center;margin:0 0 10px}.profile-back-btn,.profile-share-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 9px;border:1px solid #deddd7;border-radius:8px;background:#fff;color:#70706a;font-size:8px;cursor:pointer}.profile-share-btn{color:#333}
 @media(max-width:520px){.profile-top-actions{padding-inline:2px}}
+
+/* Private message polish */
+.message-person{display:flex!important;align-items:center!important;gap:4px!important;padding:3px 0!important;border-bottom:1px solid #ecebe5!important;background:transparent!important}
+.message-person.active{background:#f2f2ed!important;border-radius:8px}
+.message-person-main{display:flex;align-items:center;gap:8px;min-width:0;flex:1;padding:7px 6px;border:0;background:transparent;text-align:left;cursor:pointer}
+.message-person-main>span:nth-child(2){display:flex;min-width:0;flex:1;flex-direction:column;gap:3px}
+.message-person-main strong{font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.message-person-main small{font-size:7px;color:#8a8a84;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.message-person-profile{display:grid;width:28px;height:28px;place-items:center;flex:0 0 auto;margin-right:3px;border:1px solid #deddd7;border-radius:7px;background:#fff;color:#777;text-decoration:none}.message-person-profile:hover{color:#222;background:#f1f1ec}
+.chat-head-actions{display:flex;align-items:center;gap:5px;flex-wrap:wrap}.chat-profile-btn{width:30px!important;height:30px!important}.chat-block-btn{padding:6px 8px;border:1px solid #deddd7;border-radius:7px;background:#fff;color:#777;font-size:8px;cursor:pointer}.chat-block-btn:hover{color:#222;border-color:#bdbcb6}
+.messages-blocked-note{margin:0;padding:13px;border-top:1px solid #deddd7;background:#f1f1ec;color:#777;font-size:9px;text-align:center}.messages-blocked-note a{margin-left:4px;color:#222}
+.pending-compact{margin:10px 13px 4px;border:1px solid #e0dfd8;border-radius:9px;background:#f7f7f3;overflow:hidden}.pending-compact-toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:9px 10px;border:0;background:transparent;text-align:left;cursor:pointer}.pending-compact-toggle>span:first-child{display:flex;min-width:0;flex-direction:column;gap:3px}.pending-compact-toggle strong{font-size:9px}.pending-compact-meta{color:#999;font-size:7px;white-space:nowrap}.pending-compact-list{padding:0 6px 6px;border-top:1px solid #e5e4de}.pending-person{display:flex;align-items:center;gap:7px;width:100%;padding:7px 4px;border:0;border-bottom:1px solid #e9e8e2;background:transparent;text-align:left;cursor:pointer}.pending-person:last-child{border-bottom:0}.pending-person>span:nth-child(2){min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:8px}.pending-person b{display:grid;min-width:16px;height:16px;place-items:center;border-radius:999px;background:#222;color:#fff;font-size:7px}.pending-person.active{background:#ecece6;border-radius:6px}
+.relationship-action{padding:5px 7px;border:1px solid #dddcd5;border-radius:6px;background:#fff;color:#666;font-size:7px;cursor:pointer}.relationship-action:hover{color:#222;background:#f2f2ed}
+.friend-outgoing-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0}.friend-outgoing-row button{padding:4px 6px;border:1px solid #dddcd5;border-radius:6px;background:#fff;color:#777;font-size:7px;cursor:pointer}.friend-outgoing-row button:hover{color:#222}
+.lookup-profile{display:flex;align-items:center;gap:8px;min-width:0;flex:1;padding:0;border:0;background:transparent;text-align:left;cursor:pointer}.lookup-profile>span:last-child{display:flex;min-width:0;flex-direction:column;gap:3px}.lookup-profile strong{font-size:9px}.lookup-profile small{font-size:7px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.profile-block-button{padding:7px 9px;border:1px solid #d7d6cf;border-radius:8px;background:#fff;color:#777;font-size:8px;cursor:pointer}.profile-block-button:hover{color:#222;background:#f2f2ed}
+.profile-top-actions{gap:7px}.profile-back-btn svg,.profile-share-btn svg{opacity:.75}
+@media(max-width:600px){
+  .chat-head-actions{gap:4px}.chat-block-btn{padding:6px}.message-person-profile{width:25px;height:25px}.pending-compact{margin-inline:10px}
+  .profile-identity{padding-inline:5px}.profile-stats>div{padding:11px 12px}
+}
