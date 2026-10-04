@@ -45,6 +45,7 @@ export function DirectMessagesPage() {
   const [sending, setSending] = useState(false);
   const [notice, setNotice] = useState("");
   const [blockStatus, setBlockStatus] = useState<"none" | "blocked_by_me" | "blocked_you">("none");
+  const [pendingOpen, setPendingOpen] = useState(false);
 
   async function loadStatus() {
     try {
@@ -316,13 +317,15 @@ export function DirectMessagesPage() {
                 {thread.unreadCount > 0 && <span className="message-unread">{thread.unreadCount}</span>}
               </button>)
             }
-            <div className="pending-compact">
-              <div><span className="small-label">TIN NHẮN CHỜ</span><strong>{requestThreads.length ? requestThreads.length + " cuộc trò chuyện" : "Trống"}</strong></div>
-              {requestThreads.length > 0 && <div className="pending-compact-list">
-                {requestThreads.slice(0, 3).map(thread => <button type="button" key={thread.threadId} className={selected?.id === thread.other.id ? "pending-person active" : "pending-person"} onClick={() => void openConversation({ ...thread.other, relationship: "conversation" })}>
+            <div className={pendingOpen ? "pending-compact open" : "pending-compact"}>
+              <button type="button" className="pending-compact-toggle" onClick={() => setPendingOpen(current => !current)}>
+                <span><span className="small-label">TIN NHẮN CHỜ</span><strong>{requestThreads.length ? requestThreads.length + " cuộc trò chuyện" : "Trống"}</strong></span>
+                <span className="pending-compact-meta">{requestThreads.reduce((sum, item) => sum + item.unreadCount, 0) ? requestThreads.reduce((sum, item) => sum + item.unreadCount, 0) + " mới" : ""} {requestThreads.length ? (pendingOpen ? "⌃" : "⌄") : ""}</span>
+              </button>
+              {pendingOpen && requestThreads.length > 0 && <div className="pending-compact-list">
+                {requestThreads.map(thread => <button type="button" key={thread.threadId} className={selected?.id === thread.other.id ? "pending-person active" : "pending-person"} onClick={() => void openConversation({ ...thread.other, relationship: "conversation" })}>
                   <span className="community-avatar small">{avatar(thread.other)}</span><span>{thread.other.name}</span>{thread.unreadCount > 0 && <b>{thread.unreadCount}</b>}
                 </button>)}
-                {requestThreads.length > 3 && <span className="pending-more">+{requestThreads.length - 3}</span>}
               </div>}
             </div>
           </div>
