@@ -7,8 +7,8 @@ import { isRecord } from "@/lib/focus-domain";
 type Channel = { source: AudioBufferSourceNode; gain: GainNode };
 type Engine = { context: AudioContext; master: GainNode; channels: Map<SoundId, Channel>; buffers: Map<SoundId, AudioBuffer>; pending: Map<SoundId, Promise<void>>; controller: AbortController };
 export function useAmbientMixer(workspaceId: string | null) {
-  const [levels, setLevelsState] = useState<MixerLevels>(() => ({ ...emptyLevels(), lofi: 40 }));
-  const [master, setMasterState] = useState(65);
+  const [levels, setLevelsState] = useState<MixerLevels>(() => ({ ...emptyLevels(), lofi: 18 }));
+  const [master, setMasterState] = useState(60);
   const [playing, setPlaying] = useState(false);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState<SoundId[]>([]);
@@ -25,8 +25,8 @@ export function useAmbientMixer(workspaceId: string | null) {
   useEffect(() => {
     if (!workspaceId) return;
     mounted.current = true;
-    let restored = { ...emptyLevels(), lofi: 40 };
-    let restoredMaster = 65;
+    let restored = { ...emptyLevels(), lofi: 18 };
+    let restoredMaster = 60;
     try {
       const value: unknown = JSON.parse(localStorage.getItem(key) ?? "null");
       if (isRecord(value) && isRecord(value.levels)) {
@@ -34,7 +34,7 @@ export function useAmbientMixer(workspaceId: string | null) {
         for (const sound of SOUND_CATALOG) {
           const level = value.levels[sound.id]; restored[sound.id] = typeof level === "number" && Number.isFinite(level) ? Math.max(0, Math.min(100, Math.round(level))) : 0;
         }
-        restoredMaster = typeof value.master === "number" && Number.isFinite(value.master) ? Math.max(0, Math.min(100, Math.round(value.master))) : 65;
+        restoredMaster = typeof value.master === "number" && Number.isFinite(value.master) ? Math.max(0, Math.min(100, Math.round(value.master))) : 60;
       }
     } catch { /* Mixer controls stay available without storage. */ }
     latest.current = { levels: restored, master: restoredMaster, playing: false };
@@ -50,7 +50,9 @@ export function useAmbientMixer(workspaceId: string | null) {
   function persist() { if (key) try { localStorage.setItem(key, JSON.stringify({ levels: latest.current.levels, master: latest.current.master })); } catch { /* Optional settings persistence. */ } }
   function gainFor(id: SoundId) {
     const count = Object.values(latest.current.levels).filter((level) => level > 0).length;
-    return Math.pow(latest.current.levels[id] / 100, 1.2) * 0.95 / Math.sqrt(Math.max(1, count / 3));
+    const raw = Math.pow(latest.current.levels[id] / 100, 1.05) * 0.22;
+    // Keep the sum of several ambient layers gentle and leave headroom for transients.
+    return raw / Math.sqrt(Math.max(1, count / 2.2));
   }
   function startChannel(active: Engine, id: SoundId) {
     if (engine.current !== active || !latest.current.playing || latest.current.levels[id] <= 0 || active.channels.has(id)) return;
@@ -74,7 +76,7 @@ export function useAmbientMixer(workspaceId: string | null) {
         const response = await fetch(definition.recording.src, { signal: AbortSignal.any([active.controller.signal, AbortSignal.timeout(25000)]), cache: "force-cache" });
         if (!response.ok) throw new Error("Tải bản thu chưa thành công. Kiểm tra mạng rồi thử lại.");
         const decoded = await active.context.decodeAudioData(await response.arrayBuffer());
-        buffer = prepareLoop(active.context, decoded);
+        buffer = decoded;
       } else buffer = synthesizeSound(active.context, id);
       if (engine.current !== active || !mounted.current) return;
       active.buffers.set(id, buffer); startChannel(active, id);
@@ -108,7 +110,11 @@ export function useAmbientMixer(workspaceId: string | null) {
       if (!engine.current) {
         const context = new Constructor({ sampleRate: 32000, latencyHint: "playback" });
         const compressor = context.createDynamicsCompressor();
-        compressor.threshold.value = -12; compressor.knee.value = 15; compressor.ratio.value = 5; compressor.attack.value = 0.015; compressor.release.value = 0.3;
+        compressor.threshold.value = -18;
+        compressor.knee.value = 24;
+        compressor.ratio.value = 2.2;
+        compressor.attack.value = 0.035;
+        compressor.release.value = 0.45;
         const masterGain = context.createGain(); masterGain.gain.value = 0; masterGain.connect(compressor).connect(context.destination);
         engine.current = { context, master: masterGain, channels: new Map(), buffers: new Map(), pending: new Map(), controller: new AbortController() };
       }
@@ -135,7 +141,7 @@ export function useAmbientMixer(workspaceId: string | null) {
   }
   function togglePlayback() {
     if (latest.current.playing) { pause(); return; }
-    if (!Object.values(latest.current.levels).some((level) => level > 0)) updateLevels({ ...latest.current.levels, rain: 40 });
+    if (!Object.values(latest.current.levels).some((level) => level > 0)) updateLevels({ ...latest.current.levels, rain: 32 });
     void play();
   }
   function toggleChannel(id: SoundId) {
