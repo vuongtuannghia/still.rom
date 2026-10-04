@@ -19,6 +19,7 @@ export async function GET() {
       creatorName: accounts.name,
       creatorEmail: accounts.email,
       creatorPicture: accounts.customPicture,
+      creatorPicture: accounts.customPicture,
     }).from(sharedStudyRooms)
       .innerJoin(accounts, eq(accounts.id, sharedStudyRooms.accountId))
       .orderBy(desc(sharedStudyRooms.pinned), desc(sharedStudyRooms.createdAt))
