@@ -102,6 +102,15 @@ export async function setAccessCookie(request: Request, token: string, maxAge = 
   (await cookies()).set(COOKIE, token, { httpOnly: true, sameSite: secure ? "none" : "lax", path: "/", maxAge, secure, partitioned: secure });
 }
 export async function bootstrapWorkspace(request: Request, browserToken: unknown) {
+  // Once a Google account session exists, the account workspace is authoritative.
+  // This prevents the client from re-establishing a guest workspace after login,
+  // which would otherwise block cross-device snapshot restoration.
+  const accountToken = (await cookies()).get(ACCOUNT_COOKIE)?.value;
+  if (validAccessToken(accountToken)) {
+    const accountSession = await findAccountSession(accountToken);
+    if (accountSession?.active) return accountSession.workspace;
+    if (accountSession && !accountSession.active) throw new ApiError(401, "Phiên tài khoản đã hết hạn. Vui lòng đăng nhập lại.");
+  }
   if (!validAccessToken(browserToken)) throw new ApiError(400, "Mã truy cập trình duyệt không hợp lệ.");
   const known = await findWorkspace(browserToken);
   if (known) { await setAccessCookie(request, browserToken); return known; }
