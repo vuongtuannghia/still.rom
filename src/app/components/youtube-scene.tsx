@@ -171,7 +171,7 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
       try { player.current?.destroy(); } catch { /* Native frame may already be gone. */ }
       player.current = null; container.replaceChildren();
     };
-  }, [scene.videoId, scene.playlistId, scene.startSeconds, scene.title, loop, standard, progressKey, ambientView]);
+  }, [scene.videoId, scene.playlistId, scene.startSeconds, scene.title, loop, standard, progressKey]);
 
   function playPause() {
     if (ready && player.current) {
