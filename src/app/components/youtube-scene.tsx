@@ -34,8 +34,8 @@ const errorMessages: Record<number, string> = {
   153: "YouTube chưa nhận được nguồn trang trong khung preview. Thử trình phát tiêu chuẩn hoặc mở website trong tab riêng.",
 };
 
-type Props = { scene: YouTubeScene; loop: boolean; muted: boolean; onMuted: (value: boolean) => void; onFallback: () => void; onPause?: () => void; onVideoChange?: (videoId: string) => void; ambientView?: boolean; edgeToEdge?: boolean; showControls?: boolean };
-function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVideoChange, ambientView = false, edgeToEdge = false, showControls = false, standard, onRetry, onStandard }: Props & { standard: boolean; onRetry: () => void; onStandard: () => void }) {
+type Props = { scene: YouTubeScene; loop: boolean; muted: boolean; onMuted: (value: boolean) => void; onFallback: () => void; onPause?: () => void; onVideoChange?: (videoId: string) => void; ambientView?: boolean; edgeToEdge?: boolean; showControls?: boolean; sessionRole?: "preview" | "room" };
+function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVideoChange, ambientView = false, edgeToEdge = false, showControls = false, sessionRole = "room", standard, onRetry, onStandard }: Props & { standard: boolean; onRetry: () => void; onStandard: () => void }) {
   const root = useRef<HTMLDivElement>(null);
   const info = useRef<HTMLDivElement>(null);
   const host = useRef<HTMLDivElement>(null);
@@ -99,8 +99,21 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
   useEffect(() => {
     const container = host.current; if (!container) return;
     let disposed = false, becameReady = false, hasPlayed = false;
+    const channelName = `stillroom-youtube-${scene.videoId || scene.playlistId || scene.id}`;
+    const channel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(channelName) : null;
     container.replaceChildren();
     const timeout = window.setTimeout(() => { if (!disposed && !becameReady) setApiNotice("YouTube đang tải chậm. Bạn có thể nhấn ▶ trực tiếp trong video phía trên."); }, 11000);
+    channel?.addEventListener("message", (event) => {
+      if (disposed) return;
+      const message = event.data as { type?: string; role?: string; progress?: number } | null;
+      if (!message) return;
+      if (message.type === "claim" && message.role === "room" && sessionRole === "preview" && player.current) {
+        try { rememberProgress(); player.current.pauseVideo(); } catch {}
+      }
+      if (message.type === "progress" && typeof message.progress === "number" && sessionRole === "room") {
+        try { sessionStorage.setItem(progressKey, String(Math.floor(message.progress))); } catch {}
+      }
+    });
     const userGesture = () => {
       if (disposed || userMuted.current || audioUnlocked.current || !player.current || !becameReady) return;
       try {
@@ -117,7 +130,13 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
       try { const videoId = target.getVideoData?.().video_id; if (isVideoId(videoId)) preferences.current.onVideoChange?.(videoId); } catch { /* Playlist may not expose an id immediately. */ }
     }
     function rememberProgress() {
-      try { const current = player.current?.getCurrentTime?.() ?? 0; if (Number.isFinite(current) && current >= 0) sessionStorage.setItem(progressKey, String(Math.floor(current))); } catch { /* Storage is optional. */ }
+      try {
+        const current = player.current?.getCurrentTime?.() ?? 0;
+        if (Number.isFinite(current) && current >= 0) {
+          sessionStorage.setItem(progressKey, String(Math.floor(current)));
+          channel?.postMessage({ type: "progress", role: sessionRole, progress: current });
+        }
+      } catch { /* Storage is optional. */ }
     }
     let progressTimer = 0;
     void loadYouTubeAPI().then((api) => {
@@ -129,6 +148,7 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
         onReady: (event) => {
           if (disposed) return;
           becameReady = true; window.clearTimeout(timeout); setReady(true); setApiNotice(""); reportVideo(event.target);
+          channel?.postMessage({ type: "claim", role: sessionRole });
           event.target.mute();
           const resumeAt = Math.max(savedProgress.current, scene.startSeconds);
           if (resumeAt > 0 && event.target.seekTo) event.target.seekTo(resumeAt, true);
@@ -159,8 +179,9 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
       disposed = true; window.clearTimeout(timeout);
       try { player.current?.destroy(); } catch { /* Native frame may already be gone. */ }
       player.current = null; container.replaceChildren();
+      channel?.close();
     };
-  }, [scene.videoId, scene.playlistId, scene.startSeconds, scene.title, loop, standard, progressKey]);
+  }, [scene.videoId, scene.playlistId, scene.startSeconds, scene.title, loop, standard, progressKey, sessionRole]);
 
   function playPause() {
     if (ready && player.current) {
