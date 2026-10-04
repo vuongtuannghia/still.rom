@@ -4,7 +4,7 @@ import {
   forumComments, forumPosts, meetRoomComments, notifications,
   profilePostComments, profilePosts, sharedStudyRooms,
 } from "@/db/schema";
-import { and, eq, or } from "drizzle-orm";
+import { and, eq, isNotNull, or } from "drizzle-orm";
 import { assertAdmin, assertRootAdmin } from "@/lib/admin";
 import { apiError, ApiError, json, positiveId, readBody } from "@/lib/server-api";
 import { requireAccount } from "@/lib/community-auth";
