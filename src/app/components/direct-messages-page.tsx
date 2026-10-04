@@ -43,7 +43,7 @@ function initial(name: string) {
   return name.trim().split(/\s+/).at(-1)?.[0]?.toUpperCase() ?? "U";
 }
 
-export function DirectMessagesPage({ initialUserId }: { initialUserId?: string } = {}) {
+export function DirectMessagesPage() {
   const router = useRouter();
   const [account, setAccount] = useState<DashboardData["account"]>(null);
   const [friends, setFriends] = useState<Person[]>([]);
@@ -106,25 +106,6 @@ export function DirectMessagesPage({ initialUserId }: { initialUserId?: string }
 
   useEffect(() => { void loadStatus(); }, []);
 
-  useEffect(() => {
-    if (!account || !initialUserId) return;
-    void (async () => {
-      try {
-        const response = await fetch("/api/users/" + encodeURIComponent(initialUserId), { cache: "no-store", credentials: "same-origin" });
-        if (!response.ok) return;
-        const payload = await response.json() as { profile: { id: string; name: string; email: string | null; picture: string | null }; relationship?: Relationship };
-        if (payload.profile) {
-          await openConversation({
-            id: payload.profile.id,
-            name: payload.profile.name,
-            email: payload.profile.email ?? "",
-            picture: payload.profile.picture,
-            relationship: payload.relationship ?? "lookup",
-          });
-        }
-      } catch {}
-    })();
-  }, [account?.id, initialUserId]);
   useEffect(() => {
     if (!account) return;
     void loadFriends();
@@ -217,7 +198,7 @@ export function DirectMessagesPage({ initialUserId }: { initialUserId?: string }
             <section className="message-list-section">
               <div className="message-list-title"><div><span className="small-label">TIN NHẮN CHÍNH</span><h3>Bạn bè</h3></div><span>{primaryThreads.length}</span></div>
               {primaryThreads.length === 0 ? <div className="message-list-empty">Chưa có cuộc trò chuyện với bạn bè.</div> :
-                primaryThreads.map(thread => <div className="message-row" role="button" tabIndex={0} key={thread.threadId} onClick={() => router.push("/tin-nhan?user=" + encodeURIComponent(thread.other.id) + (thread.other.email ? "&email=" + encodeURIComponent(thread.other.email) : ""))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") router.push("/tin-nhan?user=" + encodeURIComponent(thread.other.id) + (thread.other.email ? "&email=" + encodeURIComponent(thread.other.email) : "")); }}>
+                primaryThreads.map(thread => <div className="message-row" role="button" tabIndex={0} key={thread.threadId} onClick={() => router.push("/tin-nhan/" + encodeURIComponent(thread.other.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") router.push("/tin-nhan/" + encodeURIComponent(thread.other.id)); }}>
                   <ProfileActionMenu person={{ id: thread.other.id, name: thread.other.name, picture: thread.other.picture }}><span className="community-avatar">{thread.other.picture ? <img src={thread.other.picture} alt="" /> : initial(thread.other.name)}</span></ProfileActionMenu>
                   <span className="message-row-copy"><strong>{thread.other.name}</strong><small>{thread.lastBody}</small></span>
                   <span className="message-row-meta"><span>{timeLabel(thread.lastCreatedAt)}</span>{thread.unreadCount > 0 && <b>{thread.unreadCount}</b>}</span>
@@ -228,7 +209,7 @@ export function DirectMessagesPage({ initialUserId }: { initialUserId?: string }
             <section className="message-list-section pending-message-section">
               <div className="message-list-title"><div><span className="small-label">TIN NHẮN CHỜ</span><h3>Người lạ</h3></div><span>{pendingThreads.length}</span></div>
               {pendingThreads.length === 0 ? <div className="message-list-empty">Không có tin nhắn chờ.</div> :
-                pendingThreads.map(thread => <div className="message-row pending" role="button" tabIndex={0} key={thread.threadId} onClick={() => router.push("/tin-nhan?user=" + encodeURIComponent(thread.other.id) + (thread.other.email ? "&email=" + encodeURIComponent(thread.other.email) : ""))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") router.push("/tin-nhan?user=" + encodeURIComponent(thread.other.id) + (thread.other.email ? "&email=" + encodeURIComponent(thread.other.email) : "")); }}>
+                pendingThreads.map(thread => <div className="message-row pending" role="button" tabIndex={0} key={thread.threadId} onClick={() => router.push("/tin-nhan/" + encodeURIComponent(thread.other.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") router.push("/tin-nhan/" + encodeURIComponent(thread.other.id)); }}>
                   <ProfileActionMenu person={{ id: thread.other.id, name: thread.other.name, picture: thread.other.picture }}><span className="community-avatar">{thread.other.picture ? <img src={thread.other.picture} alt="" /> : initial(thread.other.name)}</span></ProfileActionMenu>
                   <span className="message-row-copy"><strong>{thread.other.name}</strong><small>{thread.lastBody}</small></span>
                   <span className="message-row-meta"><span>{timeLabel(thread.lastCreatedAt)}</span>{thread.unreadCount > 0 && <b>{thread.unreadCount}</b>}</span>
