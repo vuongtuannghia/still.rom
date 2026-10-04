@@ -316,9 +316,13 @@ export function synthesizeSound(context: AudioContext, id: SoundId): AudioBuffer
         if (age >= 0 && age < 4.8) {
           const freq = notesToFrequency(midi) * (channel ? 1.0004 : 1);
           const attack = 1 - Math.exp(-age * 9);
-          const release = Math.exp(-age * .72);
-          const tone = Math.sin(2 * Math.PI * freq * age) + .20 * Math.sin(2 * Math.PI * freq * 2 * age) + .06 * Math.sin(2 * Math.PI * freq * 3 * age);
-          out += tone * attack * release * (noteIndex < 2 ? .025 : .035);
+          const release = Math.exp(-age * .52);
+          // Warm, rounded harmonics: avoid the glassy high-frequency character that
+          // made the previous procedural piano tiring when layered with ambience.
+          const tone = Math.sin(2 * Math.PI * freq * age)
+            + .08 * Math.sin(2 * Math.PI * freq * 2 * age)
+            + .018 * Math.sin(2 * Math.PI * freq * 3 * age);
+          out += tone * attack * release * (noteIndex < 2 ? .018 : .024);
         }
       });
       out += pink * .045;
