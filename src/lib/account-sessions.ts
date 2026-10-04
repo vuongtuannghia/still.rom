@@ -6,7 +6,7 @@ import type { AccountSummary } from "./account-domain";
 
 export const hashAccessToken = (token: string) => createHash("sha256").update(token).digest("hex");
 export function accountSummary(row: typeof accounts.$inferSelect): AccountSummary {
-  return { id: row.id, name: row.name, email: row.email, picture: row.picture, createdAt: row.createdAt.toISOString() };
+  return { id: row.id, name: row.name, email: row.email, picture: row.customPicture || row.picture, createdAt: row.createdAt.toISOString() };
 }
 export async function accountForWorkspace(workspaceId: string) {
   return (await db.select().from(accounts).where(eq(accounts.workspaceId, workspaceId)).limit(1))[0] ?? null;
