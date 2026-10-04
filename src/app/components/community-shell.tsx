@@ -28,7 +28,7 @@ export function CommunityShell({ active, title, eyebrow, description, children }
         {links.map((item) => <a key={item.id} className={item.id === active ? "nav-link active" : "nav-link"} href={item.href}><Icon name={item.icon} size={19} /><span>{item.label}</span></a>)}
       </nav>
       <div className="sidebar-art"><div className="arch-art" aria-hidden="true"><i /><i /><i /></div><span className="small-label">LESS, BUT BETTER.</span><p>Ít hơn một chút.<br /><strong>Hiện diện nhiều hơn.</strong></p><a className="text-button" href="/">Vào phòng tập trung <Icon name="arrow" size={15} /></a></div>
-      <div className="sidebar-account"><AccountControl data={null} onChanged={() => {}} /></div>
+      <div className="sidebar-account"><AccountControl data={null} onChanged={() => window.location.reload()} /></div>
       <div className="sidebar-bottom"><a className="sidebar-control" href="/#overview"><kbd>?</kbd><span>Phím tắt & dữ liệu</span></a><a className="sidebar-control" href="/#overview"><Icon name="sliders" size={18} /><span>Tùy chỉnh không gian</span></a></div>
     </aside>
 
