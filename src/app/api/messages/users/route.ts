@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { accounts, friendRequests, friendships } from "@/db/schema";
-import { and, asc, eq, inArray, ne, or } from "drizzle-orm";
+import { and, asc, eq, ilike, inArray, ne, or } from "drizzle-orm";
 import { apiError, json } from "@/lib/server-api";
 import { requireAccount } from "@/lib/community-auth";
 
@@ -25,8 +25,12 @@ export async function GET(request: Request) {
             .from(accounts).where(inArray(accounts.id, friendIds)).orderBy(asc(accounts.name))
         : [];
     } else {
+      const pattern = "%" + q.replace(/[%_\\]/g, "\\      rows = await db.select({ id: accounts.id, name: accounts.name, email: accounts.email, picture: accounts.picture })
+        .from(accounts).where(and(eq(accounts.email, q), ne(accounts.id, current.id))).limit(1);") + "%";
       rows = await db.select({ id: accounts.id, name: accounts.name, email: accounts.email, picture: accounts.picture })
-        .from(accounts).where(and(eq(accounts.email, q), ne(accounts.id, current.id))).limit(1);
+        .from(accounts)
+        .where(and(or(eq(accounts.email, q), ilike(accounts.name, pattern, "\\") ), ne(accounts.id, current.id)))
+        .orderBy(asc(accounts.name)).limit(20);
     }
 
     const result = await Promise.all(rows.map(async person => {
