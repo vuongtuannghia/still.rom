@@ -5,12 +5,12 @@ type Recording = {
   license: "CC0" | "Public Domain";
 };
 
-const RAW_AUDIO = "https://raw.githubusercontent.com/euuuuuuan/todak-public/main/assets/ambience";
+const RAW_AUDIO = "https://cdn.jsdelivr.net/gh/euuuuuuan/todak-public@main/assets/ambience";
 
 /**
- * The 7 external recordings are taken from the CC0 / Public Domain asset set documented
- * by the upstream project. The runtime also has a procedural fallback for every sound,
- * so a blocked CDN/CORS request never leaves a channel silent.
+ * These curated ambience loops are CC0 recordings re-cut by Todak to calm, event-free
+ * windows and seamless short loops. The runtime keeps procedural fallbacks for channels
+ * that do not have a recorded asset.
  */
 const RECORDING_SOURCES: Record<string, Recording> = {
   rain: { src: RAW_AUDIO + "/rain_soft.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "joedeshon (re-rendered by Todak)", license: "CC0" },
@@ -20,7 +20,7 @@ const RECORDING_SOURCES: Record<string, Recording> = {
   birds: { src: RAW_AUDIO + "/birds_dawn.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "resaural (re-rendered by Todak)", license: "CC0" },
   fireplace: { src: RAW_AUDIO + "/fire_hearth.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "uniuniversal (re-rendered by Todak)", license: "CC0" },
   cafe: { src: RAW_AUDIO + "/cafe.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "arpeggio1980 (re-rendered by Todak)", license: "CC0" },
-  forest: { src: RAW_AUDIO + "/birds_forest.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "Todak project-authored", license: "Public Domain" },
+  forest: { src: RAW_AUDIO + "/birds_dawn.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "resaural (re-rendered by Todak)", license: "CC0" },
   "forest-night": { src: RAW_AUDIO + "/crickets.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "felixblume (re-rendered by Todak)", license: "CC0" },
   waterfall: { src: RAW_AUDIO + "/stream_brook.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "cher1101 (re-rendered by Todak)", license: "CC0" },
   "storm-rain": { src: RAW_AUDIO + "/storm_far.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "nickmaysoundmusic (re-rendered by Todak)", license: "CC0" },
@@ -53,17 +53,17 @@ export const SOUND_CATALOG: SoundDefinition[] = [
   { id: "ocean", label: "Sóng biển", detail: "Sóng Point Reyes · nền rộng", icon: "water", group: "Thiên nhiên", recording: recorded("ocean") },
   { id: "river", label: "Suối chảy", detail: "Dòng nước thật · đều và sáng", icon: "water", group: "Thiên nhiên", recording: recorded("river") },
   { id: "wind", label: "Gió nhẹ", detail: "Gió thật · nền trầm", icon: "leaf", group: "Thiên nhiên", recording: recorded("wind") },
-  { id: "forest", label: "Rừng yên", detail: "Gió + nước + chim · âm tạo", icon: "leaf", group: "Thiên nhiên" },
+  { id: "forest", label: "Rừng yên", detail: "Chim sáng sớm · bản thu CC0", icon: "leaf", group: "Thiên nhiên", recording: recorded("forest") },
   { id: "birds", label: "Chim hót", detail: "Chim thật · bình minh", icon: "leaf", group: "Thiên nhiên", recording: recorded("birds") },
   { id: "fireplace", label: "Lò sưởi", detail: "Củi cháy thật · nổ lách tách", icon: "fire", group: "Không gian", recording: recorded("fireplace") },
   { id: "cafe", label: "Quán cà phê", detail: "Room tone + ly tách · âm tạo", icon: "coffee", group: "Không gian" },
   { id: "keyboard", label: "Gõ bàn phím", detail: "Nhịp phím nhẹ · âm tạo", icon: "tasks", group: "Không gian" },
   { id: "chimes", label: "Chuông gió", detail: "Âm ngân thưa · âm tạo", icon: "spark", group: "Không gian" },
   { id: "purr", label: "Mèo ngủ", detail: "Rừ rừ rất nhẹ · âm tạo", icon: "moon", group: "Không gian" },
-  { id: "forest-night", label: "Rừng sau mưa", detail: "Gió đêm + côn trùng · âm tạo", icon: "moon", group: "Thiên nhiên" },
-  { id: "waterfall", label: "Thác nước", detail: "Nước dày + bọt · âm tạo", icon: "water", group: "Thiên nhiên" },
-  { id: "storm-rain", label: "Mưa giông", detail: "Mưa lớn + sấm · âm tạo", icon: "moon", group: "Thiên nhiên" },
-  { id: "mountain-stream", label: "Suối núi", detail: "Nước nhanh + không khí · âm tạo", icon: "water", group: "Thiên nhiên" },
+  { id: "forest-night", label: "Rừng sau mưa", detail: "Côn trùng đêm · bản thu CC0", icon: "moon", group: "Thiên nhiên", recording: recorded("forest-night") },
+  { id: "waterfall", label: "Thác nước", detail: "Suối dày · bản thu CC0", icon: "water", group: "Thiên nhiên", recording: recorded("waterfall") },
+  { id: "storm-rain", label: "Mưa giông", detail: "Sấm xa · bản thu CC0", icon: "moon", group: "Thiên nhiên", recording: recorded("storm-rain") },
+  { id: "mountain-stream", label: "Suối núi", detail: "Suối êm · bản thu CC0", icon: "water", group: "Thiên nhiên", recording: recorded("mountain-stream") },
   { id: "white", label: "White noise", detail: "Nền sáng · đều", icon: "volume", group: "Noise" },
   { id: "pink", label: "Pink noise", detail: "Nền cân bằng · mềm", icon: "volume", group: "Noise" },
   { id: "brown", label: "Brown noise", detail: "Nền trầm · êm và ổn định", icon: "volume", group: "Noise" },
@@ -73,12 +73,12 @@ export type MixerLevels = Record<SoundId, number>;
 export const emptyLevels = (): MixerLevels => Object.fromEntries(SOUND_CATALOG.map((sound) => [sound.id, 0])) as MixerLevels;
 
 export const MIX_PRESETS = [
-  { id: "rain-desk", label: "Bàn học ngày mưa", detail: "Mưa dịu + piano", levels: { rain: 45, lofi: 22 } },
-  { id: "forest", label: "Một góc rừng", detail: "Suối + gió + chim", levels: { river: 32, wind: 16, birds: 17 } },
-  { id: "warm", label: "Đêm bên lửa", detail: "Lửa + mưa mái", levels: { fireplace: 40, roof: 19 } },
-  { id: "cafe", label: "Quán vắng", detail: "Cà phê + piano", levels: { cafe: 26, lofi: 28 } },
-  { id: "deep", label: "Tập trung sâu", detail: "Brown noise + biển", levels: { brown: 38, ocean: 18 } },
-  { id: "storm", label: "Mưa giông", detail: "Mưa lớn + sấm xa", levels: { "storm-rain": 28, thunder: 12 } },
+  { id: "rain-desk", label: "Bàn học ngày mưa", detail: "Mưa dịu + piano", levels: { rain: 30, lofi: 9 } },
+  { id: "forest", label: "Một góc rừng", detail: "Suối + chim", levels: { river: 20, birds: 7 } },
+  { id: "warm", label: "Đêm bên lửa", detail: "Lửa + mưa", levels: { fireplace: 23, rain: 7 } },
+  { id: "cafe", label: "Quán vắng", detail: "Cà phê + piano", levels: { cafe: 16, lofi: 12 } },
+  { id: "deep", label: "Tập trung sâu", detail: "Brown noise + biển", levels: { brown: 17, ocean: 8 } },
+  { id: "storm", label: "Mưa giông", detail: "Mưa + sấm xa", levels: { "storm-rain": 18, thunder: 4 } },
 ] as const;
 
 function clamp(value: number, min: number, max: number) {
