@@ -10,7 +10,7 @@ type Room = {
 };
 type Comment = {
   id: number; roomId: number; parentId: number | null; body: string; createdAt: string;
-  authorId: string; authorName: string; authorPicture: string | null;
+  authorId: string; authorName: string; authorEmail: string; authorPicture: string | null;
 };
 
 const ADMIN = "vuongtuannghia585@gmail.com";
@@ -205,5 +205,5 @@ function CommentThread({ account, roomId, comments, loading, draft, replyId, onD
 }
 
 function CommentItem({ comment, compact = false, onReply }: { comment: Comment; compact?: boolean; onReply: (id: number | null) => void }) {
-  return <div className={compact ? "comment-item compact" : "comment-item"}><span className="community-avatar">{avatar(comment.authorName, comment.authorPicture)}</span><div className="comment-body"><div className="comment-meta"><strong>{comment.authorName}</strong><span>{timeLabel(comment.createdAt)}</span></div><p>{comment.body}</p><button type="button" className="comment-reply" onClick={() => onReply(comment.id)}>Trả lời</button><button type="button" className="comment-reply" onClick={() => { window.location.href = "/dien-dan?user=" + encodeURIComponent(comment.authorId); }}>Nhắn riêng</button></div></div>;
+  return <div className={compact ? "comment-item compact" : "comment-item"}><span className="community-avatar">{avatar(comment.authorName, comment.authorPicture)}</span><div className="comment-body"><div className="comment-meta"><strong>{comment.authorName}</strong><span>{timeLabel(comment.createdAt)}</span></div><p>{comment.body}</p><button type="button" className="comment-reply" onClick={() => onReply(comment.id)}>Trả lời</button><a className="comment-reply comment-direct-link" href={`/tin-nhan?user=${encodeURIComponent(comment.authorId)}&email=${encodeURIComponent(comment.authorEmail)}`}>Nhắn riêng</a></div></div>;
 }
