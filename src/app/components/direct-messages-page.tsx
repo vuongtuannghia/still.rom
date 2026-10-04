@@ -183,7 +183,7 @@ export function DirectMessagesPage({ initialUserId }: { initialUserId?: string }
       if (!response.ok) throw new Error(payload.error || "Không thể hủy kết bạn.");
       await loadFriends();
       await loadThreads();
-      setSearchResults(current => current.map(person => person.id === userId ? { ...person, relationship: "lookup" } : person));
+      setSearchResults(current => current.map(person => person.id === userId ? { ...person, relationship: "lookup", requestId: undefined } : person));
       setNotice("Đã hủy kết bạn.");
     } catch (error) { setNotice(error instanceof Error ? error.message : "Không thể hủy kết bạn."); }
   }
@@ -219,7 +219,7 @@ export function DirectMessagesPage({ initialUserId }: { initialUserId?: string }
               <div className="message-list-title"><div><span className="small-label">TIN NHẮN CHỜ</span><h3>Người lạ</h3></div><span>{pendingThreads.length}</span></div>
               {pendingThreads.length === 0 ? <div className="message-list-empty">Không có tin nhắn chờ.</div> :
                 pendingThreads.map(thread => <div className="message-row pending" role="button" tabIndex={0} key={thread.threadId} onClick={() => router.push("/tin-nhan/" + thread.other.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") router.push("/tin-nhan/" + thread.other.id); }}>
-                  <ProfileActionMenu person={{ id: thread.other.id, name: thread.other.name, picture: thread.other.picture }}><span className="community-avatar">{(thread.other.name).slice(0, 1).toUpperCase()}</span></ProfileActionMenu>
+                  <ProfileAvatarMenu id={thread.other.id} name={thread.other.name} picture={thread.other.picture} size="normal" />
                   <span className="message-row-copy"><strong>{thread.other.name}</strong><small>{thread.lastBody}</small></span>
                   <span className="message-row-meta"><span>{timeLabel(thread.lastCreatedAt)}</span>{thread.unreadCount > 0 && <b>{thread.unreadCount}</b>}</span>
                 </div>)
