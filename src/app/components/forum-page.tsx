@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { DashboardData } from "@/lib/focus-domain";
 import { Icon } from "../icons";
+import { ProfileAvatarMenu } from "./profile-avatar-menu";
 import { ProfileActionMenu } from "./profile-action-menu";
 
 const ADMIN = "vuongtuannghia585@gmail.com";
@@ -179,7 +180,7 @@ export function ForumPage() {
 
         {pinnedPosts.length > 0 && <section className="forum-pinned-list">
           <div className="forum-section-title"><div><span>ĐƯỢC GHIM</span><h3>Thông tin nổi bật</h3></div><small>Quản trị viên chọn</small></div>
-          {pinnedPosts.map(post => <PostCard key={post.id} post={post} account={account} comments={comments[post.id] ?? []} router={router} expanded={expandedPost === post.id} draft={drafts[post.id] ?? ""} replyId={replyTo[post.id] ?? null} onOpen={() => void openComments(post.id)} onDraft={text => setDrafts(current => ({ ...current, [post.id]: text }))} onReply={id => setReplyTo(current => ({ ...current, [post.id]: id }))} onSend={() => void addComment(post.id)} onPin={pinned => void pinPost(post, pinned)} onDelete={() => void deletePost(post)} />)}
+          {pinnedPosts.map(post => <PostCard key={post.id} post={post} account={account} comments={comments[post.id] ?? []} expanded={expandedPost === post.id} draft={drafts[post.id] ?? ""} replyId={replyTo[post.id] ?? null} onOpen={() => void openComments(post.id)} onDraft={text => setDrafts(current => ({ ...current, [post.id]: text }))} onReply={id => setReplyTo(current => ({ ...current, [post.id]: id }))} onSend={() => void addComment(post.id)} onPin={pinned => void pinPost(post, pinned)} onDelete={() => void deletePost(post)} />)}
         </section>}
 
         <section className="forum-feed">
@@ -199,11 +200,11 @@ export function ForumPage() {
 }
 
 function PostCard({ post, account, comments, expanded, draft, replyId, onOpen, onDraft, onReply, onSend, onPin, onDelete, router }: {
-  post: Post; account: DashboardData["account"]; comments: Comment[]; expanded: boolean; draft: string; replyId: number | null; router: ReturnType<typeof useRouter>;
+  post: Post; account: DashboardData["account"]; comments: Comment[]; expanded: boolean; draft: string; replyId: number | null;  
   onOpen: () => void; onDraft: (value: string) => void; onReply: (id: number | null) => void; onSend: () => void; onPin: (pinned: boolean) => void; onDelete: () => void;
 }) {
   return <article className={post.pinned ? "forum-post-card pinned" : "forum-post-card"}>
-    <div className="forum-post-top"><div className="forum-post-author"><ProfileActionMenu person={{ id: post.authorId, name: post.authorName, picture: post.authorPicture }}><span className="community-avatar">{avatar(post.authorName, post.authorPicture)}</span></ProfileActionMenu><div><a className="profile-inline-link" href={"/nguoi-dung/" + post.authorId}>{post.authorName}</a><span>{timeLabel(post.createdAt)}</span></div></div>{post.pinned && <span className="pinned-chip"><Icon name="target" size={11} /> Ghim</span>}</div>
+    <div className="forum-post-top"><div className="forum-post-author"><ProfileActionMenu person={{ id: post.authorId, name: post.authorName, picture: post.authorPicture }}><ProfileAvatarMenu id={post.authorId} name={post.authorName} picture={post.authorPicture} size="normal" /></ProfileActionMenu><div><a className="profile-inline-link" href={"/nguoi-dung/" + post.authorId}>{post.authorName}</a><span>{timeLabel(post.createdAt)}</span></div></div>{post.pinned && <span className="pinned-chip"><Icon name="target" size={11} /> Ghim</span>}</div>
     <h3>{post.title}</h3><p className="forum-post-body">{post.body}</p>
     <div className="forum-post-actions"><button type="button" onClick={onOpen}><Icon name="book" size={14} /> {post.commentCount ? `${post.commentCount} bình luận` : "Bình luận"}</button>{account?.email === ADMIN && <><button type="button" onClick={() => onPin(!post.pinned)}><Icon name="target" size={14} /> {post.pinned ? "Bỏ ghim" : "Ghim"}</button><button type="button" onClick={onDelete}><Icon name="close" size={14} /> Xóa</button></>}</div>
     {expanded && <div className="forum-comments">
@@ -217,5 +218,5 @@ function PostCard({ post, account, comments, expanded, draft, replyId, onOpen, o
 }
 
 function CommentLine({ comment, compact = false, onReply, router }: { comment: Comment; compact?: boolean; onReply: (id: number | null) => void; router: ReturnType<typeof useRouter> }) {
-  return <div className={compact ? "comment-line compact" : "comment-line"}><ProfileActionMenu person={{ id: comment.authorId, name: comment.authorName, picture: comment.authorPicture }}><span className="community-avatar small">{avatar(comment.authorName, comment.authorPicture)}</span></ProfileActionMenu><div><div className="comment-line-meta"><a className="profile-inline-link" href={"/nguoi-dung/" + comment.authorId}>{comment.authorName}</a><span>{timeLabel(comment.createdAt)}</span></div><p>{comment.body}</p><div className="comment-line-actions"><button type="button" onClick={() => onReply(comment.id)}>Trả lời</button></div></div></div>;
+  return <div className={compact ? "comment-line compact" : "comment-line"}><ProfileActionMenu person={{ id: comment.authorId, name: comment.authorName, picture: comment.authorPicture }}><ProfileAvatarMenu id={comment.authorId} name={comment.authorName} picture={comment.authorPicture} size="small" /></ProfileActionMenu><div><div className="comment-line-meta"><a className="profile-inline-link" href={"/nguoi-dung/" + comment.authorId}>{comment.authorName}</a><span>{timeLabel(comment.createdAt)}</span></div><p>{comment.body}</p><div className="comment-line-actions"><button type="button" onClick={() => onReply(comment.id)}>Trả lời</button></div></div></div>;
 }
