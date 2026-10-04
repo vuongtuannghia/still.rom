@@ -8,6 +8,7 @@ type AccountStatus = {
     email: string;
     picture: string | null;
     lockedUntil: string | null;
+    lockReason: string | null;
   } | null;
 };
 
