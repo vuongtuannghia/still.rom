@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { accounts, accountSessions, friendships, friendRequests, forumPosts, profilePosts, focusSessions } from "@/db/schema";
 import { apiError, json, ApiError, readBody } from "@/lib/server-api";
@@ -47,6 +47,9 @@ export async function GET(_: Request, context: { params: Promise<{ userId: strin
     }).from(profilePosts).where(eq(profilePosts.accountId, userId))
       .orderBy(desc(profilePosts.createdAt)).limit(30);
 
+    const [forumCount] = await db.select({ count: count() }).from(forumPosts).where(eq(forumPosts.accountId, userId));
+    const [photoCount] = await db.select({ count: count() }).from(profilePosts).where(eq(profilePosts.accountId, userId));
+
     const focus = await db.select({ total: sql<number>`coalesce(sum(${focusSessions.durationMinutes}),0)` })
       .from(focusSessions).where(eq(focusSessions.workspaceId, account.workspaceId));
 
@@ -84,7 +87,7 @@ export async function GET(_: Request, context: { params: Promise<{ userId: strin
       },
       relationship,
       relationshipRequestId,
-      stats: { friendCount: friendIds.length, forumPostCount: posts.length, photoPostCount: photoPosts.length, focusMinutes: Number(focus[0]?.total ?? 0) },
+      stats: { friendCount: friendIds.length, forumPostCount: Number(forumCount?.count ?? 0), photoPostCount: Number(photoCount?.count ?? 0), focusMinutes: Number(focus[0]?.total ?? 0) },
       friends: friendAccounts.map(friend => ({ id: friend.id, name: friend.name, picture: friend.customPicture || friend.picture, bio: friend.bio })),
       forumPosts: posts.map(post => ({ ...post, createdAt: post.createdAt.toISOString() })),
       profilePosts: photoPosts.map(post => ({ ...post, createdAt: post.createdAt.toISOString() })),
