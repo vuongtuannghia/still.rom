@@ -645,3 +645,16 @@ body.account-is-locked { overflow: hidden; }
   .account-lock-time { align-items: flex-start; flex-direction: column; gap: 6px; }
   .account-lock-card h1 { font-size: 39px; }
 }
+
+
+/* Larger profile navigation controls */
+.profile-top-actions .profile-back-btn,
+.profile-top-actions .profile-share-btn {
+  padding: 9px 12px !important;
+  gap: 7px !important;
+  border-radius: 9px !important;
+  font-size: 10px !important;
+  font-weight: 600;
+}
+.profile-top-actions .profile-back-btn svg,
+.profile-top-actions .profile-share-btn svg { width: 16px; height: 16px; }
