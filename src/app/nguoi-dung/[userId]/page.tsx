@@ -78,6 +78,7 @@ export default function ProfilePage() {
   const [tab, setTab] = useState<"activity" | "photos" | "friends">("activity");
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState("");
+  const [blockStatus, setBlockStatus] = useState<"none" | "blocked_by_me" | "blocked_you">("none");
   const [bio, setBio] = useState("");
   const [editMode, setEditMode] = useState(false);
   const [avatarData, setAvatarData] = useState<string | null>(null);
@@ -102,6 +103,10 @@ export default function ProfilePage() {
       setBio(full.profile.bio || "");
       setAvatarData(null);
       setCoverData(null);
+      if (full.relationship !== "self") {
+        const blockResponse = await fetch("/api/blocks?userId=" + encodeURIComponent(full.profile.id), { cache: "no-store", credentials: "same-origin" });
+        if (blockResponse.ok) setBlockStatus((await blockResponse.json() as { status: "none" | "blocked_by_me" | "blocked_you" }).status);
+      }
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Không tải được trang cá nhân.");
       setData(null);
