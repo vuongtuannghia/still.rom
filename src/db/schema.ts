@@ -20,6 +20,9 @@ export const accounts = pgTable("accounts", {
   customPicture: text("custom_picture"),
   coverPicture: text("cover_picture"),
   bio: varchar("bio", { length: 280 }),
+  role: varchar("role", { length: 20 }).default("user").notNull(),
+  lockedUntil: timestamp("locked_until", { withTimezone: true }),
+  lockReason: varchar("lock_reason", { length: 500 }),
   workspaceId: uuid("workspace_id").notNull().unique().references(() => workspaces.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   lastSignInAt: timestamp("last_sign_in_at", { withTimezone: true }).defaultNow().notNull(),
@@ -33,6 +36,18 @@ export const profilePosts = pgTable("profile_posts", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
   index("profile_posts_account_created_idx").on(table.accountId, table.createdAt),
+]);
+
+export const profilePostComments = pgTable("profile_post_comments", {
+  id: serial("id").primaryKey(),
+  postId: integer("post_id").notNull().references(() => profilePosts.id, { onDelete: "cascade" }),
+  accountId: uuid("account_id").notNull().references(() => accounts.id, { onDelete: "cascade" }),
+  parentId: integer("parent_id"),
+  body: varchar("body", { length: 2000 }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index("profile_post_comments_post_idx").on(table.postId, table.createdAt),
+  index("profile_post_comments_parent_idx").on(table.parentId),
 ]);
 
 export const accountSessions = pgTable("account_sessions", {
