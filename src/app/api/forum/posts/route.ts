@@ -40,6 +40,6 @@ export async function POST(request: Request) {
       meetRoomId = value;
     }
     const [post] = await db.insert(forumPosts).values({ accountId: account.id, title, body: body.body.trim(), meetRoomId }).returning();
-    return json({ post: { id: post.id, title: post.title, body: post.body, meetRoomId: post.meetRoomId, createdAt: post.createdAt.toISOString(), updatedAt: post.updatedAt.toISOString(), authorId: account.id, authorName: account.name, authorEmail: account.email, authorPicture: account.picture, pinned: false, commentCount: 0 } }, 201);
+    return json({ post: { id: post.id, title: post.title, body: post.body, meetRoomId: post.meetRoomId, createdAt: post.createdAt.toISOString(), updatedAt: post.updatedAt.toISOString(), authorId: account.id, authorName: account.name, authorEmail: account.email, authorPicture: account.customPicture || account.picture, pinned: false, commentCount: 0 } }, 201);
   } catch (error) { return apiError(error); }
 }
