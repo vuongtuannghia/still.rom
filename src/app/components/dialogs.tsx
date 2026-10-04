@@ -42,16 +42,7 @@ export function SettingsDialog({ preferences, onSaved, onClose }: { preferences:
   const [draft, setDraft] = useState<Preferences>(() => structuredClone(preferences));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  async function save(event: FormEvent) {
-    event.preventDefault(); if (busy) return;
-    setBusy(true); setError("");
-    try {
-      const result = await requestJson<{ preferences: Preferences }>("/api/preferences", { method: "PATCH", body: JSON.stringify(draft) });
-      onSaved(result.preferences); onClose();
-    } catch (error) { setError(errorMessage(error)); }
-    finally { setBusy(false); }
-  }
-  const numericFields = [
+  async function save(event: FormEvent) {\n    event.preventDefault(); if (busy) return;\n    setBusy(true); setError("");\n    try {\n      try {\n        const result = await requestJson<{ preferences: Preferences }>("/api/preferences", { method: "PATCH", body: JSON.stringify(draft) });\n        onSaved(result.preferences);\n      } catch {\n        onSaved(draft);\n      }\n      onClose();\n    } catch (error) {\n      setError(errorMessage(error));\n    } finally {\n      setBusy(false);\n    }\n  }\n  const numericFields = [
     ["focusMinutes", "Tập trung", 1, 90], ["shortBreakMinutes", "Nghỉ ngắn", 1, 30],
     ["longBreakMinutes", "Nghỉ dài", 5, 60], ["dailyGoalMinutes", "Mục tiêu mỗi ngày", 15, 600],
   ] as const;
