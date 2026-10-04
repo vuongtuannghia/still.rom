@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   try {
     const current = await requireAccount(request);
     const friendRows = await db.select({
-      id: accounts.id, name: accounts.name, email: accounts.email, picture: accounts.picture,
+      id: accounts.id, name: accounts.name, email: accounts.email, picture: accounts.customPicture, googlePicture: accounts.picture,
       friendshipId: friendships.id, createdAt: friendships.createdAt,
     }).from(friendships)
       .innerJoin(accounts, or(eq(accounts.id, friendships.accountAId), eq(accounts.id, friendships.accountBId)))
@@ -19,7 +19,7 @@ export async function GET(request: Request) {
 
     const friends = friendRows
       .filter(row => row.id !== current.id)
-      .map(row => ({ id: row.id, name: row.name, email: row.email, picture: row.picture, friendshipId: row.friendshipId, createdAt: row.createdAt.toISOString() }));
+      .map(row => ({ id: row.id, name: row.name, email: row.email, picture: row.picture || row.googlePicture || null, friendshipId: row.friendshipId, createdAt: row.createdAt.toISOString() }));
 
     const incomingRows = await db.select({
       id: friendRequests.id, senderId: accounts.id, senderName: accounts.name, senderEmail: accounts.email,
