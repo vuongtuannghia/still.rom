@@ -12,7 +12,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ reque
     const current = await requireAccount(request);
     const requestId = positiveId((await context.params).requestId);
     const body = await readBody(request);
-    const action = body.action === "accept" || body.action === "reject" ? body.action : "";
+    const action = body.action === "accept" || body.action === "reject" || body.action === "cancel" ? body.action : "";
     if (!action) throw new ApiError(400, "Hành động không hợp lệ.");
 
     const [row] = await db.select({
@@ -20,10 +20,20 @@ export async function PATCH(request: Request, context: { params: Promise<{ reque
       sender: accounts,
     }).from(friendRequests)
       .innerJoin(accounts, eq(accounts.id, friendRequests.senderId))
-      .where(and(eq(friendRequests.id, requestId), eq(friendRequests.recipientId, current.id), eq(friendRequests.status, "pending")))
+      .where(and(eq(friendRequests.id, requestId), eq(friendRequests.status, "pending")))
       .limit(1);
 
     if (!row) throw new ApiError(404, "Lời mời không tồn tại hoặc đã được xử lý.");
+
+    const isRecipient = row.request.recipientId === current.id;
+    const isSender = row.request.senderId === current.id;
+    if (action === "cancel") {
+      if (!isSender) throw new ApiError(403, "Bạn chỉ có thể hủy lời mời do mình gửi.");
+      await db.update(friendRequests).set({ status: "cancelled", respondedAt: new Date() }).where(eq(friendRequests.id, requestId));
+      return json({ ok: true, status: "cancelled" });
+    }
+
+    if (!isRecipient) throw new ApiError(403, "Bạn không có quyền xử lý lời mời này.");
 
     if (action === "reject") {
       await db.update(friendRequests).set({ status: "rejected", respondedAt: new Date() }).where(eq(friendRequests.id, requestId));
