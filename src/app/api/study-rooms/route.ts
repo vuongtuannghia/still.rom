@@ -18,6 +18,7 @@ export async function GET() {
       creatorId: accounts.id,
       creatorName: accounts.name,
       creatorEmail: accounts.email,
+      creatorPicture: accounts.customPicture,
     }).from(sharedStudyRooms)
       .innerJoin(accounts, eq(accounts.id, sharedStudyRooms.accountId))
       .orderBy(desc(sharedStudyRooms.pinned), desc(sharedStudyRooms.createdAt))
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
     }).returning();
 
     return json({
-      room: { ...room, createdAt: room.createdAt.toISOString(), creatorId: account.id, creatorName: account.name, creatorEmail: account.email, admin: isWebAdmin(account.email) },
+      room: { ...room, createdAt: room.createdAt.toISOString(), creatorId: account.id, creatorName: account.name, creatorEmail: account.email, creatorPicture: account.customPicture || account.picture, admin: isWebAdmin(account.email) },
     }, 201);
   } catch (error) {
     return apiError(error);
