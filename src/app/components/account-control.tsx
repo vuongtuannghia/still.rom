@@ -17,6 +17,7 @@ declare global {
           initialize: (options: { client_id: string; callback: (response: { credential: string }) => void; auto_select?: boolean; cancel_on_tap_outside?: boolean }) => void;
           renderButton: (parent: HTMLElement, options: { theme: string; size: string; width: number; text: string; shape: string; logo_alignment: string }) => void;
           prompt?: () => void;
+          cancel?: () => void;
         };
       };
     };
@@ -118,9 +119,15 @@ export function AccountControl({ data, onChanged }: {
 
 
   useEffect(() => {
-    if (activeAccount) {
+    const cleanupGoogleWidget = () => {
+      try { window.google?.accounts?.id?.cancel?.(); } catch {}
       if (buttonRef.current) buttonRef.current.innerHTML = "";
+      document.getElementById("credential_picker_container")?.remove();
+      document.querySelectorAll('iframe[src*="accounts.google.com/gsi/"], iframe[src*="accounts.google.com/gsi/button"]').forEach((node) => node.remove());
       initializedClientId.current = null;
+    };
+    if (activeAccount) {
+      cleanupGoogleWidget();
       return;
     }
     const clientId = status?.google.clientId;
