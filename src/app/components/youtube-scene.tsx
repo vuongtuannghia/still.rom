@@ -34,7 +34,7 @@ const errorMessages: Record<number, string> = {
   153: "YouTube chưa nhận được nguồn trang trong khung preview. Thử trình phát tiêu chuẩn hoặc mở website trong tab riêng.",
 };
 
-type Props = { scene: YouTubeScene; loop: boolean; muted: boolean; onMuted: (value: boolean) => void; onFallback: () => void; onPause?: () => void; onVideoChange?: (videoId: string) => void; ambientView?: boolean; edgeToEdge?: boolean; showControls?: boolean; sessionRole?: "preview" | "room" };
+type Props = { scene: YouTubeScene; loop: boolean; muted: boolean; onMuted: (value: boolean) => void; onFallback: () => void; onPause?: () => void; onVideoChange?: (videoId: string) => void; ambientView?: boolean; edgeToEdge?: boolean; showControls?: boolean; sessionRole?: "preview" | "room" | "persistent" };
 function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVideoChange, ambientView = false, edgeToEdge = false, showControls = false, sessionRole = "room", standard, onRetry, onStandard }: Props & { standard: boolean; onRetry: () => void; onStandard: () => void }) {
   const root = useRef<HTMLDivElement>(null);
   const info = useRef<HTMLDivElement>(null);
@@ -122,7 +122,7 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
       // Do not stop the already-playing preview merely because the room player was
       // created. The room player must actually reach PLAYING first; otherwise a
       // browser autoplay policy would leave the user with a silent room.
-      if (message.type === "claim-playing" && message.role === "room" && sessionRole === "preview" && player.current) {
+      if (message.type === "claim-playing" && (message.role === "room" || message.role === "persistent") && sessionRole === "preview" && player.current) {
         try { rememberProgress(); player.current.pauseVideo(); } catch {}
       }
       if (message.type === "progress" && typeof message.progress === "number" && sessionRole === "room") {
