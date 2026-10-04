@@ -44,6 +44,7 @@ export function DirectMessagesPage() {
   const [loadingChat, setLoadingChat] = useState(false);
   const [sending, setSending] = useState(false);
   const [notice, setNotice] = useState("");
+  const [blockStatus, setBlockStatus] = useState<"none" | "blocked_by_me" | "blocked_you">("none");
 
   async function loadStatus() {
     try {
@@ -136,9 +137,41 @@ export function DirectMessagesPage() {
     })();
   }, [account?.id, threads.length]);
 
+  async function loadBlockStatus(userId: string) {
+    try {
+      const response = await fetch("/api/blocks?userId=" + encodeURIComponent(userId), { cache: "no-store", credentials: "same-origin" });
+      if (response.ok) setBlockStatus((await response.json() as { status: "none" | "blocked_by_me" | "blocked_you" }).status);
+    } catch {}
+  }
+
+  async function toggleBlock(userId: string) {
+    try {
+      const method = blockStatus === "blocked_by_me" ? "DELETE" : "POST";
+      const response = await fetch("/api/blocks", {
+        method, credentials: "same-origin", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      const payload = await response.json().catch(() => ({})) as { error?: string; status?: "none" | "blocked_by_me" | "blocked_you" };
+      if (!response.ok) throw new Error(payload.error || "Không thể cập nhật chặn.");
+      const next = payload.status ?? "none";
+      setBlockStatus(next);
+      if (next === "blocked_by_me") {
+        setSelected(null);
+        setMessages([]);
+        await loadFriends();
+        await loadThreads();
+        setNotice("Đã chặn tài khoản này.");
+      } else setNotice("Đã bỏ chặn.");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Không thể cập nhật chặn.");
+    }
+  }
+
   async function openConversation(person: Person) {
     setSelected(person);
     setSelectedEmail(person.email);
+    setBlockStatus("none");
+    void loadBlockStatus(person.id);
     setLoadingChat(true);
     try {
       const emailParam = person.relationship === "friend" ? "" : `&email=${encodeURIComponent(person.email)}`;
@@ -170,6 +203,35 @@ export function DirectMessagesPage() {
     } catch (error) { setNotice(error instanceof Error ? error.message : "Không thể gửi lời mời."); }
   }
 
+  async function refreshSearch() {
+    const q = query.trim();
+    if (!q) return;
+    try {
+      const response = await fetch("/api/messages/users?q=" + encodeURIComponent(q), { cache: "no-store", credentials: "same-origin" });
+      if (response.ok) {
+        const rows = await response.json() as Person[];
+        setSearchResults(rows);
+        setLookup(rows[0] ?? null);
+      }
+    } catch {}
+  }
+
+  async function cancelFriendRequest(requestId: number) {
+    try {
+      const response = await fetch("/api/friends/requests/" + requestId, {
+        method: "PATCH", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "cancel" }),
+      });
+      const payload = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) throw new Error(payload.error || "Không thể hủy lời mời.");
+      await loadFriends();
+      await refreshSearch();
+      setNotice("Đã hủy lời mời kết bạn.");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Không thể hủy lời mời.");
+    }
+  }
+
   async function respondToRequest(requestId: number, action: "accept" | "reject") {
     try {
       const response = await fetch(`/api/friends/requests/${requestId}`, {
@@ -179,7 +241,8 @@ export function DirectMessagesPage() {
       const payload = await response.json().catch(() => ({})) as { error?: string };
       if (!response.ok) throw new Error(payload.error || "Không thể xử lý lời mời.");
       await loadFriends();
-      setNotice(action === "accept" ? "Đã chấp nhận lời mời." : "Đã từ chối lời mời.");
+      await refreshSearch();
+      setNotice(action === "accept" ? "Đã chấp nhận lời mời. Người này đã chuyển vào Bạn bè." : "Đã từ chối lời mời.");
     } catch (error) { setNotice(error instanceof Error ? error.message : "Không thể xử lý lời mời."); }
   }
 
@@ -232,7 +295,7 @@ export function DirectMessagesPage() {
                   <span className="community-avatar">{avatar(person)}</span><span><strong>{person.name}</strong><small>{person.email}</small></span>
                 </button>
                 {person.relationship === "friend" ? <span className="relationship-label">Bạn bè</span> :
-                 person.relationship === "outgoing" ? <span className="relationship-label">Đã gửi lời mời</span> :
+                 person.relationship === "outgoing" ? <button type="button" className="relationship-action" onClick={() => void cancelFriendRequest(person.requestId!)}>Hủy lời mời</button> :
                  person.relationship === "incoming" ? <div className="lookup-actions"><button type="button" onClick={() => void respondToRequest(person.requestId!, "accept")}>Chấp nhận</button><button type="button" onClick={() => void respondToRequest(person.requestId!, "reject")}>Từ chối</button></div> :
                  <div className="lookup-actions"><button className="button-primary" type="button" onClick={() => void sendFriendRequestFor(person)}>Kết bạn</button><button type="button" onClick={() => window.location.href = "/nguoi-dung/" + person.id}>Xem hồ sơ</button></div>}
               </div>)
@@ -241,7 +304,7 @@ export function DirectMessagesPage() {
 
           {!query.trim() && <div className="friend-request-box">
             {incoming.length > 0 && <div><span className="small-label">LỜI MỜI MỚI</span>{incoming.map(request => <div className="friend-request-row" key={request.id}><span className="community-avatar small">{avatar({ name: request.senderName ?? "U", picture: request.senderPicture ?? null })}</span><span><strong>{request.senderName}</strong><small>{request.senderEmail}</small></span><button type="button" onClick={() => void respondToRequest(request.id, "accept")}>✓</button><button type="button" onClick={() => void respondToRequest(request.id, "reject")}>×</button></div>)}</div>}
-            {outgoing.length > 0 && <div className="friend-outgoing"><span className="small-label">ĐÃ GỬI</span>{outgoing.map(request => <div key={request.id}>{request.recipientName} · đang chờ</div>)}</div>}
+            {outgoing.length > 0 && <div className="friend-outgoing"><span className="small-label">ĐÃ GỬI</span>{outgoing.map(request => <div className="friend-outgoing-row" key={request.id}><span>{request.recipientName} · đang chờ</span><button type="button" onClick={() => void cancelFriendRequest(request.id)}>Hủy</button></div>)}</div>}
           </div>}
 
           <div className="message-inbox-box">
@@ -253,14 +316,15 @@ export function DirectMessagesPage() {
                 {thread.unreadCount > 0 && <span className="message-unread">{thread.unreadCount}</span>}
               </button>)
             }
-            <div className="messages-subheading pending-heading"><span className="small-label">TIN NHẮN CHỜ</span><strong>Người chưa là bạn</strong><span>{requestThreads.reduce((sum, item) => sum + item.unreadCount, 0) ? (requestThreads.reduce((sum, item) => sum + item.unreadCount, 0) + " mới") : ""}</span></div>
-            {requestThreads.length === 0 ? <p className="messages-muted">Không có tin nhắn chờ.</p> :
-              requestThreads.map(thread => <button type="button" key={thread.threadId} className={selected?.id === thread.other.id ? "message-thread pending active" : "message-thread pending"} onClick={() => void openConversation({ ...thread.other, relationship: "conversation" })}>
-                <span className="community-avatar small">{avatar(thread.other)}</span>
-                <span className="message-thread-copy"><strong>{thread.other.name}</strong><small>{thread.lastBody}</small></span>
-                {thread.unreadCount > 0 && <span className="message-unread">{thread.unreadCount}</span>}
-              </button>)
-            }
+            <div className="pending-compact">
+              <div><span className="small-label">TIN NHẮN CHỜ</span><strong>{requestThreads.length ? requestThreads.length + " cuộc trò chuyện" : "Trống"}</strong></div>
+              {requestThreads.length > 0 && <div className="pending-compact-list">
+                {requestThreads.slice(0, 3).map(thread => <button type="button" key={thread.threadId} className={selected?.id === thread.other.id ? "pending-person active" : "pending-person"} onClick={() => void openConversation({ ...thread.other, relationship: "conversation" })}>
+                  <span className="community-avatar small">{avatar(thread.other)}</span><span>{thread.other.name}</span>{thread.unreadCount > 0 && <b>{thread.unreadCount}</b>}
+                </button>)}
+                {requestThreads.length > 3 && <span className="pending-more">+{requestThreads.length - 3}</span>}
+              </div>}
+            </div>
           </div>
           <div className="messages-people-list">
             {loading ? <p className="messages-muted">Đang tải…</p> :
@@ -274,14 +338,14 @@ export function DirectMessagesPage() {
 
         <section className="messages-chat panel">
           {selected ? <>
-            <header className="messages-chat-head"><div className="message-person-head"><span className="community-avatar">{avatar(selected)}</span><div><h3>{selected.name}</h3><span>{selected.relationship === "friend" ? "Bạn bè · trò chuyện riêng" : "Trò chuyện riêng bằng email"}</span></div></div>{selected.relationship === "conversation" && <button type="button" className="button-secondary chat-add-friend" onClick={() => void sendFriendRequestFor(selected)}><Icon name="arrow" size={13} /> Kết bạn</button>}{selected.relationship === "outgoing" && <span className="relationship-label">Đã gửi lời mời</span>}</header>
+            <header className="messages-chat-head"><div className="message-person-head"><span className="community-avatar">{avatar(selected)}</span><div><h3>{selected.name}</h3><span>{selected.relationship === "friend" ? "Bạn bè · trò chuyện riêng" : "Tin nhắn chờ"}</span></div></div><div className="chat-head-actions"><button type="button" className="icon-button chat-profile-btn" title="Xem hồ sơ" aria-label="Xem hồ sơ" onClick={() => window.location.href = "/nguoi-dung/" + selected.id}><Icon name="arrow" size={14} /></button>{selected.relationship === "conversation" && <button type="button" className="button-secondary chat-add-friend" onClick={() => void sendFriendRequestFor(selected)}><Icon name="arrow" size={13} /> Kết bạn</button>}{selected.relationship === "outgoing" && <button type="button" className="relationship-action" onClick={() => void cancelFriendRequest(selected.requestId!)}>Hủy</button>}<button type="button" className="chat-block-btn" onClick={() => void toggleBlock(selected.id)}>{blockStatus === "blocked_by_me" ? "Bỏ chặn" : "Chặn"}</button></div></header>
             <div className="messages-list">
               {loadingChat ? <div className="messages-muted centered">Đang mở cuộc trò chuyện…</div> :
                 messages.length === 0 ? <div className="messages-empty"><div className="empty-orbit">+</div><strong>Bắt đầu bằng một câu đơn giản.</strong><span>Chào người bạn muốn học cùng.</span></div> :
                 messages.map(message => <article key={message.id} className={message.senderId === account.id ? "message-bubble mine" : "message-bubble"}><p>{message.body}</p><small>{timeLabel(message.createdAt)}</small></article>)
               }
             </div>
-            <div className="messages-composer"><input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void sendMessage(); } }} placeholder="Viết tin nhắn…" maxLength={4000} /><button className="button-primary" type="button" onClick={() => void sendMessage()} disabled={sending || !draft.trim()}><Icon name="arrow" size={15} /> Gửi</button></div>
+            {blockStatus === "blocked_you" ? <div className="messages-blocked-note">Tài khoản này đã chặn bạn.</div> : <div className="messages-composer"><input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void sendMessage(); } }} placeholder="Viết tin nhắn…" maxLength={4000} /><button className="button-primary" type="button" onClick={() => void sendMessage()} disabled={sending || blockStatus !== "none" || !draft.trim()}><Icon name="arrow" size={15} /> Gửi</button></div>}
           </> : <div className="messages-empty messages-empty-large"><div className="messages-big-icon"><Icon name="arrow" size={24} /></div><strong>Chọn một người bạn.</strong><span>Danh sách chỉ hiện bạn bè; tìm người khác bằng email chính xác.</span></div>}
         </section>
       </div>}
