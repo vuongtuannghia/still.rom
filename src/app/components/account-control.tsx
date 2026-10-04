@@ -92,7 +92,7 @@ export function AccountControl({ data, onChanged }: {
     {account ? <div className="account-connected account-sidebar">
       <span className="account-avatar">{account.picture ? <img src={account.picture} alt="" /> : account.name.slice(0, 1).toUpperCase()}</span>
       <div><strong>{account.name}</strong><span>{account.email}</span><small><Icon name="check" size={12} /> Đã sao lưu tiến độ</small></div>
-      <button type="button" className="icon-button" aria-label="Đăng xuất" disabled={busy} onClick={() => void logout()}><Icon name="logout" size={16} /></button>
+      <button type="button" className="icon-button" aria-label="Đăng xuất" disabled={busy} onClick={() => void logout()}><Icon name="close" size={16} /></button>
     </div> : <div className="account-sidebar-login">
       <div><strong>Sao lưu tiến độ</strong><span>{configured ? "Đăng nhập Google để dùng trên mọi thiết bị." : "Cần cấu hình Google OAuth để bật đăng nhập."}</span></div>
       <button type="button" className="button-secondary account-google-small" disabled={!configured || busy} onClick={login}><span className="google-letter">G</span> Đăng nhập Google</button>
