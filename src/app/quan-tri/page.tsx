@@ -101,7 +101,12 @@ export default function AdminPage() {
               : <select className="admin-duration" defaultValue="" disabled={busyId===user.id} onChange={event => {
                   const value=event.target.value; event.currentTarget.value="";
                   if (!value) return;
-                  if (confirm("Khóa " + user.name + " và xóa toàn bộ bài đăng/bình luận của tài khoản này?")) void action(user.id,{action:"lock",durationMinutes:Number(value),purgeContent:true,reason:"Vi phạm quy tắc cộng đồng"});
+                  if (confirm("Khóa " + user.name + " và xóa toàn bộ bài đăng/bình luận của tài khoản này?")) {
+                    const lockBody = value === "-1"
+                      ? { action: "lock", permanent: true, purgeContent: true, reason: "Vi phạm quy tắc cộng đồng" }
+                      : { action: "lock", durationMinutes: Number(value), purgeContent: true, reason: "Vi phạm quy tắc cộng đồng" };
+                    void action(user.id, lockBody);
+                  }
                 }}><option value="">Khóa…</option>{DURATIONS.map(item=><option key={item.value} value={item.value}>{item.label} + xóa nội dung</option>)}<option value="-1">Vĩnh viễn + xóa nội dung</option></select>}
             <button className="admin-action danger" disabled={busyId===user.id} onClick={() => { if(confirm("Xóa toàn bộ bài đăng và bình luận của tài khoản này?")) void action(user.id,{action:"purge-content"}); }}>Xóa nội dung</button>
           </div>
