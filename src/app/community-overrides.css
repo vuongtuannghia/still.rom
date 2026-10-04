@@ -338,3 +338,59 @@
 @media(max-width:900px){.profile-action-popover{min-width:175px}.message-row{padding:10px 11px}.profile-actions .profile-action-group{width:100%}.profile-actions .profile-action-group>*{flex:1}}
 
 .profile-action-primary{font-weight:700!important}.pending-message-section{margin-top:10px!important}.pending-message-section .message-list-title{padding-bottom:8px}.pending-message-section .message-row{padding-block:10px}
+
+/* Messages — final layout */
+.messages-page{width:100%}
+.messages-inbox-page{width:100%}
+.messages-inbox-layout{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:16px;align-items:start}
+.messages-inbox-main{display:grid;gap:12px;min-width:0}
+.messages-inbox-side{display:grid;gap:12px;min-width:0}
+.message-list-section,.messages-connection-card,.messages-tip-card{border:1px solid #dddcd5;border-radius:13px;background:#fff;overflow:hidden;box-shadow:0 5px 22px rgba(0,0,0,.025)}
+.message-list-title{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;padding:14px 16px 9px;border-bottom:1px solid #ecebe6}
+.message-list-title>div{display:flex;flex-direction:column;gap:3px}.message-list-title h3{margin:0;font-size:16px;line-height:1.1;letter-spacing:-.035em;color:#232320}.message-list-title>span{color:#99988f;font-size:8px}
+.message-list-empty{padding:18px 16px;color:#8a8982;font-size:9px}
+.message-row{display:flex!important;align-items:center!important;gap:10px!important;width:100%;min-height:68px;padding:10px 14px!important;border:0!important;border-bottom:1px solid #efeee9!important;border-radius:0!important;background:#fff!important;text-align:left!important;cursor:pointer}
+.message-row:last-child{border-bottom:0!important}.message-row:hover{background:#f7f7f3!important}.message-row.pending{background:#fcfcf8!important}.message-row.pending:hover{background:#f1f1ec!important}
+.message-row-copy{display:flex!important;min-width:0!important;flex:1!important;flex-direction:column!important;gap:3px!important}.message-row-copy strong{font-size:10px!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.message-row-copy small{font-size:8px!important;color:#818078!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.message-row-meta{display:flex;align-items:flex-end;gap:5px;flex-direction:column;color:#aaa89f;font-size:7px;flex:0 0 auto}.message-row-meta b{display:grid;min-width:18px;height:18px;place-items:center;padding:0 5px;border-radius:999px;background:#232320;color:#fff;font-size:7px}
+.messages-connection-card{padding-bottom:8px}.messages-connection-card .message-list-title{margin:0}
+.messages-search{display:flex!important;align-items:center!important;gap:7px!important;margin:11px!important;padding:9px 10px!important;border:1px solid #dddcd5!important;border-radius:9px!important;background:#f5f5f0!important}
+.messages-search input{width:100%;min-width:0;border:0;outline:0;background:transparent;font-size:9px}
+.friend-search-results{padding:0 11px 8px}.friend-search-row{display:flex;align-items:center;gap:7px;padding:8px 0;border-top:1px solid #ecebe5}.friend-search-row:first-child{border-top:0}
+.friend-search-copy{display:flex;min-width:0;flex:1;flex-direction:column;gap:2px}.friend-search-copy strong{font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.friend-search-copy small{font-size:7px;color:#999;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.friend-requests-mini{padding:0 11px 8px}.friend-requests-mini .small-label{display:block;margin:2px 0 5px}.mini-request-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:6px;padding:7px 0;border-top:1px solid #ecebe5}.mini-request-row>span:nth-child(2){display:flex;min-width:0;flex-direction:column}.mini-request-row strong{font-size:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mini-request-row small{font-size:7px;color:#999;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mini-request-row button{width:23px;height:23px;border:1px solid #dddcd5;border-radius:6px;background:#fff;color:#666;font-size:10px;cursor:pointer}
+.friend-outgoing-mini{padding:7px 11px;border-top:1px solid #ecebe5}.friend-outgoing-mini>div{display:flex;justify-content:space-between;align-items:center;padding:5px 0;color:#666;font-size:8px}.friend-outgoing-mini button{border:0;background:transparent;color:#8c8b84;font-size:8px;cursor:pointer}
+.messages-tip-card{padding:14px}.messages-tip-card p{margin:7px 0 0;color:#7d7c75;font-size:9px;line-height:1.7}
+.pending-message-section{margin-top:0!important}
+.pending-message-section .message-list-title{background:#fbfbf8}
+.pending-message-section .message-row{min-height:62px!important}
+
+/* Conversation */
+.direct-chat-page{width:100%;display:flex;justify-content:center}
+.direct-chat-card{width:100%;max-width:900px;border:1px solid #dddcd5;border-radius:15px;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.035);overflow:hidden}
+.direct-chat-loading,.direct-chat-empty{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:7px;min-height:360px;padding:25px;text-align:center;color:#888;font-size:9px}
+.direct-chat-header{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 17px;border-bottom:1px solid #e6e5df;background:#fff}
+.direct-chat-person{display:flex;align-items:center;gap:10px;min-width:0}.direct-chat-person>div{min-width:0;display:flex;flex-direction:column;gap:3px}.direct-chat-person h2{margin:0;font-size:17px;letter-spacing:-.03em}.direct-chat-person>div>span{color:#8c8b84;font-size:8px}
+.direct-chat-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}.direct-chat-actions .profile-action-group{display:flex;gap:6px}
+.pending-message-banner{display:flex;align-items:center;gap:9px;padding:10px 14px;border-bottom:1px solid #e7e6e0;background:#fafaf6;color:#77766f;font-size:8px}.pending-message-banner strong{color:#222;font-size:8px;letter-spacing:.06em;text-transform:uppercase}
+.direct-chat-messages{display:flex;flex-direction:column;gap:8px;min-height:470px;max-height:58vh;overflow:auto;padding:18px}
+.direct-bubble{align-self:flex-start;max-width:72%;padding:9px 11px;border:1px solid #dddcd5;border-radius:11px 11px 11px 3px;background:#f4f4ef}.direct-bubble.mine{align-self:flex-end;border-color:#222;background:#222;color:#f7f7f2;border-radius:11px 11px 3px 11px}.direct-bubble p{margin:0;font-size:10px;line-height:1.65;white-space:pre-wrap}.direct-bubble small{display:block;margin-top:4px;opacity:.55;font-size:7px}
+.direct-chat-composer{display:flex;gap:8px;padding:10px;border-top:1px solid #e6e5df;background:#fff}.direct-chat-composer input{flex:1;min-width:0;min-height:40px;padding:9px 11px;border:1px solid #d8d7d0;border-radius:9px;background:#f7f7f3;outline:0;font-size:10px}.direct-chat-composer .button-primary{min-width:62px;justify-content:center}.chat-block-btn{min-height:34px!important;padding:7px 9px!important}
+.global-notification{z-index:1400}
+
+/* Remove secondary "Nhắn riêng" text actions; avatar menu is the canonical entry point. */
+.forum-post-actions .forum-action-link,.comment-line-actions .comment-direct-link{display:none!important}
+
+/* More reliable profile access: keep profile avatar action menu above nearby cards. */
+.profile-action-menu{z-index:150!important}.profile-action-popover{z-index:160!important}
+
+@media(max-width:900px){
+  .messages-inbox-layout{grid-template-columns:1fr}.messages-inbox-side{order:-1}
+  .messages-inbox-main{order:1}.messages-connection-card{display:block}.messages-tip-card{display:none}
+  .message-list-section{border-radius:11px}.direct-chat-card{max-width:none}.direct-chat-header{align-items:flex-start;flex-direction:column}.direct-chat-actions{justify-content:flex-start;width:100%}.direct-chat-actions>*{flex:0 0 auto}
+  .direct-chat-messages{min-height:52vh;max-height:none}
+}
+@media(max-width:600px){
+  .messages-inbox-layout{gap:10px}.message-list-title{padding:12px 13px 8px}.message-row{min-height:60px!important;padding:9px 11px!important}.message-row-copy strong{font-size:9px!important}.message-row-copy small{font-size:7px!important}
+  .direct-chat-header{padding:13px}.direct-chat-messages{padding:12px}.direct-bubble{max-width:84%}.direct-chat-composer{position:sticky;bottom:0}.pending-message-banner{align-items:flex-start;flex-direction:column;gap:3px}
+}
