@@ -42,8 +42,8 @@ export async function GET(request: Request) {
     return json({
       friends,
       blocks: [...blockedIds],
-      incoming: incomingRows.map(row => ({ ...row, createdAt: row.createdAt.toISOString() })),
-      outgoing: outgoingRows.map(row => ({ ...row, createdAt: row.createdAt.toISOString() })),
+      incoming: incomingRows.filter(row => !blockedIds.has(row.senderId)).map(row => ({ ...row, createdAt: row.createdAt.toISOString() })),
+      outgoing: outgoingRows.filter(row => !blockedIds.has(row.recipientId)).map(row => ({ ...row, createdAt: row.createdAt.toISOString() })),
     });
   } catch (error) { return apiError(error); }
 }
