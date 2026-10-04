@@ -9,7 +9,7 @@ type ProfileData = {
     id: string; name: string; email: string | null; picture: string | null; coverPicture: string | null;
     bio: string | null; createdAt: string; lastSignInAt: string; isAdmin: boolean;
   };
-  relationship: "self" | "friend" | "incoming" | "outgoing" | "none";
+  relationship: "self" | "friend" | "incoming" | "outgoing" | "blocked" | "none";
   relationshipRequestId: number | null;
   blockStatus: "none" | "blocked_by_me" | "blocked_you";
   stats: { friendCount: number; forumPostCount: number; photoPostCount: number; focusMinutes: number };
@@ -85,6 +85,7 @@ export default function ProfilePage() {
   const [postBody, setPostBody] = useState("");
   const [postImage, setPostImage] = useState<string | null>(null);
   const [posting, setPosting] = useState(false);
+  const [blocking, setBlocking] = useState(false);
   const avatarInput = useRef<HTMLInputElement>(null);
   const coverInput = useRef<HTMLInputElement>(null);
   const postInput = useRef<HTMLInputElement>(null);
@@ -306,20 +307,14 @@ export default function ProfilePage() {
         </div>
       </div>
       <div className="profile-actions">
-        {isSelf
-          ? <button className="button-primary" type="button" onClick={() => setEditMode(current => !current)}><Icon name="sliders" size={14} /> {editMode ? "Đang chỉnh sửa" : "Chỉnh hồ sơ"}</button>
-          : data.blockStatus !== "none"
-          ? <span className="relationship-label">{data.blockStatus === "blocked_by_me" ? "Đã chặn" : "Bị chặn"}</span>
-          : data.relationship === "friend"
-          ? <button className="button-primary" type="button" onClick={() => router.push("/tin-nhan?user=" + encodeURIComponent(data.profile.id))}><Icon name="arrow" size={14} /> Nhắn tin</button>
-          : data.relationship === "incoming"
-          ? <div className="profile-action-group"><button className="button-primary" type="button" onClick={() => void respondToFriend("accept")}>Chấp nhận</button><button className="button-secondary" type="button" onClick={() => void respondToFriend("reject")}>Từ chối</button></div>
-          : data.relationship === "outgoing"
-          ? <button className="button-secondary" type="button" onClick={() => void cancelFriendRequest()}>Hủy lời mời</button>
-          : <button className="button-primary" type="button" onClick={() => void sendFriendRequest()}>Kết bạn</button>}
-        {!isSelf && data.blockStatus !== "blocked_you" && <button className="button-secondary" type="button" onClick={() => router.push("/tin-nhan?user=" + encodeURIComponent(data.profile.id))}><Icon name="arrow" size={14} /> Nhắn riêng</button>}
-        {!isSelf && data.blockStatus !== "blocked_you" && <button className="profile-block-button" type="button" onClick={() => void toggleBlock()}>{data.blockStatus === "blocked_by_me" ? "Bỏ chặn" : "Chặn"}</button>}
-        {!isSelf && data.blockStatus === "blocked_you" && <span className="relationship-label">Tài khoản này đã chặn bạn</span>}
+        {isSelf ? <button className="button-primary" type="button" onClick={() => setEditMode(current => !current)}><Icon name="sliders" size={14} /> {editMode ? "Đang chỉnh sửa" : "Chỉnh hồ sơ"}</button>
+        : data.relationship === "blocked" ? <span className="profile-blocked-label">Đã chặn / bị chặn</span>
+        : data.relationship === "friend" ? <button className="button-primary" type="button" onClick={() => router.push("/tin-nhan?user=" + encodeURIComponent(data.profile.id))}><Icon name="arrow" size={14} /> Nhắn tin</button>
+        : data.relationship === "incoming" ? <div className="profile-action-group"><button className="button-primary" type="button" onClick={() => void respondToFriend("accept")}>Chấp nhận</button><button className="button-secondary" type="button" onClick={() => void respondToFriend("reject")}>Từ chối</button></div>
+        : data.relationship === "outgoing" ? <span className="relationship-label">Đã gửi lời mời</span>
+        : <button className="button-primary" type="button" onClick={() => void sendFriendRequest()}>Kết bạn</button>}
+        {!isSelf && data.relationship !== "blocked" && <button className="button-secondary" type="button" onClick={() => router.push("/tin-nhan?user=" + encodeURIComponent(data.profile.id))}><Icon name="arrow" size={14} /> Nhắn riêng</button>}
+        {!isSelf && <button className="profile-block-btn" type="button" onClick={() => void toggleBlock()} disabled={blocking}>{data.relationship === "blocked" ? "Bỏ chặn" : "Chặn"}</button>}
       </div>
     </section>
 
