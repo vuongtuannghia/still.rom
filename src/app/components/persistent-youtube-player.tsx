@@ -35,6 +35,7 @@ export function PersistentYouTubePlayer() {
   const [persisted, setPersisted] = useState<Persisted | null>(null);
   const [handoff, setHandoff] = useState(false);
   const [roomRect, setRoomRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+  const [roomOpen, setRoomOpen] = useState(false);
   const lastRoute = useRef(pathname);
 
   useEffect(() => {
@@ -69,29 +70,53 @@ export function PersistentYouTubePlayer() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(detail));
         setPersisted(detail);
         setHandoff(true);
+        setRoomOpen(true);
       }
     };
+    const onRoomClose = () => setRoomOpen(false);
 
     window.addEventListener("storage", onStorage);
     window.addEventListener("stillroom-youtube-sync", onSync);
     window.addEventListener("stillroom-youtube-handoff", onHandoff);
+    window.addEventListener("stillroom-youtube-room-close", onRoomClose);
     return () => {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("stillroom-youtube-sync", onSync);
       window.removeEventListener("stillroom-youtube-handoff", onHandoff);
+      window.removeEventListener("stillroom-youtube-room-close", onRoomClose);
     };
   }, []);
 
   useEffect(() => {
     if (lastRoute.current !== pathname) {
       lastRoute.current = pathname;
-      setHandoff(!isInternalDashboard(pathname));
+      if (!isInternalDashboard(pathname)) {
+        setHandoff(true);
+        setRoomOpen(false);
+      } else if (!roomOpen) {
+        setHandoff(false);
+      }
     }
-  }, [pathname]);
+  }, [pathname, roomOpen]);
 
-  const roomMode = pathname === "/hoc-chung" && Boolean(persisted?.scene);
-  const dashboardMode = isInternalDashboard(pathname) && !handoff;
-  const visible = Boolean(persisted?.scene) && !dashboardMode;
+  useEffect(() => {
+    const syncRoomOpen = () => {
+      const open = Boolean(document.querySelector(".study-room-dialog[open]"));
+      setRoomOpen(open);
+    };
+    syncRoomOpen();
+    const observer = new MutationObserver(syncRoomOpen);
+    observer.observe(document.body, { subtree: true, attributes: true, attributeFilter: ["open"] });
+    window.addEventListener("resize", syncRoomOpen);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", syncRoomOpen);
+    };
+  }, []);
+
+  const roomMode = Boolean(persisted?.scene) && (pathname === "/hoc-chung" || (isInternalDashboard(pathname) && roomOpen));
+  const dashboardMode = isInternalDashboard(pathname) && !roomMode && !handoff;
+  const visible = Boolean(persisted?.scene) && (roomMode || !dashboardMode);
 
   useEffect(() => {
     if (!roomMode) {
