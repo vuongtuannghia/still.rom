@@ -5,11 +5,7 @@ import { Icon } from "../icons";
 import { isVideoId, youtubeWatchUrl, type YouTubeScene } from "@/lib/scene-domain";
 
 type Player = { playVideo: () => void; pauseVideo: () => void; mute: () => void; unMute: () => void; setVolume: (value: number) => void; destroy: () => void; getCurrentTime?: () => number; seekTo?: (seconds: number, allowSeekAhead?: boolean) => void; getVideoData?: () => { video_id?: string } };
-type PlayerOptions = {
-  videoId?: string;
-  playerVars?: Record<string, number | string>;
-  events: { onReady: (event: PlayerEvent) => void; onError: (event: PlayerEvent) => void; onStateChange: (event: PlayerEvent) => void; onAutoplayBlocked: () => void };
-};
+type PlayerOptions = { videoId?: string; playerVars?: Record<string, number | string>; events: { onReady: (event: PlayerEvent) => void; onError: (event: PlayerEvent) => void; onStateChange: (event: PlayerEvent) => void; onAutoplayBlocked: () => void } };
 type PlayerEvent = { target: Player; data?: number };
 type YouTubeAPI = { Player: new (element: HTMLElement, options: PlayerOptions) => Player };
 type YouTubeWindow = Window & { YT?: YouTubeAPI; onYouTubeIframeAPIReady?: () => void };
@@ -46,6 +42,7 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
   const player = useRef<Player | null>(null);
   const preferences = useRef({ muted, onPause, onVideoChange });
   const userMuted = useRef(false);
+  const audioUnlocked = useRef(false);
   const [ready, setReady] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [status, setStatus] = useState("Nhấn ▶ trên video nếu trình duyệt không tự phát.");
@@ -67,7 +64,6 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
       const raw = sessionStorage.getItem(progressKey);
       const parsed = raw ? Number(raw) : 0;
       savedProgress.current = Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
-
       const muteKey = `stillroom.youtube.muted:${scene.videoId || scene.playlistId || scene.id}`;
       const storedMute = sessionStorage.getItem(muteKey);
       if (storedMute === "1") userMuted.current = true;
@@ -81,7 +77,7 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
       setPlayerMuted(false);
       preferences.current.muted = false;
     }
-  // The room's timer causes frequent parent renders; this should only initialize per video.
+  // Timer rerenders must not reset the YouTube audio preference.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progressKey]);
 
@@ -97,59 +93,31 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
         player.current.unMute();
         if (!hasPlayed) player.current.playVideo();
         audioUnlocked.current = true;
+        setPlayerMuted(false);
       } catch { /* Browser may still require direct interaction with the player. */ }
     };
     document.addEventListener("pointerdown", userGesture, true);
     document.addEventListener("keydown", userGesture, true);
-
     function reportVideo(target: Player) {
       try { const videoId = target.getVideoData?.().video_id; if (isVideoId(videoId)) preferences.current.onVideoChange?.(videoId); } catch { /* Playlist may not expose an id immediately. */ }
     }
     function rememberProgress() {
-      try {
-        const current = player.current?.getCurrentTime?.() ?? 0;
-        if (Number.isFinite(current) && current >= 0) sessionStorage.setItem(progressKey, String(Math.floor(current)));
-      } catch { /* Storage is optional. */ }
+      try { const current = player.current?.getCurrentTime?.() ?? 0; if (Number.isFinite(current) && current >= 0) sessionStorage.setItem(progressKey, String(Math.floor(current))); } catch { /* Storage is optional. */ }
     }
     let progressTimer = 0;
     void loadYouTubeAPI().then((api) => {
       if (disposed) return;
-      const playerVars: Record<string, number | string> = {
-        enablejsapi: 1,
-        origin: window.location.origin,
-        autoplay: 1,
-        mute: 1,
-        playsinline: 1,
-        controls: 1,
-        rel: 0,
-        hl: "vi",
-        start: scene.startSeconds,
-      };
-      if (!scene.videoId && scene.playlistId) {
-        playerVars.list = scene.playlistId;
-        playerVars.listType = "playlist";
-        if (loop) playerVars.loop = 1;
-      } else if (loop && scene.videoId) {
-        playerVars.loop = 1;
-        playerVars.playlist = scene.videoId;
-      }
+      const playerVars: Record<string, number | string> = { enablejsapi: 1, origin: window.location.origin, autoplay: 1, mute: 1, playsinline: 1, controls: 1, rel: 0, hl: "vi", start: scene.startSeconds };
+      if (!scene.videoId && scene.playlistId) { playerVars.list = scene.playlistId; playerVars.listType = "playlist"; if (loop) playerVars.loop = 1; }
+      else if (loop && scene.videoId) { playerVars.loop = 1; playerVars.playlist = scene.videoId; }
       player.current = new api.Player(container, { videoId: scene.videoId || undefined, playerVars, events: {
         onReady: (event) => {
           if (disposed) return;
-          becameReady = true; window.clearTimeout(timeout); setReady(true); setApiNotice("");
-          reportVideo(event.target);
-          // Start muted. For a normal embedded player this is the most reliable way to
-          // satisfy browser autoplay rules while keeping the video playable in a small window.
+          becameReady = true; window.clearTimeout(timeout); setReady(true); setApiNotice(""); reportVideo(event.target);
           event.target.mute();
           const resumeAt = Math.max(savedProgress.current, scene.startSeconds);
           if (resumeAt > 0 && event.target.seekTo) event.target.seekTo(resumeAt, true);
-                const startVisiblePlayback = () => {
-            if (disposed || !document.documentElement.contains(container)) return;
-            try { event.target.playVideo(); } catch { setAutoplayBlocked(true); }
-          };
-          globalThis.requestAnimationFrame(startVisiblePlayback);
-          // Start muted for autoplay reliability. A user gesture anywhere in the room
-          // will unlock sound once, without ever muting later interactions.
+          globalThis.requestAnimationFrame(() => { if (disposed || !document.documentElement.contains(container)) return; try { event.target.playVideo(); } catch { setAutoplayBlocked(true); } });
           progressTimer = window.setInterval(rememberProgress, 1000);
         },
         onStateChange: (event) => {
@@ -173,7 +141,6 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
       document.removeEventListener("visibilitychange", saveOnVisibility);
       document.removeEventListener("pointerdown", userGesture, true);
       document.removeEventListener("keydown", userGesture, true);
-
       disposed = true; window.clearTimeout(timeout);
       try { player.current?.destroy(); } catch { /* Native frame may already be gone. */ }
       player.current = null; container.replaceChildren();
@@ -183,48 +150,20 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
   function playPause() {
     if (ready && player.current) {
       if (playing) player.current.pauseVideo();
-      else {
-        if (!userMuted.current) { player.current.setVolume(35); player.current.unMute(); audioUnlocked.current = true; }
-        player.current.playVideo();
-      }
-    } else {
-      host.current?.querySelector("iframe")?.focus();
-      setApiNotice("Bấm nút ▶ của YouTube trong vùng video phía trên. Nếu khung B chặn YouTube, hãy thử Mở website riêng.");
-    }
+      else { if (!userMuted.current) { player.current.setVolume(35); player.current.unMute(); audioUnlocked.current = true; setPlayerMuted(false); } player.current.playVideo(); }
+    } else { host.current?.querySelector("iframe")?.focus(); setApiNotice("Bấm nút ▶ của YouTube trong vùng video phía trên. Nếu khung B chặn YouTube, hãy thử Mở website riêng."); }
   }
   return <div ref={root} className={`youtube-scene-player ${ambientView ? "ambient-player" : edgeToEdge ? "edge-player" : ""}`} data-player-view={ambientView ? "ambient" : edgeToEdge ? "edge" : "studio"}>
     <div className="youtube-stage" ref={host} data-video-id={scene.videoId}>
-      {autoplayBlocked && <button
-        type="button"
-        className="youtube-autoplay-overlay"
-        onClick={() => {
-          setAutoplayBlocked(false);
-          if (player.current) {
-            try { player.current.mute(); player.current.playVideo(); } catch {}
-            if (!userMuted.current) {
-              player.current.setVolume(35);
-              player.current.unMute();
-              audioUnlocked.current = true;
-            }
-          }
-        }}
-      >
-        <Icon name="play" size={18} />
-        <span>Phát video</span>
-      </button>}
+      {autoplayBlocked && <button type="button" className="youtube-autoplay-overlay" onClick={() => { setAutoplayBlocked(false); if (player.current) { try { player.current.mute(); player.current.playVideo(); } catch {} if (!userMuted.current) { player.current.setVolume(35); player.current.unMute(); audioUnlocked.current = true; setPlayerMuted(false); } } }}><Icon name="play" size={18} /><span>Phát video</span></button>}
     </div>
     <div ref={info} className="youtube-player-info" hidden={(edgeToEdge || ambientView) && !showControls && !fatal && !apiNotice}>
-      <div className="youtube-controls"><span className="youtube-status" role="status"><span className={playing ? "live-dot" : "tiny-dot"} />{status}</span><div><button type="button" className="button-secondary" disabled={Boolean(fatal)} onClick={playPause}><Icon name={playing ? "pause" : "play"} size={15} />{playing ? "Dừng video" : "Phát video"}</button><button type="button" className="button-secondary" aria-pressed={!muted} onClick={() => {
-        const nextMuted = !userMuted.current;
-        userMuted.current = nextMuted;
-        preferences.current.muted = nextMuted;
-        setPlayerMuted(nextMuted);
+      <div className="youtube-controls"><span className="youtube-status" role="status"><span className={playing ? "live-dot" : "tiny-dot"} />{status}</span><div><button type="button" className="button-secondary" disabled={Boolean(fatal)} onClick={playPause}><Icon name={playing ? "pause" : "play"} size={15} />{playing ? "Dừng video" : "Phát video"}</button><button type="button" className="button-secondary" aria-pressed={!playerMuted} onClick={() => {
+        const nextMuted = !userMuted.current; userMuted.current = nextMuted; preferences.current.muted = nextMuted; setPlayerMuted(nextMuted);
         try { sessionStorage.setItem(`stillroom.youtube.muted:${scene.videoId || scene.playlistId || scene.id}`, nextMuted ? "1" : "0"); } catch {}
         onMuted(nextMuted);
-        if (ready && player.current) {
-          if (nextMuted) player.current.mute();
-          else { player.current.setVolume(35); player.current.unMute(); player.current.playVideo(); }
-        } else setApiNotice("Bạn có thể bật hoặc tắt tiếng bằng nút loa của YouTube trong video.");
+        if (ready && player.current) { if (nextMuted) player.current.mute(); else { player.current.setVolume(35); player.current.unMute(); player.current.playVideo(); audioUnlocked.current = true; } }
+        else setApiNotice("Bạn có thể bật hoặc tắt tiếng bằng nút loa của YouTube trong video.");
       }}><Icon name="volume" size={15} />{playerMuted ? "Bật tiếng video" : "Tắt tiếng video"}</button></div></div>
       {apiNotice && !fatal && <p className="youtube-api-notice" role="status">{apiNotice}</p>}
       {fatal && <div className="youtube-error" role="alert"><p>{fatal}</p><div><button type="button" className="button-secondary" onClick={onRetry}>Thử lại</button>{!standard && <button type="button" className="button-secondary" onClick={onStandard}>Thử trình phát tiêu chuẩn</button>}<button type="button" className="button-secondary" onClick={onFallback}>Dùng cảnh tĩnh</button></div></div>}
