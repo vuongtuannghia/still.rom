@@ -21,6 +21,9 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "still. room — Tập trung & tiến độ",
   description: "Một không gian đen trắng cho Pomodoro, nhiệm vụ, thói quen từng ngày và biểu đồ tiến độ của riêng bạn.",
+  verification: {
+    google: "60AZJX28Fhl1X0rdSnAZ9qt-5u7OVactK34Ukmw2i7s",
+  },
 };
 export default function RootLayout({ children }: { children: ReactNode }) {
   return <html lang="vi"><body>{children}<PersistentYouTubePlayer /><NotificationBell /><AccountLockGuard /></body></html>;
