@@ -64,14 +64,22 @@ export async function POST(request: Request) {
     if (reversePending) throw new ApiError(409, "Người này đã gửi lời mời kết bạn cho bạn.");
 
     const [existing] = await db.select().from(friendRequests)
-      .where(and(eq(friendRequests.senderId, current.id), eq(friendRequests.recipientId, target.id), eq(friendRequests.status, "pending"))).limit(1);
-    if (existing) throw new ApiError(409, "Bạn đã gửi lời mời cho người này.");
-
-    const [requestRow] = await db.insert(friendRequests).values({
-      senderId: current.id,
-      recipientId: target.id,
-      status: "pending",
-    }).returning();
+      .where(and(eq(friendRequests.senderId, current.id), eq(friendRequests.recipientId, target.id))).limit(1);
+    if (existing?.status === "pending") throw new ApiError(409, "Bạn đã gửi lời mời cho người này.");
+    let requestRow;
+    if (existing) {
+      [requestRow] = await db.update(friendRequests).set({
+        status: "pending",
+        createdAt: new Date(),
+        respondedAt: null,
+      }).where(eq(friendRequests.id, existing.id)).returning();
+    } else {
+      [requestRow] = await db.insert(friendRequests).values({
+        senderId: current.id,
+        recipientId: target.id,
+        status: "pending",
+      }).returning();
+    }
 
     await db.insert(notifications).values({
       accountId: target.id,
