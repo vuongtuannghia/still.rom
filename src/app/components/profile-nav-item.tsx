@@ -19,7 +19,7 @@ export function ProfileNavItem() {
   if (!account) return null;
 
   return <a className="nav-link profile-nav-link" href={"/nguoi-dung/" + account.id}>
-    <Icon name="layout" size={19} />
+    <Icon name="user" size={19} />
     <span>Trang cá nhân</span>
   </a>;
 }
