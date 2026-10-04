@@ -51,6 +51,7 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
   const [status, setStatus] = useState("Nhấn ▶ trên video nếu trình duyệt không tự phát.");
   const [fatal, setFatal] = useState("");
   const [apiNotice, setApiNotice] = useState("");
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
   const progressKey = `stillroom.youtube.progress:${scene.videoId || scene.playlistId || scene.id}`;
   const savedProgress = useRef(0);
 
@@ -89,6 +90,17 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
     let disposed = false, becameReady = false, hasPlayed = false;
     container.replaceChildren();
     const timeout = window.setTimeout(() => { if (!disposed && !becameReady) setApiNotice("YouTube đang tải chậm. Bạn có thể nhấn ▶ trực tiếp trong video phía trên."); }, 11000);
+    const unlockAudio = () => {
+      if (disposed || preferences.current.muted || !player.current) return;
+      try {
+        player.current.setVolume(35);
+        player.current.unMute();
+        if (!hasPlayed) player.current.playVideo();
+      } catch { /* Browser may still require a direct click on the player. */ }
+    };
+    const interactionHandler = () => unlockAudio();
+    root.current?.addEventListener("pointerdown", interactionHandler, { passive: true });
+    root.current?.addEventListener("keydown", interactionHandler, { passive: true });
     function reportVideo(target: Player) {
       try { const videoId = target.getVideoData?.().video_id; if (isVideoId(videoId)) preferences.current.onVideoChange?.(videoId); } catch { /* Playlist may not expose an id immediately. */ }
     }
@@ -132,25 +144,15 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
           if (resumeAt > 0 && event.target.seekTo) event.target.seekTo(resumeAt, true);
           const startVisiblePlayback = () => {
             if (disposed || !document.documentElement.contains(container)) return;
-            try { event.target.playVideo(); } catch { /* YouTube will report autoplayBlocked if blocked. */ }
+            try { event.target.playVideo(); } catch { setAutoplayBlocked(true); }
           };
-          if ("IntersectionObserver" in window) {
-            const observer = new IntersectionObserver((entries) => {
-              if (entries.some((entry) => entry.isIntersecting && entry.intersectionRatio >= 0.5)) {
-                observer.disconnect();
-                globalThis.requestAnimationFrame(startVisiblePlayback);
-              }
-            }, { threshold: [0, 0.5, 1] });
-            observer.observe(container);
-            if (observer) window.setTimeout(() => observer.disconnect(), 12000);
-          } else {
-            globalThis.requestAnimationFrame(startVisiblePlayback);
-          }
+          globalThis.requestAnimationFrame(startVisiblePlayback);
           if (!ambientView && !preferences.current.muted) { event.target.setVolume(35); event.target.unMute(); }
           progressTimer = window.setInterval(rememberProgress, 1000);
         },
         onStateChange: (event) => {
           if (disposed) return;
+          if (event.data === 1) setAutoplayBlocked(false);
           setPlaying(event.data === 1);
           if (event.data === 1) { reportVideo(event.target); hasPlayed = true; setFatal(""); setStatus("Video đang phát"); }
           else if (event.data === 2) { rememberProgress(); setStatus("Video đang tạm dừng"); if (hasPlayed) preferences.current.onPause?.(); }
@@ -158,7 +160,7 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
           else if (event.data === 0) { rememberProgress(); setStatus("Video đã kết thúc"); }
         },
         onError: (event) => { if (!disposed) { rememberProgress(); setFatal(errorMessages[event.data ?? 0] ?? "Video chưa phát được. Thử một link khác hoặc mở trên YouTube."); setPlaying(false); } },
-        onAutoplayBlocked: () => { if (!disposed) { setStatus("Tự phát bị chặn. Nhấn Phát video hoặc ▶ trực tiếp trong video."); setPlaying(false); } },
+        onAutoplayBlocked: () => { if (!disposed) { setAutoplayBlocked(true); setStatus("Tự phát bị trình duyệt chặn. Bấm Phát video — không cần phóng to."); setPlaying(false); } },
       } });
     }).catch((reason) => { if (!disposed) setApiNotice(reason instanceof Error ? reason.message : "Bạn có thể nhấn ▶ trực tiếp trong video."); });
     const saveOnVisibility = () => { if (document.visibilityState === "hidden") rememberProgress(); };
@@ -167,6 +169,8 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
       rememberProgress();
       if (progressTimer) window.clearInterval(progressTimer);
       document.removeEventListener("visibilitychange", saveOnVisibility);
+      root.current?.removeEventListener("pointerdown", interactionHandler);
+      root.current?.removeEventListener("keydown", interactionHandler);
       disposed = true; window.clearTimeout(timeout);
       try { player.current?.destroy(); } catch { /* Native frame may already be gone. */ }
       player.current = null; container.replaceChildren();
@@ -186,7 +190,25 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
     }
   }
   return <div ref={root} className={`youtube-scene-player ${ambientView ? "ambient-player" : edgeToEdge ? "edge-player" : ""}`} style={ambientView && fit.width ? { "--ambient-frame-width": `${fit.width}px`, "--ambient-frame-height": `${fit.height}px` } as CSSProperties : undefined} data-player-view={ambientView ? "ambient" : edgeToEdge ? "edge" : "studio"}>
-    <div className="youtube-stage" ref={host} data-video-id={scene.videoId} />
+    <div className="youtube-stage" ref={host} data-video-id={scene.videoId}>
+      {autoplayBlocked && <button
+        type="button"
+        className="youtube-autoplay-overlay"
+        onClick={() => {
+          setAutoplayBlocked(false);
+          if (player.current) {
+            try { player.current.mute(); player.current.playVideo(); } catch {}
+            if (!muted) {
+              player.current.setVolume(35);
+              player.current.unMute();
+            }
+          }
+        }}
+      >
+        <Icon name="play" size={18} />
+        <span>Phát video</span>
+      </button>}
+    </div>
     <div ref={info} className="youtube-player-info" hidden={(edgeToEdge || ambientView) && !showControls && !fatal && !apiNotice}>
       <div className="youtube-controls"><span className="youtube-status" role="status"><span className={playing ? "live-dot" : "tiny-dot"} />{status}</span><div><button type="button" className="button-secondary" disabled={Boolean(fatal)} onClick={playPause}><Icon name={playing ? "pause" : "play"} size={15} />{playing ? "Dừng video" : "Phát video"}</button><button type="button" className="button-secondary" aria-pressed={!muted} onClick={() => {
         const nextMuted = !muted;
