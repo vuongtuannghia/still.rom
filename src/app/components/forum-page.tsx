@@ -1,25 +1,40 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { DashboardData } from "@/lib/focus-domain";
 import { Icon } from "../icons";
 
-type Post = {
-  id: number; title: string; body: string; meetRoomId: number | null;
-  createdAt: string; updatedAt: string; authorId: string; authorName: string;
-  authorPicture: string | null; meetTitle?: string | null; meetUrl?: string | null; commentCount: number;
-};
-type Comment = {
-  id: number; postId: number; parentId: number | null; body: string; createdAt: string;
-  authorId: string; authorName: string; authorPicture: string | null;
-};
-type Person = { id: string; name: string; picture: string | null };
-type Message = { id: number; senderId: string; body: string; createdAt: string; readAt: string | null };
-
 const ADMIN = "vuongtuannghia585@gmail.com";
 
-function initials(name: string) { return name.trim().split(/\s+/).at(-1)?.[0]?.toUpperCase() ?? "U"; }
-function avatar(name: string, picture: string | null) { return picture ? <img src={picture} alt="" /> : initials(name); }
+type Post = {
+  id: number;
+  title: string;
+  body: string;
+  pinned: boolean;
+  createdAt: string;
+  authorId: string;
+  authorName: string;
+  authorEmail: string;
+  authorPicture: string | null;
+  commentCount: number;
+};
+
+type Comment = {
+  id: number;
+  postId: number;
+  parentId: number | null;
+  body: string;
+  createdAt: string;
+  authorId: string;
+  authorName: string;
+  authorEmail: string;
+  authorPicture: string | null;
+};
+
+function avatar(name: string, picture: string | null) {
+  return picture ? <img src={picture} alt="" /> : name.trim().split(/\s+/).at(-1)?.[0]?.toUpperCase() ?? "U";
+}
+
 function timeLabel(value: string) {
   const minutes = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 60000));
   if (minutes < 1) return "vừa xong";
@@ -34,20 +49,14 @@ export function ForumPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [comments, setComments] = useState<Record<number, Comment[]>>({});
   const [expandedPost, setExpandedPost] = useState<number | null>(null);
-  const [commentDraft, setCommentDraft] = useState<Record<number, string>>({});
+  const [drafts, setDrafts] = useState<Record<number, string>>({});
   const [replyTo, setReplyTo] = useState<Record<number, number | null>>({});
-  const [postTitle, setPostTitle] = useState("");
-  const [postBody, setPostBody] = useState("");
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
   const [posting, setPosting] = useState(false);
-  const [people, setPeople] = useState<Person[]>([]);
-  const [personQuery, setPersonQuery] = useState("");
-  const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [messageDraft, setMessageDraft] = useState("");
-  const [sendingMessage, setSendingMessage] = useState(false);
   const [notice, setNotice] = useState("");
 
-  async function loadCore() {
+  async function load() {
     try {
       const [statusRes, postsRes] = await Promise.all([
         fetch("/api/account/status", { cache: "no-store" }),
@@ -55,204 +64,155 @@ export function ForumPage() {
       ]);
       if (statusRes.ok) setAccount((await statusRes.json() as { account: DashboardData["account"] }).account);
       if (postsRes.ok) setPosts(await postsRes.json() as Post[]);
-    } catch { setNotice("Chưa tải được diễn đàn."); }
+    } catch {
+      setNotice("Chưa tải được diễn đàn.");
+    }
   }
-  async function loadPeople(query = "") {
+
+  useEffect(() => { void load(); }, []);
+
+  async function createPost() {
+    if (!account) { setNotice("Đăng nhập Google để tạo chủ đề."); return; }
+    if (!title.trim() || !body.trim()) return;
+    setPosting(true);
     try {
-      const response = await fetch(`/api/messages/users?q=${encodeURIComponent(query)}`, { cache: "no-store", credentials: "same-origin" });
-      if (response.ok) setPeople(await response.json() as Person[]);
-    } catch {}
+      const response = await fetch("/api/forum/posts", {
+        method: "POST", credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: title.trim(), body: body.trim() }),
+      });
+      const payload = await response.json().catch(() => ({})) as { post?: Post; error?: string };
+      if (!response.ok || !payload.post) throw new Error(payload.error || "Không thể đăng bài.");
+      setPosts(current => [payload.post!, ...current]);
+      setTitle(""); setBody("");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Không thể đăng bài.");
+    } finally { setPosting(false); }
   }
-  useEffect(() => { void loadCore(); void loadPeople(); }, []);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const userId = params.get("user");
-    if (!userId) return;
-    (async () => {
-      try {
-        const response = await fetch("/api/messages/users", { cache: "no-store", credentials: "same-origin" });
-        if (!response.ok) return;
-        const list = await response.json() as Person[];
-        const person = list.find(item => item.id === userId);
-        if (person) setSelectedPerson(person);
-      } catch {}
-    })();
-  }, []);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => { if (account) void loadPeople(personQuery); }, 250);
-    return () => window.clearTimeout(timer);
-  }, [personQuery, account]);
-
-  async function openPost(postId: number) {
+  async function openComments(postId: number) {
     if (expandedPost === postId) { setExpandedPost(null); return; }
     setExpandedPost(postId);
     if (comments[postId]) return;
     try {
       const response = await fetch(`/api/forum/posts/${postId}/comments`, { cache: "no-store" });
-      if (!response.ok) throw new Error();
-      const next = await response.json() as Comment[];
-      setComments((current) => ({ ...current, [postId]: next }));
+      const payload = response.ok ? await response.json() as Comment[] : [];
+      setComments(current => ({ ...current, [postId]: payload }));
     } catch { setNotice("Chưa tải được bình luận."); }
-  }
-
-  async function addPost() {
-    if (!account) { setNotice("Đăng nhập Google để tạo chủ đề."); return; }
-    if (!postTitle.trim() || !postBody.trim()) return;
-    setPosting(true);
-    try {
-      const response = await fetch("/api/forum/posts", {
-        method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: postTitle.trim(), body: postBody.trim() }),
-      });
-      const payload = await response.json().catch(() => ({})) as { post?: Post; error?: string };
-      if (!response.ok || !payload.post) throw new Error(payload.error || "Không thể đăng chủ đề.");
-      setPosts((current) => [payload.post!, ...current]);
-      setPostTitle(""); setPostBody("");
-    } catch (error) { setNotice(error instanceof Error ? error.message : "Không thể đăng chủ đề."); }
-    finally { setPosting(false); }
-  }
-
-  async function deletePost(postId: number) {
-    if (account?.email !== ADMIN) return;
-    if (!window.confirm("Xóa bài đăng này và toàn bộ bình luận?")) return;
-    try {
-      const response = await fetch(`/api/forum/posts/${postId}`, {
-        method: "DELETE",
-        credentials: "same-origin",
-      });
-      const payload = await response.json().catch(() => ({})) as { error?: string };
-      if (!response.ok) throw new Error(payload.error || "Không thể xóa bài đăng.");
-      setPosts((current) => current.filter(post => post.id !== postId));
-      setComments((current) => {
-        const next = { ...current };
-        delete next[postId];
-        return next;
-      });
-      if (expandedPost === postId) setExpandedPost(null);
-    } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Không thể xóa bài đăng.");
-    }
   }
 
   async function addComment(postId: number) {
     if (!account) { setNotice("Đăng nhập Google để bình luận."); return; }
-    const body = commentDraft[postId]?.trim();
-    if (!body) return;
+    const text = drafts[postId]?.trim();
+    if (!text) return;
     try {
       const response = await fetch(`/api/forum/posts/${postId}/comments`, {
-        method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body, parentId: replyTo[postId] ?? null }),
+        method: "POST", credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body: text, parentId: replyTo[postId] ?? null }),
       });
       const payload = await response.json().catch(() => ({})) as { comment?: Comment; error?: string };
       if (!response.ok || !payload.comment) throw new Error(payload.error || "Không thể gửi bình luận.");
-      setComments((current) => ({ ...current, [postId]: [...(current[postId] ?? []), payload.comment!] }));
-      setCommentDraft((current) => ({ ...current, [postId]: "" }));
-      setReplyTo((current) => ({ ...current, [postId]: null }));
-      setPosts((current) => current.map(post => post.id === postId ? { ...post, commentCount: post.commentCount + 1 } : post));
-    } catch (error) { setNotice(error instanceof Error ? error.message : "Không thể gửi bình luận."); }
+      setComments(current => ({ ...current, [postId]: [...(current[postId] ?? []), payload.comment!] }));
+      setDrafts(current => ({ ...current, [postId]: "" }));
+      setReplyTo(current => ({ ...current, [postId]: null }));
+      setPosts(current => current.map(post => post.id === postId ? { ...post, commentCount: post.commentCount + 1 } : post));
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Không thể gửi bình luận.");
+    }
   }
 
-  async function openDirect(person: Person) {
-    setSelectedPerson(person);
+  async function pinPost(post: Post, pinned: boolean) {
+    if (account?.email !== ADMIN) return;
     try {
-      const response = await fetch(`/api/messages?with=${person.id}`, { cache: "no-store", credentials: "same-origin" });
-      if (!response.ok) throw new Error();
-      const payload = await response.json() as { other: Person; messages: Message[] };
-      setSelectedPerson(payload.other);
-      setMessages(payload.messages);
-    } catch { setNotice("Chưa mở được tin nhắn riêng."); }
-  }
-  async function sendMessage() {
-    if (!selectedPerson || !messageDraft.trim()) return;
-    setSendingMessage(true);
-    try {
-      const response = await fetch("/api/messages", {
-        method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipientId: selectedPerson.id, body: messageDraft.trim() }),
+      const response = await fetch(`/api/forum/posts/${post.id}`, {
+        method: "PATCH", credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pinned }),
       });
-      const payload = await response.json().catch(() => ({})) as { message?: Message; error?: string };
-      if (!response.ok || !payload.message) throw new Error(payload.error || "Không thể gửi tin nhắn.");
-      setMessages((current) => [...current, payload.message!]);
-      setMessageDraft("");
-    } catch (error) { setNotice(error instanceof Error ? error.message : "Không thể gửi tin nhắn."); }
-    finally { setSendingMessage(false); }
+      const payload = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) throw new Error(payload.error || "Không thể cập nhật ghim.");
+      setPosts(current => current.map(item => ({ ...item, pinned: item.id === post.id ? pinned : false }))
+        .sort((a, b) => Number(b.pinned) - Number(a.pinned)));
+    } catch (error) { setNotice(error instanceof Error ? error.message : "Không thể cập nhật ghim."); }
   }
 
-  useEffect(() => {
-    if (!selectedPerson || !account) return;
-    const timer = window.setInterval(async () => {
-      try {
-        const response = await fetch(`/api/messages?with=${selectedPerson.id}`, { cache: "no-store", credentials: "same-origin" });
-        if (response.ok) setMessages((await response.json() as { messages: Message[] }).messages);
-      } catch {}
-    }, 5000);
-    return () => window.clearInterval(timer);
-  }, [selectedPerson?.id, account?.id]);
+  async function deletePost(post: Post) {
+    if (account?.email !== ADMIN) return;
+    if (!window.confirm("Xóa bài đăng và toàn bộ bình luận?")) return;
+    try {
+      const response = await fetch(`/api/forum/posts/${post.id}`, { method: "DELETE", credentials: "same-origin" });
+      const payload = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) throw new Error(payload.error || "Không thể xóa bài.");
+      setPosts(current => current.filter(item => item.id !== post.id));
+      setComments(current => { const next = { ...current }; delete next[post.id]; return next; });
+      if (expandedPost === post.id) setExpandedPost(null);
+    } catch (error) { setNotice(error instanceof Error ? error.message : "Không thể xóa bài."); }
+  }
 
-  const onlinePeople = useMemo(() => people.filter(person => person.id !== selectedPerson?.id), [people, selectedPerson]);
+  const pinnedPosts = posts.filter(post => post.pinned);
+  const normalPosts = posts.filter(post => !post.pinned);
 
-  return <div className="forum-page-grid">
+  return <div className="forum-page">
     {notice && <div className="community-alert"><Icon name="signal" size={15} /><span>{notice}</span><button type="button" onClick={() => setNotice("")}><Icon name="close" size={14} /></button></div>}
 
-    <section className="forum-main">
-      <div className="forum-intro">
-        <div><span className="community-kicker light"><span /> STILL / DISCUSS</span><h2>Nói chuyện.<br /><em>Hỏi nhau. Học cùng nhau.</em></h2><p>Đặt câu hỏi, chia sẻ tài liệu, rủ nhau vào phòng học. Bạn cũng có thể nhắn riêng bất kỳ người nào.</p></div>
-        <div className="forum-intro-mark">/ / /</div>
-      </div>
-
-      <div className="forum-compose">
-        <div className="compose-avatar">{account ? avatar(account.name, account.picture) : "?"}</div>
-        <div className="compose-fields"><input value={postTitle} onChange={(e) => setPostTitle(e.target.value)} placeholder="Tiêu đề cuộc trò chuyện" disabled={!account || posting} maxLength={160} /><textarea value={postBody} onChange={(e) => setPostBody(e.target.value)} placeholder={account ? "Bạn đang nghĩ gì về việc học?" : "Đăng nhập Google để bắt đầu trò chuyện"} disabled={!account || posting} maxLength={5000} /><div className="compose-footer"><span>{account ? "Bài viết công khai trong diễn đàn." : "Chỉ thành viên đã đăng nhập mới có thể đăng."}</span><button className="button-primary" type="button" onClick={() => void addPost()} disabled={!account || posting || !postTitle.trim() || !postBody.trim()}>{posting ? "Đang đăng…" : "Đăng chủ đề"}</button></div></div>
-      </div>
-
-      <div className="forum-feed">
-        <div className="community-section-heading"><div><span className="small-label">MỚI NHẤT</span><h3>Cuộc trò chuyện</h3></div><span>{posts.length} chủ đề</span></div>
-        {posts.length === 0 ? <div className="forum-empty"><Icon name="book" size={26} /><strong>Hãy là người mở đầu.</strong><p>Tạo chủ đề đầu tiên cho cộng đồng.</p></div> :
-          posts.map(post => <article className="forum-post-card" key={post.id}>
-            <div className="forum-post-author"><span className="community-avatar">{avatar(post.authorName, post.authorPicture)}</span><div><strong>{post.authorName}</strong><span>{timeLabel(post.createdAt)}</span></div></div>
-            <h3>{post.title}</h3><p className="forum-post-body">{post.body}</p>
-            {post.meetTitle && post.meetUrl && <a className="forum-meet-chip" href={post.meetUrl} target="_blank" rel="noreferrer"><Icon name="radio" size={14} /><span>{post.meetTitle}</span><Icon name="arrow" size={13} /></a>}
-            <div className="forum-post-actions"><button type="button" onClick={() => void openPost(post.id)}><Icon name="book" size={14} /> {post.commentCount ? `${post.commentCount} bình luận` : "Bình luận"}</button><button type="button" onClick={() => openDirect({ id: post.authorId, name: post.authorName, picture: post.authorPicture })}><Icon name="arrow" size={14} /> Nhắn riêng</button>{account?.email === ADMIN && <button type="button" className="forum-delete-button" onClick={() => void deletePost(post.id)}><Icon name="close" size={14} /> Xóa bài</button>}</div>
-            {expandedPost === post.id && <ForumComments account={account} comments={comments[post.id] ?? []} draft={commentDraft[post.id] ?? ""} replyId={replyTo[post.id] ?? null} onDraft={(value) => setCommentDraft(current => ({ ...current, [post.id]: value }))} onReply={(id) => setReplyTo(current => ({ ...current, [post.id]: id }))} onSend={() => void addComment(post.id)} onDirect={(person) => void openDirect(person)} />}
-          </article>)
-        }
-      </div>
+    <section className="forum-hero">
+      <span className="community-kicker light"><span /> STILL / DISCUSS</span>
+      <h2>Nói chuyện.<br /><em>Hỏi nhau. Học cùng nhau.</em></h2>
+      <p>Chia sẻ kinh nghiệm học, đặt câu hỏi, rủ nhau vào phòng học và kết nối với những người cùng nhịp.</p>
+      <div className="forum-hero-actions"><a className="button-primary" href="/hoc-chung"><Icon name="radio" size={15} /> Phòng học chung</a><a className="forum-hero-link" href="/tin-nhan"><Icon name="arrow" size={14} /> Tin nhắn riêng</a></div>
     </section>
 
-    <aside className="forum-side">
-      <section className="dm-card">
-        <div className="dm-heading"><div><span className="small-label">TIN NHẮN RIÊNG</span><h3>Nhắn với nhau</h3></div><Icon name="arrow" size={17} /></div>
-        {!account ? <div className="dm-locked"><Icon name="signal" size={19} /><strong>Đăng nhập Google</strong><span>Để tìm và nhắn riêng với mọi người.</span></div> :
-          <><div className="dm-search"><Icon name="target" size={14} /><input value={personQuery} onChange={(e) => setPersonQuery(e.target.value)} placeholder="Tìm người…" /></div>
-          <div className="people-list">{onlinePeople.map(person => <button type="button" className="person-row" key={person.id} onClick={() => void openDirect(person)}><span className="community-avatar small">{avatar(person.name, person.picture)}</span><span><strong>{person.name}</strong><small>Nhắn riêng</small></span><Icon name="arrow" size={13} /></button>)}</div></>}
-      </section>
+    <div className="forum-layout">
+      <main>
+        <section className="forum-compose">
+          <div className="compose-avatar">{account ? avatar(account.name, account.picture) : "?"}</div>
+          <div className="compose-fields">
+            <input value={title} onChange={e => setTitle(e.target.value)} disabled={!account || posting} placeholder="Tiêu đề cuộc trò chuyện" maxLength={160} />
+            <textarea value={body} onChange={e => setBody(e.target.value)} disabled={!account || posting} placeholder={account ? "Bạn muốn chia sẻ điều gì?" : "Đăng nhập Google để bắt đầu viết…"} maxLength={5000} />
+            <div className="compose-footer"><span>{account ? "Bài viết công khai với cộng đồng." : "Chỉ thành viên đã đăng nhập mới có thể đăng."}</span><button className="button-primary" type="button" onClick={() => void createPost()} disabled={!account || posting || !title.trim() || !body.trim()}>{posting ? "Đang đăng…" : "Đăng chủ đề"}</button></div>
+          </div>
+        </section>
 
-      {selectedPerson && account && <section className="dm-conversation">
-        <div className="dm-conversation-head"><div className="forum-post-author"><span className="community-avatar">{avatar(selectedPerson.name, selectedPerson.picture)}</span><div><strong>{selectedPerson.name}</strong><span>Tin nhắn riêng</span></div></div><button type="button" className="icon-button" aria-label="Đóng trò chuyện" onClick={() => setSelectedPerson(null)}><Icon name="close" size={15} /></button></div>
-        <div className="dm-messages">{messages.length === 0 ? <div className="dm-empty">Bắt đầu cuộc trò chuyện.</div> : messages.map(message => <div className={message.senderId === account.id ? "dm-bubble mine" : "dm-bubble"} key={message.id}><p>{message.body}</p><small>{timeLabel(message.createdAt)}</small></div>)}</div>
-        <div className="dm-composer"><input value={messageDraft} onChange={e => setMessageDraft(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void sendMessage(); } }} placeholder="Viết tin nhắn…" maxLength={4000} /><button className="icon-button" type="button" onClick={() => void sendMessage()} disabled={sendingMessage || !messageDraft.trim()} aria-label="Gửi"><Icon name="arrow" size={15} /></button></div>
-      </section>}
+        {pinnedPosts.length > 0 && <section className="forum-pinned-list">
+          <div className="forum-section-title"><div><span>ĐƯỢC GHIM</span><h3>Thông tin nổi bật</h3></div><small>Quản trị viên chọn</small></div>
+          {pinnedPosts.map(post => <PostCard key={post.id} post={post} account={account} comments={comments[post.id] ?? []} expanded={expandedPost === post.id} draft={drafts[post.id] ?? ""} replyId={replyTo[post.id] ?? null} onOpen={() => void openComments(post.id)} onDraft={text => setDrafts(current => ({ ...current, [post.id]: text }))} onReply={id => setReplyTo(current => ({ ...current, [post.id]: id }))} onSend={() => void addComment(post.id)} onPin={pinned => void pinPost(post, pinned)} onDelete={() => void deletePost(post)} />)}
+        </section>}
 
-      {account && <section className="community-guideline"><span className="small-label">MỘT QUY ƯỚC NHỎ</span><p>Tôn trọng nhau. Chia sẻ điều hữu ích. Không spam link. Phòng Meet là nơi học, diễn đàn là nơi nói chuyện.</p></section>}
-    </aside>
+        <section className="forum-feed">
+          <div className="forum-section-title"><div><span>MỚI NHẤT</span><h3>Cuộc trò chuyện</h3></div><small>{posts.length} chủ đề</small></div>
+          {normalPosts.length === 0 ? <div className="forum-empty"><div className="empty-orbit">+</div><strong>Hãy là người mở đầu.</strong><p>Chia sẻ câu hỏi hoặc kinh nghiệm học đầu tiên.</p></div> :
+            normalPosts.map(post => <PostCard key={post.id} post={post} account={account} comments={comments[post.id] ?? []} expanded={expandedPost === post.id} draft={drafts[post.id] ?? ""} replyId={replyTo[post.id] ?? null} onOpen={() => void openComments(post.id)} onDraft={text => setDrafts(current => ({ ...current, [post.id]: text }))} onReply={id => setReplyTo(current => ({ ...current, [post.id]: id }))} onSend={() => void addComment(post.id)} onPin={pinned => void pinPost(post, pinned)} onDelete={() => void deletePost(post)} />)}
+        </section>
+      </main>
+
+      <aside className="forum-sidebar">
+        <section className="forum-side-card dark-card"><span className="small-label">CỘNG ĐỒNG</span><strong>Học đều.<br />Nói thật.</strong><p>Không spam. Không quảng cáo. Tôn trọng nhịp học của người khác.</p></section>
+        <a className="forum-side-card side-link-card" href="/tin-nhan"><div><span className="small-label">TIN NHẮN RIÊNG</span><strong>Nhắn với bạn bè</strong><span>Tìm người bằng email chính xác hoặc chọn bạn bè.</span></div><Icon name="arrow" size={16} /></a>
+        <a className="forum-side-card side-link-card" href="/hoc-chung"><div><span className="small-label">GOOGLE MEET</span><strong>Vào phòng học</strong><span>Bật camera và học cùng mọi người.</span></div><Icon name="radio" size={16} /></a>
+      </aside>
+    </div>
   </div>;
 }
 
-function ForumComments({ account, comments, draft, replyId, onDraft, onReply, onSend, onDirect }: {
-  account: DashboardData["account"]; comments: Comment[]; draft: string; replyId: number | null;
-  onDraft: (value: string) => void; onReply: (id: number | null) => void; onSend: () => void; onDirect: (person: Person) => void;
+function PostCard({ post, account, comments, expanded, draft, replyId, onOpen, onDraft, onReply, onSend, onPin, onDelete }: {
+  post: Post; account: DashboardData["account"]; comments: Comment[]; expanded: boolean; draft: string; replyId: number | null;
+  onOpen: () => void; onDraft: (value: string) => void; onReply: (id: number | null) => void; onSend: () => void; onPin: (pinned: boolean) => void; onDelete: () => void;
 }) {
-  const top = comments.filter(comment => !comment.parentId);
-  return <div className="forum-comments">
-    {comments.length === 0 ? <p className="comment-empty">Chưa có bình luận. Hãy mở lời trước.</p> : top.map(comment => <div className="comment-block" key={comment.id}>
-      <CommentLine comment={comment} onReply={onReply} onDirect={onDirect} />
-      <div className="comment-replies">{comments.filter(child => child.parentId === comment.id).map(child => <CommentLine compact key={child.id} comment={child} onReply={onReply} onDirect={onDirect} />)}</div>
-    </div>)}
-    <div className="comment-composer">{replyId && <div className="replying">Đang trả lời một bình luận <button type="button" onClick={() => onReply(null)}>Hủy</button></div>}<div className="comment-input-row"><span className="community-avatar small">{account ? avatar(account.name, account.picture) : "?"}</span><input value={draft} onChange={e => onDraft(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(); } }} placeholder={account ? "Viết bình luận…" : "Đăng nhập để bình luận"} disabled={!account} maxLength={2000} /><button className="icon-button" type="button" onClick={onSend} disabled={!account || !draft.trim()}><Icon name="arrow" size={15} /></button></div></div>
-  </div>;
+  return <article className={post.pinned ? "forum-post-card pinned" : "forum-post-card"}>
+    <div className="forum-post-top"><div className="forum-post-author"><span className="community-avatar">{avatar(post.authorName, post.authorPicture)}</span><div><strong>{post.authorName}</strong><span>{timeLabel(post.createdAt)}</span></div></div>{post.pinned && <span className="pinned-chip"><Icon name="target" size={11} /> Ghim</span>}</div>
+    <h3>{post.title}</h3><p className="forum-post-body">{post.body}</p>
+    <div className="forum-post-actions"><button type="button" onClick={onOpen}><Icon name="book" size={14} /> {post.commentCount ? `${post.commentCount} bình luận` : "Bình luận"}</button><button type="button" onClick={() => { window.location.href = `/tin-nhan?user=${encodeURIComponent(post.authorId)}&email=${encodeURIComponent(post.authorEmail)}`; }}><Icon name="arrow" size={14} /> Nhắn riêng</button>{account?.email === ADMIN && <><button type="button" onClick={() => onPin(!post.pinned)}><Icon name="target" size={14} /> {post.pinned ? "Bỏ ghim" : "Ghim"}</button><button type="button" onClick={onDelete}><Icon name="close" size={14} /> Xóa</button></>}</div>
+    {expanded && <div className="forum-comments">
+      {!comments.length ? <p className="comment-empty">Chưa có bình luận. Hãy mở lời trước.</p> : comments.filter(comment => !comment.parentId).map(comment => <div className="comment-block" key={comment.id}>
+        <CommentLine comment={comment} onReply={onReply} />
+        <div className="comment-replies">{comments.filter(child => child.parentId === comment.id).map(child => <CommentLine key={child.id} comment={child} compact onReply={onReply} />)}</div>
+      </div>)}
+      <div className="comment-composer">{replyId && <div className="replying">Đang trả lời một bình luận <button type="button" onClick={() => onReply(null)}>Hủy</button></div>}<div className="comment-input-row"><span className="community-avatar small">{account ? avatar(account.name, account.picture) : "?"}</span><input value={draft} onChange={e => onDraft(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(); } }} placeholder={account ? "Viết bình luận…" : "Đăng nhập để bình luận"} disabled={!account} maxLength={2000} /><button className="icon-button" type="button" onClick={onSend} disabled={!account || !draft.trim()}><Icon name="arrow" size={15} /></button></div></div>
+    </div>}
+  </article>;
 }
-function CommentLine({ comment, compact = false, onReply, onDirect }: { comment: Comment; compact?: boolean; onReply: (id: number | null) => void; onDirect: (person: Person) => void }) {
-  return <div className={compact ? "comment-line compact" : "comment-line"}><span className="community-avatar small">{avatar(comment.authorName, comment.authorPicture)}</span><div><div className="comment-line-meta"><strong>{comment.authorName}</strong><span>{timeLabel(comment.createdAt)}</span></div><p>{comment.body}</p><div className="comment-line-actions"><button type="button" onClick={() => onReply(comment.id)}>Trả lời</button><button type="button" onClick={() => onDirect({ id: comment.authorId, name: comment.authorName, picture: comment.authorPicture })}>Nhắn riêng</button></div></div></div>;
+
+function CommentLine({ comment, compact = false, onReply }: { comment: Comment; compact?: boolean; onReply: (id: number | null) => void }) {
+  return <div className={compact ? "comment-line compact" : "comment-line"}><span className="community-avatar small">{avatar(comment.authorName, comment.authorPicture)}</span><div><div className="comment-line-meta"><strong>{comment.authorName}</strong><span>{timeLabel(comment.createdAt)}</span></div><p>{comment.body}</p><div className="comment-line-actions"><button type="button" onClick={() => onReply(comment.id)}>Trả lời</button><button type="button" onClick={() => { window.location.href = `/tin-nhan?user=${encodeURIComponent(comment.authorId)}&email=${encodeURIComponent(comment.authorEmail)}`; }}>Nhắn riêng</button></div></div></div>;
 }
