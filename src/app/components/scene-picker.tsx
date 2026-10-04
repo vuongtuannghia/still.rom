@@ -6,7 +6,6 @@ import { Icon } from "../icons";
 import { BUILTIN_SCENES, parseYouTubeLink, type RoomSettings, type YouTubeScene } from "@/lib/scene-domain";
 import { errorMessage } from "@/lib/client-api";
 import { ConfirmDialog, Dialog, type Confirmation } from "./dialogs";
-import { YouTubeScenePlayer } from "./youtube-scene";
 
 type SceneProps = { room: RoomSettings; onChange: (patch: Partial<RoomSettings>) => Promise<void> };
 export function YouTubeLinkForm({ room, onChange, onPlay, quick = false }: SceneProps & { onPlay?: () => void; quick?: boolean }) {
@@ -97,24 +96,6 @@ export function SceneChoices({ room, onChange, onEnter, compact = false }: Scene
 export function ScenePickerDialog({ room, onChange, onEnter, onClose }: SceneProps & { onEnter: () => void; onClose: () => void }) {
   return <Dialog title="Quang cảnh học tập" description="Dán link và Phát ngay. Video, timer và âm thanh có điều khiển riêng." onClose={onClose} className="scene-picker-dialog"><SceneChoices room={room} onChange={onChange} onEnter={onEnter} /></Dialog>;
 }
-function inlineYouTubeSrc(scene: YouTubeScene) {
-  const base = scene.videoId
-    ? `https://www.youtube-nocookie.com/embed/${scene.videoId}`
-    : "https://www.youtube-nocookie.com/embed/videoseries";
-  const params = new URLSearchParams({
-    playsinline: "1",
-    controls: "1",
-    rel: "0",
-    modestbranding: "1",
-    start: String(scene.startSeconds),
-  });
-  if (scene.playlistId) {
-    params.set("list", scene.playlistId);
-    params.set("listType", "playlist");
-  }
-  return base + "?" + params.toString();
-}
-
 export function SceneBanner({ room, onChange, onEnter, onChoose }: SceneProps & { onEnter: () => void; onChoose: () => void }) {
   const youtube = room.scenes.find((scene) => scene.id === room.selectedId);
   const still = BUILTIN_SCENES.find((scene) => scene.id === room.selectedId) ?? BUILTIN_SCENES[0];
@@ -132,17 +113,7 @@ export function SceneBanner({ room, onChange, onEnter, onChoose }: SceneProps & 
     </div>
     {youtube ? (
       <div className="scene-banner-youtube-preview-wrap">
-        <div className="scene-banner-preview scene-banner-youtube-preview">
-          <YouTubeScenePlayer
-            scene={youtube}
-            loop={room.loop}
-            muted={room.youtubeMuted}
-            onMuted={(value) => void onChange({ youtubeMuted: value })}
-            onFallback={() => void onChange({ selectedId: "quiet-window" })}
-            ambientView
-            sessionRole="preview"
-          />
-        </div>
+        <div className="scene-banner-preview scene-banner-youtube-preview youtube-single-player-slot" data-youtube-slot="dashboard" aria-label="Video YouTube đang phát"></div>
         <div className="scene-preview-meta">
           <span>YOUTUBE SCENE · XEM NGAY</span>
           <strong>{youtube.title}</strong>
