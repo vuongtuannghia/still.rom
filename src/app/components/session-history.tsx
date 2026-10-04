@@ -36,8 +36,28 @@ export function SessionLogDialog({ workspaceId, onSaved, onClose }: { workspaceI
         onClose();
         return;
       }
-      const result = await requestJson<{ session: FocusSession }>("/api/focus-sessions", { method: "POST", body: JSON.stringify(payloadRef.current) });
-      onSaved(result.session); onClose();
+      try {
+        const result = await requestJson<{ session: FocusSession }>("/api/focus-sessions", { method: "POST", body: JSON.stringify(payloadRef.current) });
+        onSaved(result.session); onClose();
+      } catch (serverError) {
+        // Keep manual sessions usable even while the database/API is not provisioned.
+        const payload = payloadRef.current;
+        const fallback: FocusSession = {
+          id: Date.now(),
+          ...payload,
+          durationMinutes: payload.durationSeconds / 60,
+          createdAt: payload.endedAt,
+        };
+        try {
+          const key = `stillroom.pending.sessions:${workspaceId}`;
+          const saved = JSON.parse(localStorage.getItem(key) || "[]") as FocusSession[];
+          localStorage.setItem(key, JSON.stringify([fallback, ...saved].slice(0, 200)));
+        } catch {
+          // Local persistence is best-effort; the in-memory session is still shown immediately.
+        }
+        onSaved(fallback);
+        onClose();
+      }
     } catch (error) { setError(errorMessage(error)); }
     finally { setBusy(false); }
   }
