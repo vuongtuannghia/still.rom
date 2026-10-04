@@ -74,12 +74,14 @@ export const forumPosts = pgTable("forum_posts", {
   title: varchar("title", { length: 160 }).notNull(),
   body: varchar("body", { length: 5000 }).notNull(),
   meetRoomId: integer("meet_room_id").references(() => sharedStudyRooms.id, { onDelete: "set null" }),
+  pinned: boolean("pinned").default(false).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
   index("forum_posts_account_idx").on(table.accountId, table.createdAt),
   index("forum_posts_created_idx").on(table.createdAt),
   index("forum_posts_meet_room_idx").on(table.meetRoomId),
+  index("forum_posts_pinned_idx").on(table.pinned, table.createdAt),
 ]);
 
 export const forumComments = pgTable("forum_comments", {
