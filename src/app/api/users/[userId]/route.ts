@@ -105,7 +105,7 @@ export async function GET(_: Request, context: { params: Promise<{ userId: strin
         id: account.id, name: account.name, email: viewer === userId || relationship === "friend" ? account.email : null,
         picture: account.customPicture || account.picture, coverPicture: account.coverPicture, bio: account.bio,
         createdAt: account.createdAt.toISOString(), lastSignInAt: account.lastSignInAt.toISOString(),
-        isAdmin: account.email.toLowerCase() === ADMIN,
+        isAdmin: account.role === "admin" || account.email.toLowerCase() === ADMIN,
       },
       relationship,
       relationshipRequestId,
