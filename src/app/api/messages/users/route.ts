@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { accounts, friendRequests, friendships } from "@/db/schema";
+import { accountBlocks, accounts, friendRequests, friendships } from "@/db/schema";
 import { and, asc, eq, ilike, inArray, ne, or } from "drizzle-orm";
 import { apiError, json } from "@/lib/server-api";
 import { requireAccount } from "@/lib/community-auth";
@@ -11,6 +11,10 @@ export async function GET(request: Request) {
     const current = await requireAccount(request);
     const q = new URL(request.url).searchParams.get("q")?.trim().toLowerCase() ?? "";
 
+    const blockRows = await db.select({ blockerId: accountBlocks.blockerId, blockedId: accountBlocks.blockedId })
+      .from(accountBlocks).where(or(eq(accountBlocks.blockerId, current.id), eq(accountBlocks.blockedId, current.id)));
+    const blockedIds = new Set(blockRows.flatMap(row => [row.blockerId, row.blockedId]).filter(id => id !== current.id));
+
     const friendshipRows = await db.select({
       a: friendships.accountAId,
       b: friendships.accountBId,
@@ -19,7 +23,7 @@ export async function GET(request: Request) {
       eq(friendships.accountBId, current.id),
     ));
 
-    const friendIds = friendshipRows.flatMap(row => [row.a, row.b]).filter(id => id !== current.id);
+    const friendIds = friendshipRows.flatMap(row => [row.a, row.b]).filter(id => id !== current.id && !blockedIds.has(id));
 
     let rows;
     if (!q) {
@@ -51,6 +55,7 @@ export async function GET(request: Request) {
         .limit(20);
     }
 
+    rows = rows.filter(person => !blockedIds.has(person.id));
     const result = await Promise.all(rows.map(async person => {
       const normalized = { ...person, picture: person.picture || person.googlePicture || null };
       if (friendIds.includes(person.id)) return { ...normalized, relationship: "friend" as const };
