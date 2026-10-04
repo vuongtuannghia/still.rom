@@ -108,7 +108,12 @@ export async function bootstrapWorkspace(request: Request, browserToken: unknown
   const accountToken = (await cookies()).get(ACCOUNT_COOKIE)?.value;
   if (validAccessToken(accountToken)) {
     const accountSession = await findAccountSession(accountToken);
-    if (accountSession?.active) return accountSession.workspace;
+    if (accountSession?.active) {
+      if (accountSession.account.lockedUntil && accountSession.account.lockedUntil.getTime() > Date.now()) {
+        throw new ApiError(403, "Tài khoản đang bị khóa.");
+      }
+      return accountSession.workspace;
+    }
     if (accountSession && !accountSession.active) throw new ApiError(401, "Phiên tài khoản đã hết hạn. Vui lòng đăng nhập lại.");
   }
   if (!validAccessToken(browserToken)) throw new ApiError(400, "Mã truy cập trình duyệt không hợp lệ.");
