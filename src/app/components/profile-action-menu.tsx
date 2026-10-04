@@ -35,7 +35,7 @@ export function ProfileActionMenu({ person, children, placement = "left" }: {
       <button type="button" role="menuitem" onClick={() => router.push("/nguoi-dung/" + person.id)}>
         <Icon name="layout" size={14} /> Xem trang cá nhân
       </button>
-      <button type="button" role="menuitem" onClick={() => router.push("/tin-nhan/" + encodeURIComponent(person.id))}>
+      <button type="button" role="menuitem" onClick={() => router.push("/tin-nhan?user=" + encodeURIComponent(person.id))}>
         <Icon name="arrow" size={14} /> Nhắn tin riêng
       </button>
     </div>}
