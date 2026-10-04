@@ -96,8 +96,61 @@ export function SceneChoices({ room, onChange, onEnter, compact = false }: Scene
 export function ScenePickerDialog({ room, onChange, onEnter, onClose }: SceneProps & { onEnter: () => void; onClose: () => void }) {
   return <Dialog title="Quang cảnh học tập" description="Dán link và Phát ngay. Video, timer và âm thanh có điều khiển riêng." onClose={onClose} className="scene-picker-dialog"><SceneChoices room={room} onChange={onChange} onEnter={onEnter} /></Dialog>;
 }
+function inlineYouTubeSrc(scene: YouTubeScene) {
+  const base = scene.videoId
+    ? `https://www.youtube-nocookie.com/embed/${scene.videoId}`
+    : "https://www.youtube-nocookie.com/embed/videoseries";
+  const params = new URLSearchParams({
+    playsinline: "1",
+    controls: "1",
+    rel: "0",
+    modestbranding: "1",
+    start: String(scene.startSeconds),
+  });
+  if (scene.playlistId) {
+    params.set("list", scene.playlistId);
+    params.set("listType", "playlist");
+  }
+  return base + "?" + params.toString();
+}
+
 export function SceneBanner({ room, onChange, onEnter, onChoose }: SceneProps & { onEnter: () => void; onChoose: () => void }) {
   const youtube = room.scenes.find((scene) => scene.id === room.selectedId);
   const still = BUILTIN_SCENES.find((scene) => scene.id === room.selectedId) ?? BUILTIN_SCENES[0];
-  return <section className="scene-banner panel" id="study-room"><div className="scene-banner-copy"><span className="eyebrow"><Icon name="leaf" size={14} /> MỘT GÓC HỌC. MỘT THẾ GIỚI YÊN.</span><h2>Ở đây, chỉ cần có mặt.</h2><p>Video của bạn, tiếng mưa thật và một việc nhỏ để bắt đầu.</p><YouTubeLinkForm room={room} onChange={onChange} onPlay={onEnter} quick /><div className="scene-banner-actions"><button className="button-primary" type="button" onClick={onEnter}>Mở phòng học <Icon name="move" size={16} /></button><button className="button-secondary" type="button" onClick={onChoose}><Icon name="plus" size={16} /> Dán link YouTube</button></div><small><span className="tiny-dot" />Đang chọn: {youtube?.title ?? still.title}</small></div><button className="scene-banner-preview" type="button" onClick={onEnter} aria-label="Mở quang cảnh trong phòng học"><Image src={youtube?.videoId ? `https://i.ytimg.com/vi/${youtube.videoId}/hqdefault.jpg` : still.image} alt="" fill unoptimized={Boolean(youtube?.videoId)} sizes="(max-width: 760px) 100vw, 500px" style={{ objectPosition: youtube ? "center" : still.position, filter: !youtube && room.stillMonochrome ? "grayscale(1)" : undefined }} /><span className="scene-preview-caption"><span>{youtube ? "YOUTUBE SCENE" : "STILL / ROOM"}</span><strong>{youtube?.title ?? still.title}</strong><i><Icon name="play" size={21} /></i></span></button></section>;
+  return <section className="scene-banner panel" id="study-room">
+    <div className="scene-banner-copy">
+      <span className="eyebrow"><Icon name="leaf" size={14} /> MỘT GÓC HỌC. MỘT THẾ GIỚI YÊN.</span>
+      <h2>Ở đây, chỉ cần có mặt.</h2>
+      <p>Video của bạn, tiếng mưa thật và một việc nhỏ để bắt đầu.</p>
+      <YouTubeLinkForm room={room} onChange={onChange} onPlay={onEnter} quick />
+      <div className="scene-banner-actions">
+        <button className="button-primary" type="button" onClick={onEnter}>Mở phòng học <Icon name="move" size={16} /></button>
+        <button className="button-secondary" type="button" onClick={onChoose}><Icon name="plus" size={16} /> Dán link YouTube</button>
+      </div>
+      <small><span className="tiny-dot" />Đang chọn: {youtube?.title ?? still.title}</small>
+    </div>
+    {youtube ? (
+      <div className="scene-banner-preview scene-banner-youtube-preview">
+        <iframe
+          title={`YouTube: ${youtube.title}`}
+          src={inlineYouTubeSrc(youtube)}
+          loading="lazy"
+          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+          referrerPolicy="strict-origin-when-cross-origin"
+        />
+        <div className="scene-preview-caption">
+          <div>
+            <span>YOUTUBE SCENE · XEM NGAY</span>
+            <strong>{youtube.title}</strong>
+          </div>
+          <button type="button" aria-label="Mở phòng học" onClick={onEnter}><Icon name="move" size={18} /></button>
+        </div>
+      </div>
+    ) : (
+      <button className="scene-banner-preview" type="button" onClick={onEnter} aria-label="Mở quang cảnh trong phòng học">
+        <Image src={still.image} alt="" fill sizes="(max-width: 760px) 100vw, 500px" style={{ objectPosition: still.position, filter: room.stillMonochrome ? "grayscale(1)" : undefined }} />
+        <span className="scene-preview-caption"><span>STILL / ROOM</span><strong>{still.title}</strong><i><Icon name="play" size={21} /></i></span>
+      </button>
+    )}
+  </section>;
 }
