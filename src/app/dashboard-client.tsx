@@ -18,7 +18,7 @@ import { SceneBackdrop } from "./components/scene-backdrop";
 import { AccountControl } from "./components/account-control";
 import { ProfileNavItem } from "./components/profile-nav-item";
 import { ProfileAvatarMenu } from "./components/profile-avatar-menu";
-  import { AdminNavItem } from "./components/admin-nav-item";
+import { AdminNavItem } from "./components/admin-nav-item";
 import type { RoomSettings } from "@/lib/scene-domain";
 import {
   DEFAULT_PREFERENCES, MODE_LABELS, dateKey, dateRange, focusStreak, formatMinutes, labelDate,
