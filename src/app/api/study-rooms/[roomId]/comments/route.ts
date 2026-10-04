@@ -21,6 +21,8 @@ export async function POST(request: Request, context: { params: Promise<{ roomId
   try {
     const account = await requireAccount(request);
     const roomId = positiveId((await context.params).roomId);
+    const [room] = await db.select({ accountId: sharedStudyRooms.accountId }).from(sharedStudyRooms).where(eq(sharedStudyRooms.id, roomId)).limit(1);
+    if (!room) throw new ApiError(404, "Không tìm thấy phòng học.");
     const body = await readBody(request);
     if (typeof body.body !== "string" || !body.body.trim() || body.body.trim().length > 2000) throw new ApiError(400, "Bình luận phải từ 1 đến 2000 ký tự.");
     let parentId: number | null = null;
