@@ -97,6 +97,19 @@ export function AccountControl({ data, onChanged }: {
     const id = window.setInterval(() => void loadStatus(), 10000);
     return () => window.clearInterval(id);
   }, []);
+  useEffect(() => {
+    if (!status?.account && data) {
+      try {
+        localStorage.setItem(PENDING_IMPORT_KEY, JSON.stringify({
+          format: "stillroom-backup", version: 1, exportedAt: new Date().toISOString(),
+          preferences: data.preferences, room: data.room, tasks: data.tasks, subtasks: data.subtasks,
+          habits: data.habits, checkIns: data.checkIns, sessions: data.sessions,
+        }));
+      } catch {}
+    }
+  }, [status?.account, data]);
+
+
 
   useEffect(() => {
     const clientId = status?.google.clientId;
