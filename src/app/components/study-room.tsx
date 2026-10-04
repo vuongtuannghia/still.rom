@@ -141,6 +141,7 @@ export function StudyRoom({ room, onChange, onClose, focusProps, mixer, tasksPan
       </div>
       {videoOnly && <button type="button" className="video-only-keyboard-return" aria-label="Hiện thanh công cụ video" onFocus={revealControls} onClick={revealControls}>Hiện thanh công cụ — Back, Tab hoặc pause video.</button>}
     </div>
+    </div>
   </div>;
 
 }
