@@ -111,7 +111,15 @@ export function useAmbientMixer(workspaceId: string | null) {
       if (engine.current !== active || !mounted.current) return;
       active.buffers.set(id, buffer); startChannel(active, id);
     })().catch((reason) => {
-      if (engine.current === active && mounted.current && !active.controller.signal.aborted) setFailed((current) => ({ ...current, [id]: reason instanceof Error ? reason.message : "Chưa tải được âm thanh." }));
+      if (engine.current === active && mounted.current && !active.controller.signal.aborted) {
+        try {
+          const fallback = synthesizeSound(active.context, id);
+          active.buffers.set(id, fallback);
+          startChannel(active, id);
+        } catch {
+          setFailed((current) => ({ ...current, [id]: reason instanceof Error ? reason.message : "Chưa tải được âm thanh." }));
+        }
+      }
     }).finally(() => {
       active.pending.delete(id);
       if (mounted.current && engine.current === active) setLoading((current) => current.filter((value) => value !== id));
