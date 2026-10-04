@@ -341,7 +341,7 @@ export default function ProfilePage() {
       <div className="profile-actions">
         {isSelf ? <button className="button-primary" type="button" onClick={() => setEditMode(current => !current)}><Icon name="sliders" size={14} /> {editMode ? "Đang chỉnh sửa" : "Chỉnh hồ sơ"}</button>
         : data.relationship === "blocked" ? <span className="profile-blocked-label">Đã chặn / bị chặn</span>
-        : data.relationship === "friend" ? <div className="profile-action-group"><button className="button-primary" type="button" onClick={() => router.push("/tin-nhan/" + encodeURIComponent(data.profile.id))}><Icon name="arrow" size={14} /> Nhắn tin</button><button className="button-secondary" type="button" onClick={() => void removeFriend()}>Hủy kết bạn</button></div>
+        : data.relationship === "friend" ? <div className="profile-action-group"><button className="button-primary" type="button" onClick={() => router.push("/tin-nhan?user=" + encodeURIComponent(data.profile.id))}><Icon name="arrow" size={14} /> Nhắn tin</button><button className="button-secondary" type="button" onClick={() => void removeFriend()}>Hủy kết bạn</button></div>
         : data.relationship === "incoming" ? <div className="profile-action-group"><button className="button-primary" type="button" onClick={() => void respondToFriend("accept")}>Chấp nhận</button><button className="button-secondary" type="button" onClick={() => void respondToFriend("reject")}>Từ chối</button></div>
         : data.relationship === "outgoing" ? <button className="button-secondary" type="button" onClick={() => void cancelFriendRequest()}>Hủy lời mời</button>
         : <button className="button-primary" type="button" onClick={() => void sendFriendRequest()}>Kết bạn</button>}
