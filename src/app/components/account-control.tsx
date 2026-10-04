@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "../icons";
 import type { DashboardData } from "@/lib/focus-domain";
+import { ProfileAvatarMenu } from "./profile-avatar-menu";
 
 const LOCAL_DATA_KEY = "stillroom.progress.v4";
 const PENDING_IMPORT_KEY = "stillroom.pending-account-import.v1";
@@ -209,7 +210,7 @@ export function AccountControl({ data, onChanged }: {
 
   return <div className="account-control">
     {activeAccount ? <div className="account-connected account-sidebar">
-      <span className="account-avatar">{activeAccount.picture ? <img src={activeAccount.picture} alt="" /> : activeAccount.name.slice(0, 1).toUpperCase()}</span>
+      <ProfileAvatarMenu id={activeAccount.id} name={activeAccount.name} picture={activeAccount.picture} size="normal" self />
       <a className="account-user-meta account-profile-link" href={"/nguoi-dung/" + activeAccount.id}><strong>{activeAccount.name}</strong><span>{activeAccount.email}</span><small><Icon name="check" size={12} /> Đã sao lưu tiến độ · Xem hồ sơ</small></a>
       <button type="button" className="button-secondary account-logout" disabled={busy} onClick={() => void logout()}>{busy ? "Đang đăng xuất…" : "Đăng xuất"}</button>
     </div> : <div className="account-sidebar-login">
