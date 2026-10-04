@@ -56,6 +56,18 @@ export const accountSnapshots = pgTable("account_snapshots", {
 }, (table) => [index("account_snapshots_account_idx").on(table.accountId)]);
 
 // Browser access keys allow secure same-origin requests when embedded cookies are blocked.
+export const sharedStudyRooms = pgTable("shared_study_rooms", {
+  id: serial("id").primaryKey(),
+  accountId: uuid("account_id").notNull().references(() => accounts.id, { onDelete: "cascade" }),
+  title: varchar("title", { length: 120 }).notNull(),
+  meetUrl: varchar("meet_url", { length: 2000 }).notNull(),
+  pinned: boolean("pinned").default(false).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index("shared_study_rooms_created_idx").on(table.createdAt),
+  index("shared_study_rooms_pinned_idx").on(table.pinned, table.createdAt),
+]);
+
 export const workspaceAccessKeys = pgTable("workspace_access_keys", {
   tokenHash: varchar("token_hash", { length: 64 }).primaryKey(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
