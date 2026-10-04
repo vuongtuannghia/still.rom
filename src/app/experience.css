@@ -641,3 +641,58 @@
 @media (prefers-reduced-motion: reduce) {
   .persistent-youtube-player { transition: none; }
 }
+
+
+/* One-player architecture: dashboard and study room provide slots for the same iframe. */
+.study-room-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 100 !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 10px !important;
+  background: rgba(10,10,9,.62) !important;
+}
+.study-room-overlay .study-room-dialog {
+  position: relative !important;
+  inset: auto !important;
+  z-index: 101 !important;
+  width: calc(100vw - 20px) !important;
+  max-width: 1540px !important;
+  height: calc(100dvh - 20px) !important;
+  max-height: calc(100dvh - 20px) !important;
+  display: block !important;
+}
+.youtube-single-player-slot {
+  position: relative !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  background: #090909 !important;
+}
+.scene-banner-youtube-preview {
+  aspect-ratio: 16 / 9 !important;
+}
+.room-youtube-slot {
+  width: 100% !important;
+  height: 100% !important;
+}
+.persistent-youtube-slot-player {
+  z-index: 1100 !important;
+  overflow: hidden !important;
+  pointer-events: auto !important;
+  border-radius: inherit !important;
+}
+.persistent-youtube-slot-player .youtube-stage {
+  border-radius: inherit !important;
+}
+html.stillroom-room-player-active .persistent-youtube-slot-player {
+  z-index: 1100 !important;
+}
+@media (max-width: 760px) {
+  .study-room-overlay { padding: 6px !important; }
+  .study-room-overlay .study-room-dialog {
+    width: calc(100vw - 12px) !important;
+    height: calc(100dvh - 12px) !important;
+  }
+}
