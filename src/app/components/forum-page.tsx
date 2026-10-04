@@ -215,6 +215,6 @@ function PostCard({ post, account, comments, expanded, draft, replyId, onOpen, o
   </article>;
 }
 
-function CommentLine({ comment, compact = false, onReply}: { comment: Comment; compact?: boolean; onReply: (id: number | null) => void; router: ReturnType<typeof useRouter> }) {
+function CommentLine({ comment, compact = false, onReply }: { comment: Comment; compact?: boolean; onReply: (id: number | null) => void }) {
   return <div className={compact ? "comment-line compact" : "comment-line"}><ProfileActionMenu person={{ id: comment.authorId, name: comment.authorName, picture: comment.authorPicture }}><span className="community-avatar small">{avatar(comment.authorName, comment.authorPicture)}</span></ProfileActionMenu><div><div className="comment-line-meta"><a className="profile-inline-link" href={"/nguoi-dung/" + comment.authorId}>{comment.authorName}</a><span>{timeLabel(comment.createdAt)}</span></div><p>{comment.body}</p><div className="comment-line-actions"><button type="button" onClick={() => onReply(comment.id)}>Trả lời</button></div></div></div>;
 }
