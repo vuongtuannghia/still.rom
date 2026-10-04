@@ -74,7 +74,10 @@ export async function GET(_: Request, context: { params: Promise<{ userId: strin
       } else {
         const [a, b] = orderedAccountPair(viewer, userId);
         const [friend] = await db.select({ id: friendships.id }).from(friendships)
-          .where(and(eq(friendships.accountAId, a), eq(friendships.accountBId, b))).limit(1);
+          .where(or(
+            and(eq(friendships.accountAId, a), eq(friendships.accountBId, b)),
+            and(eq(friendships.accountAId, b), eq(friendships.accountBId, a)),
+          )).limit(1);
 
         if (friend) {
           relationship = "friend";
