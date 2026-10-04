@@ -19,3 +19,9 @@ export async function findAccountSession(token: string) {
   if (!row) return null;
   return { ...row, active: row.session.revokedAt === null && row.session.expiresAt.getTime() > Date.now() };
 }
+
+
+export async function accountFromSessionToken(token: string) {
+  const row = await findAccountSession(token);
+  return row?.active ? row : null;
+}
