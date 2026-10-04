@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     description: "Không gian tập trung tối giản để học, theo dõi tiến độ và học cùng nhau.",
   },
   verification: {
-    google: "60AZJX28Fhl1X0rdSnAZ9qt-5u7OVactK34Ukmw2i7s",
+    google: "jRrDLgQsTU50xF6QiUY5cqm8tuLjXkKiK403BweeE7Y",
   },
 };
 export default function RootLayout({ children }: { children: ReactNode }) {
