@@ -5,7 +5,7 @@ type Recording = {
   license: "CC0" | "Public Domain";
 };
 
-const RAW_AUDIO = "https://cdn.jsdelivr.net/gh/euuuuuuan/todak-public@main/assets/ambience";
+const RAW_AUDIO = "https://raw.githubusercontent.com/euuuuuuan/todak-public/main/assets/ambience";
 
 /**
  * Curated ambience loops are sourced from a published CC0 asset register. The selected
@@ -34,9 +34,9 @@ function recorded(id: string): Recording | undefined {
 }
 
 export type SoundId =
-  | "lofi" | "rain" | "roof" | "thunder" | "ocean" | "river" | "wind" | "forest" | "birds"
-  | "fireplace" | "cafe" | "keyboard" | "chimes" | "purr" | "forest-night" | "waterfall"
-  | "storm-rain" | "mountain-stream" | "white" | "pink" | "brown";
+  | "lofi" | "rain" | "roof" | "thunder" | "ocean" | "river" | "wind" | "forest"
+  | "fireplace" | "cafe" | "forest-night" | "waterfall" | "storm-rain" | "mountain-stream"
+  | "keyboard" | "chimes" | "purr" | "white" | "pink" | "brown";
 
 export type SoundDefinition = {
   id: SoundId;
@@ -48,39 +48,35 @@ export type SoundDefinition = {
 };
 
 export const SOUND_CATALOG: SoundDefinition[] = [
-  { id: "lofi", label: "Lo-fi", detail: "Lo-fi thật · mềm và chậm", icon: "headphones", group: "Không gian", recording: recorded("lofi") },
-  { id: "rain", label: "Mưa dịu", detail: "Mưa thật trong phòng · vòng lặp mượt", icon: "water", group: "Thiên nhiên", recording: recorded("rain") },
-  { id: "roof", label: "Mưa trên mái", detail: "Mưa dày · bản thu CC0", icon: "water", group: "Thiên nhiên", recording: recorded("roof") },
-  { id: "thunder", label: "Sấm xa", detail: "Sấm thật · để âm lượng thấp", icon: "moon", group: "Thiên nhiên", recording: recorded("thunder") },
-  { id: "ocean", label: "Sóng biển", detail: "Sóng Point Reyes · nền rộng", icon: "water", group: "Thiên nhiên", recording: recorded("ocean") },
-  { id: "river", label: "Suối chảy", detail: "Dòng nước thật · đều và sáng", icon: "water", group: "Thiên nhiên", recording: recorded("river") },
-  { id: "wind", label: "Gió nhẹ", detail: "Gió thật · nền trầm", icon: "leaf", group: "Thiên nhiên", recording: recorded("wind") },
-  { id: "forest", label: "Rừng yên", detail: "Chim sáng sớm · bản thu CC0", icon: "leaf", group: "Thiên nhiên", recording: recorded("forest") },
-  { id: "birds", label: "Chim hót", detail: "Chim thật · bình minh", icon: "leaf", group: "Thiên nhiên", recording: recorded("birds") },
-  { id: "fireplace", label: "Lò sưởi", detail: "Củi cháy thật · nổ lách tách", icon: "fire", group: "Không gian", recording: recorded("fireplace") },
-  { id: "cafe", label: "Quán cà phê", detail: "Room tone + ly tách · âm tạo", icon: "coffee", group: "Không gian" },
-  { id: "keyboard", label: "Gõ bàn phím", detail: "Nhịp phím nhẹ · âm tạo", icon: "tasks", group: "Không gian" },
-  { id: "chimes", label: "Chuông gió", detail: "Âm ngân thưa · âm tạo", icon: "spark", group: "Không gian" },
-  { id: "purr", label: "Mèo ngủ", detail: "Rừ rừ rất nhẹ · âm tạo", icon: "moon", group: "Không gian" },
-  { id: "forest-night", label: "Rừng sau mưa", detail: "Côn trùng đêm · bản thu CC0", icon: "moon", group: "Thiên nhiên", recording: recorded("forest-night") },
-  { id: "waterfall", label: "Thác nước", detail: "Suối dày · bản thu CC0", icon: "water", group: "Thiên nhiên", recording: recorded("waterfall") },
-  { id: "storm-rain", label: "Mưa giông", detail: "Sấm xa · bản thu CC0", icon: "moon", group: "Thiên nhiên", recording: recorded("storm-rain") },
-  { id: "mountain-stream", label: "Suối núi", detail: "Suối êm · bản thu CC0", icon: "water", group: "Thiên nhiên", recording: recorded("mountain-stream") },
-  { id: "white", label: "White noise", detail: "Nền sáng · đều", icon: "volume", group: "Noise" },
-  { id: "pink", label: "Pink noise", detail: "Nền cân bằng · mềm", icon: "volume", group: "Noise" },
-  { id: "brown", label: "Brown noise", detail: "Nền trầm · êm và ổn định", icon: "volume", group: "Noise" },
+  { id: "lofi", label: "Piano lo-fi", detail: "Piano mềm · nhịp chậm · không lời", icon: "headphones", group: "Không gian" },
+  { id: "rain", label: "Mưa dịu", detail: "Mưa cửa sổ · nền đều, dễ tập trung", icon: "water", group: "Thiên nhiên", recording: recorded("rain") },
+  { id: "roof", label: "Mưa trên mái", detail: "Hạt mưa dày · ấm và kín", icon: "water", group: "Thiên nhiên", recording: recorded("roof") },
+  { id: "thunder", label: "Sấm xa", detail: "Rền rất xa · dùng ở mức thấp", icon: "moon", group: "Thiên nhiên", recording: recorded("thunder") },
+  { id: "ocean", label: "Sóng biển", detail: "Sóng chậm · nền rộng và mềm", icon: "water", group: "Thiên nhiên", recording: recorded("ocean") },
+  { id: "river", label: "Suối chảy", detail: "Nước chảy đều · sáng và tự nhiên", icon: "water", group: "Thiên nhiên", recording: recorded("river") },
+  { id: "wind", label: "Gió nhẹ", detail: "Gió nền · trầm và ít gây chú ý", icon: "leaf", group: "Thiên nhiên" },
+  { id: "forest", label: "Rừng yên", detail: "Chim bình minh · không gian mở", icon: "leaf", group: "Thiên nhiên", recording: recorded("forest") },
+  { id: "fireplace", label: "Lò sưởi", detail: "Củi cháy · lách tách rất nhẹ", icon: "fire", group: "Không gian", recording: recorded("fireplace") },
+  { id: "cafe", label: "Quán cà phê", detail: "Room tone + ly tách · nền xã hội nhẹ", icon: "coffee", group: "Không gian", recording: recorded("cafe") },
+  { id: "forest-night", label: "Đêm yên", detail: "Côn trùng đêm · nền tối và sâu", icon: "moon", group: "Thiên nhiên", recording: recorded("forest-night") },
+  { id: "keyboard", label: "Gõ phím", detail: "Nhịp phím rất nhẹ · làm nền", icon: "tasks", group: "Không gian" },
+  { id: "chimes", label: "Chuông gió", detail: "Điểm âm thưa · tránh gây chú ý", icon: "spark", group: "Không gian" },
+  { id: "purr", label: "Mèo ngủ", detail: "Rừ rừ rất nhẹ · thư giãn", icon: "moon", group: "Không gian" },
+  { id: "white", label: "White noise", detail: "Đều và sáng · che tiếng ồn", icon: "volume", group: "Noise" },
+  { id: "pink", label: "Pink noise", detail: "Mềm hơn white · cân bằng", icon: "volume", group: "Noise" },
+  { id: "brown", label: "Brown noise", detail: "Trầm và dày · tập trung sâu", icon: "volume", group: "Noise" },
 ];
 
 export type MixerLevels = Record<SoundId, number>;
 export const emptyLevels = (): MixerLevels => Object.fromEntries(SOUND_CATALOG.map((sound) => [sound.id, 0])) as MixerLevels;
 
 export const MIX_PRESETS = [
-  { id: "rain-desk", label: "Bàn học ngày mưa", detail: "Mưa dịu + piano", levels: { rain: 30, lofi: 9 } },
-  { id: "forest", label: "Một góc rừng", detail: "Suối + chim", levels: { river: 20, birds: 7 } },
-  { id: "warm", label: "Đêm bên lửa", detail: "Lửa + mưa", levels: { fireplace: 23, rain: 7 } },
-  { id: "cafe", label: "Quán vắng", detail: "Cà phê + piano", levels: { cafe: 16, lofi: 12 } },
-  { id: "deep", label: "Tập trung sâu", detail: "Brown noise + biển", levels: { brown: 17, ocean: 8 } },
-  { id: "storm", label: "Mưa giông", detail: "Mưa + sấm xa", levels: { "storm-rain": 18, thunder: 4 } },
+  { id: "rain-desk", label: "Bàn học ngày mưa", detail: "Mưa dịu + piano", levels: { rain: 34, lofi: 8 } },
+  { id: "forest", label: "Một góc rừng", detail: "Suối + chim", levels: { river: 28, forest: 11 } },
+  { id: "warm", label: "Đêm bên lửa", detail: "Lửa + mưa nhẹ", levels: { fireplace: 28, rain: 8 } },
+  { id: "cafe", label: "Quán vắng", detail: "Cà phê + piano", levels: { cafe: 22, lofi: 8 } },
+  { id: "deep", label: "Tập trung sâu", detail: "Brown noise + sóng", levels: { brown: 20, ocean: 9 } },
+  { id: "storm", label: "Mưa giông", detail: "Mưa mái + sấm xa", levels: { roof: 20, thunder: 3 } },
 ] as const;
 
 function clamp(value: number, min: number, max: number) {
