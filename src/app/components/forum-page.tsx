@@ -126,7 +126,7 @@ export function ForumPage() {
   }
 
   async function pinPost(post: Post, pinned: boolean) {
-    if (account?.email !== ADMIN) return;
+    if (!(account?.role === "admin" || account?.email.toLowerCase() === ADMIN)) return;
     try {
       const response = await fetch(`/api/forum/posts/${post.id}`, {
         method: "PATCH", credentials: "same-origin",
@@ -140,8 +140,19 @@ export function ForumPage() {
     } catch (error) { setNotice(error instanceof Error ? error.message : "Không thể cập nhật ghim."); }
   }
 
+  async function deleteComment(commentId: number, postId: number) {
+    if (!(account?.role === "admin" || account?.email.toLowerCase() === ADMIN)) return;
+    if (!window.confirm("Xóa bình luận này?")) return;
+    try {
+      const response = await fetch("/api/forum/comments/" + commentId, { method: "DELETE", credentials: "same-origin" });
+      if (!response.ok) throw new Error();
+      setComments(current => ({ ...current, [postId]: (current[postId] ?? []).filter(item => item.id !== commentId && item.parentId !== commentId) }));
+      setPosts(current => current.map(post => post.id === postId ? { ...post, commentCount: Math.max(0, post.commentCount - 1) } : post));
+    } catch { setNotice("Không thể xóa bình luận."); }
+  }
+
   async function deletePost(post: Post) {
-    if (account?.email !== ADMIN) return;
+    if (!(account?.role === "admin" || account?.email.toLowerCase() === ADMIN)) return;
     if (!window.confirm("Xóa bài đăng và toàn bộ bình luận?")) return;
     try {
       const response = await fetch(`/api/forum/posts/${post.id}`, { method: "DELETE", credentials: "same-origin" });
@@ -179,13 +190,13 @@ export function ForumPage() {
 
         {pinnedPosts.length > 0 && <section className="forum-pinned-list">
           <div className="forum-section-title"><div><span>ĐƯỢC GHIM</span><h3>Thông tin nổi bật</h3></div><small>Quản trị viên chọn</small></div>
-          {pinnedPosts.map(post => <PostCard key={post.id} post={post} account={account} comments={comments[post.id] ?? []} expanded={expandedPost === post.id} draft={drafts[post.id] ?? ""} replyId={replyTo[post.id] ?? null} onOpen={() => void openComments(post.id)} onDraft={text => setDrafts(current => ({ ...current, [post.id]: text }))} onReply={id => setReplyTo(current => ({ ...current, [post.id]: id }))} onSend={() => void addComment(post.id)} onPin={pinned => void pinPost(post, pinned)} onDelete={() => void deletePost(post)} />)}
+          {pinnedPosts.map(post => <PostCard key={post.id} post={post} account={account} comments={comments[post.id] ?? []} expanded={expandedPost === post.id} draft={drafts[post.id] ?? ""} replyId={replyTo[post.id] ?? null} onOpen={() => void openComments(post.id)} onDraft={text => setDrafts(current => ({ ...current, [post.id]: text }))} onReply={id => setReplyTo(current => ({ ...current, [post.id]: id }))} onSend={() => void addComment(post.id)} onPin={pinned => void pinPost(post, pinned)} onDelete={() => void deletePost(post)} onDeleteComment={(commentId) => void deleteComment(commentId, post.id)} />)}
         </section>}
 
         <section className="forum-feed">
           <div className="forum-section-title"><div><span>MỚI NHẤT</span><h3>Cuộc trò chuyện</h3></div><small>{posts.length} chủ đề</small></div>
           {normalPosts.length === 0 ? <div className="forum-empty"><div className="empty-orbit">+</div><strong>Hãy là người mở đầu.</strong><p>Chia sẻ câu hỏi hoặc kinh nghiệm học đầu tiên.</p></div> :
-            normalPosts.map(post => <PostCard key={post.id} post={post} account={account} comments={comments[post.id] ?? []} expanded={expandedPost === post.id} draft={drafts[post.id] ?? ""} replyId={replyTo[post.id] ?? null} onOpen={() => void openComments(post.id)} onDraft={text => setDrafts(current => ({ ...current, [post.id]: text }))} onReply={id => setReplyTo(current => ({ ...current, [post.id]: id }))} onSend={() => void addComment(post.id)} onPin={pinned => void pinPost(post, pinned)} onDelete={() => void deletePost(post)} />)}
+            normalPosts.map(post => <PostCard key={post.id} post={post} account={account} comments={comments[post.id] ?? []} expanded={expandedPost === post.id} draft={drafts[post.id] ?? ""} replyId={replyTo[post.id] ?? null} onOpen={() => void openComments(post.id)} onDraft={text => setDrafts(current => ({ ...current, [post.id]: text }))} onReply={id => setReplyTo(current => ({ ...current, [post.id]: id }))} onSend={() => void addComment(post.id)} onPin={pinned => void pinPost(post, pinned)} onDelete={() => void deletePost(post)} onDeleteComment={(commentId) => void deleteComment(commentId, post.id)} />)}
         </section>
       </main>
 
@@ -199,7 +210,7 @@ export function ForumPage() {
 
 function PostCard({ post, account, comments, expanded, draft, replyId, onOpen, onDraft, onReply, onSend, onPin, onDelete}: {
   post: Post; account: DashboardData["account"]; comments: Comment[]; expanded: boolean; draft: string; replyId: number | null;  
-  onOpen: () => void; onDraft: (value: string) => void; onReply: (id: number | null) => void; onSend: () => void; onPin: (pinned: boolean) => void; onDelete: () => void;
+  onOpen: () => void; onDraft: (value: string) => void; onReply: (id: number | null) => void; onSend: () => void; onPin: (pinned: boolean) => void; onDelete: () => void; onDeleteComment: (commentId: number) => void;
 }) {
   return <article className={post.pinned ? "forum-post-card pinned" : "forum-post-card"}>
     <div className="forum-post-top"><div className="forum-post-author"><ProfileActionMenu person={{ id: post.authorId, name: post.authorName, picture: post.authorPicture }}><span className="community-avatar">{avatar(post.authorName, post.authorPicture)}</span></ProfileActionMenu><div><a className="profile-inline-link" href={"/nguoi-dung/" + post.authorId}>{post.authorName}</a><span>{timeLabel(post.createdAt)}</span></div></div>{post.pinned && <span className="pinned-chip"><Icon name="target" size={11} /> Ghim</span>}</div>
@@ -207,14 +218,14 @@ function PostCard({ post, account, comments, expanded, draft, replyId, onOpen, o
     <div className="forum-post-actions"><button type="button" onClick={onOpen}><Icon name="book" size={14} /> {post.commentCount ? `${post.commentCount} bình luận` : "Bình luận"}</button>{account?.email === ADMIN && <><button type="button" onClick={() => onPin(!post.pinned)}><Icon name="target" size={14} /> {post.pinned ? "Bỏ ghim" : "Ghim"}</button><button type="button" onClick={onDelete}><Icon name="close" size={14} /> Xóa</button></>}</div>
     {expanded && <div className="forum-comments">
       {!comments.length ? <p className="comment-empty">Chưa có bình luận. Hãy mở lời trước.</p> : comments.filter(comment => !comment.parentId).map(comment => <div className="comment-block" key={comment.id}>
-        <CommentLine comment={comment} onReply={onReply} />
-        <div className="comment-replies">{comments.filter(child => child.parentId === comment.id).map(child => <CommentLine key={child.id} comment={child} compact onReply={onReply} />)}</div>
+        <CommentLine comment={comment} onReply={onReply} canDelete={Boolean(account?.role === "admin" || account?.email.toLowerCase() === ADMIN)} onDelete={() => onDeleteComment(comment.id)} />
+        <div className="comment-replies">{comments.filter(child => child.parentId === comment.id).map(child => <CommentLine key={child.id} comment={child} compact onReply={onReply} canDelete={Boolean(account?.role === "admin" || account?.email.toLowerCase() === ADMIN)} onDelete={() => onDeleteComment(child.id)} />)}</div>
       </div>)}
       <div className="comment-composer">{replyId && <div className="replying">Đang trả lời một bình luận <button type="button" onClick={() => onReply(null)}>Hủy</button></div>}<div className="comment-input-row"><span className="community-avatar small">{account ? avatar(account.name, account.picture) : "?"}</span><input value={draft} onChange={e => onDraft(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(); } }} placeholder={account ? "Viết bình luận…" : "Đăng nhập để bình luận"} disabled={!account} maxLength={2000} /><button className="icon-button" type="button" onClick={onSend} disabled={!account || !draft.trim()}><Icon name="arrow" size={15} /></button></div></div>
     </div>}
   </article>;
 }
 
-function CommentLine({ comment, compact = false, onReply }: { comment: Comment; compact?: boolean; onReply: (id: number | null) => void }) {
-  return <div className={compact ? "comment-line compact" : "comment-line"}><ProfileActionMenu person={{ id: comment.authorId, name: comment.authorName, picture: comment.authorPicture }}><span className="community-avatar small">{avatar(comment.authorName, comment.authorPicture)}</span></ProfileActionMenu><div><div className="comment-line-meta"><a className="profile-inline-link" href={"/nguoi-dung/" + comment.authorId}>{comment.authorName}</a><span>{timeLabel(comment.createdAt)}</span></div><p>{comment.body}</p><div className="comment-line-actions"><button type="button" onClick={() => onReply(comment.id)}>Trả lời</button></div></div></div>;
+function CommentLine({ comment, compact = false, onReply, canDelete = false, onDelete }: { comment: Comment; compact?: boolean; onReply: (id: number | null) => void; canDelete?: boolean; onDelete?: () => void }) {
+  return <div className={compact ? "comment-line compact" : "comment-line"}><ProfileActionMenu person={{ id: comment.authorId, name: comment.authorName, picture: comment.authorPicture }}><span className="community-avatar small">{avatar(comment.authorName, comment.authorPicture)}</span></ProfileActionMenu><div><div className="comment-line-meta"><a className="profile-inline-link" href={"/nguoi-dung/" + comment.authorId}>{comment.authorName}</a><span>{timeLabel(comment.createdAt)}</span></div><p>{comment.body}</p><div className="comment-line-actions"><button type="button" onClick={() => onReply(comment.id)}>Trả lời</button>{canDelete && <button type="button" onClick={onDelete}>Xóa</button>}</div></div></div>;
 }
