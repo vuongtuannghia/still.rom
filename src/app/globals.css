@@ -556,3 +556,36 @@ section[id] { scroll-margin-top: 28px; }
 .workspace-access-bar {
   display: none !important;
 }
+
+
+.shared-study-card { padding:22px 24px; margin-bottom:20px; }
+.shared-study-heading { margin-bottom:16px; }
+.shared-study-heading h2 { margin:6px 0 4px; font-size:23px; font-weight:560; letter-spacing:-.035em; }
+.shared-study-heading p { max-width:760px; margin:0; color:var(--muted); font-size:11px; line-height:1.7; }
+.shared-pinned { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-bottom:15px; padding:15px 16px; border:1px solid var(--strong-border); border-radius:11px; background:var(--ink); color:var(--surface); }
+.shared-pinned > div { display:flex; min-width:0; flex-direction:column; gap:4px; }
+.shared-pinned .small-label { color:color-mix(in srgb,var(--surface) 72%,transparent); }
+.shared-pinned strong { font-size:16px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.shared-pinned span:last-child { color:color-mix(in srgb,var(--surface) 72%,transparent); font-size:9px; }
+.shared-pinned .button-primary { flex:0 0 auto; border-color:var(--surface); background:var(--surface); color:var(--ink); }
+.shared-room-form { display:grid; grid-template-columns:minmax(150px,.7fr) minmax(220px,1.4fr) auto; gap:10px; padding:13px; border:1px solid var(--border); border-radius:10px; background:var(--soft); }
+.shared-field { display:flex; min-width:0; flex-direction:column; gap:6px; }
+.shared-field label { color:var(--secondary); font-size:10px; font-weight:600; }
+.shared-field input { width:100%; min-width:0; min-height:39px; padding:8px 10px; border:1px solid var(--strong-border); border-radius:7px; background:var(--surface); color:var(--ink); font-size:11px; }
+.shared-submit { align-self:end; min-height:39px; white-space:nowrap; }
+.shared-signin-note { display:flex; align-items:center; gap:7px; margin:9px 1px 0; color:var(--muted); font-size:10px; }
+.shared-room-list { display:grid; gap:7px; margin-top:14px; }
+.shared-room-item { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:11px 12px; border:1px solid var(--border); border-radius:9px; background:var(--surface); }
+.shared-room-main { display:flex; min-width:0; flex-direction:column; gap:2px; }
+.shared-room-main strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px; font-weight:600; }
+.shared-room-main span { color:var(--muted); font-size:9px; }
+.shared-room-actions { display:flex; align-items:center; gap:5px; flex:0 0 auto; }
+.shared-room-actions a { min-height:31px; padding-inline:10px; font-size:10px; }
+.shared-room-actions .icon-button { width:30px; height:31px; }
+@media (max-width:760px) {
+  .shared-study-card { padding:18px 15px; }
+  .shared-room-form { grid-template-columns:1fr; }
+  .shared-submit { width:100%; }
+  .shared-pinned { align-items:flex-start; flex-direction:column; }
+  .shared-pinned .button-primary { width:100%; justify-content:center; }
+}
