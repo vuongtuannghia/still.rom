@@ -15,6 +15,7 @@ import { useAmbientMixer } from "./use-ambient-mixer";
 import { TaskTree, type TaskTreeResult } from "./components/task-tree";
 import { SceneBanner, ScenePickerDialog } from "./components/scene-picker";
 import { StudyRoom } from "./components/study-room";
+import { SharedYouTubePlayer } from "./components/shared-youtube-player";
 import { SceneBackdrop } from "./components/scene-backdrop";
 import { AccountControl } from "./components/account-control";
 import { ProfileAvatarMenu } from "./components/profile-avatar-menu";
@@ -620,5 +621,6 @@ export default function DashboardClient() {
     {immersive && data && <StudyRoom room={data.room} onChange={saveRoom} onClose={() => { setImmersive(false); window.dispatchEvent(new Event("stillroom-youtube-room-close")); }} focusProps={focusProps} mixer={mixer} time={clock.time} date={today ? labelDate(today, { weekday: "long", day: "numeric", month: "long" }) : "Hôm nay"} tasksPanel={<div className="task-list">{data.tasks.length ? data.tasks.slice().sort((a, b) => Number(a.completed) - Number(b.completed)).map(renderTask) : <p className="empty-chart-note">Chưa có nhiệm vụ. Thêm một việc ở dashboard rồi quay lại đây nhé.</p>}</div>} />}
     {toast && <div className={`toast-message ${toast.error ? "error" : ""}`} role={toast.error ? "alert" : "status"} aria-live={toast.error ? "assertive" : "polite"}><Icon name={toast.error ? "signal" : "check"} size={18} /><span>{toast.text}</span><button type="button" aria-label="Đóng thông báo" onClick={() => setToast(null)}><Icon name="close" size={15} /></button></div>}
     <span className="sr-only" aria-live="off">{dialogOpen ? "Cửa sổ đang mở" : "Dashboard"}</span>
+    {data && <SharedYouTubePlayer room={data.room} immersive={immersive} onChange={saveRoom} />}
   </div>;
 }
