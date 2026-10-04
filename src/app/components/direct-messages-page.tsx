@@ -10,7 +10,7 @@ type Person = {
 };
 type Message = { id: number; senderId: string; body: string; createdAt: string; readAt: string | null };
 type FriendRequest = { id: number; senderId?: string; recipientId?: string; senderName?: string; senderEmail?: string; recipientName?: string; recipientEmail?: string; senderPicture?: string | null; recipientPicture?: string | null; createdAt: string };
-type FriendsPayload = { friends: Person[]; incoming: FriendRequest[]; outgoing: FriendRequest[] };
+type FriendsPayload = { friends: Person[]; incoming: FriendRequest[]; outgoing: FriendRequest[]; blocks?: string[] };
 
 function initials(name: string) {
   return name.trim().split(/\s+/).at(-1)?.[0]?.toUpperCase() ?? "U";
@@ -190,7 +190,7 @@ export function DirectMessagesPage() {
     try {
       const response = await fetch("/api/friends", {
         method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: person.email }),
+        body: JSON.stringify({ userId: person.id }),
       });
       const payload = await response.json().catch(() => ({})) as { request?: FriendRequest; error?: string };
       if (!response.ok) throw new Error(payload.error || "Không thể gửi lời mời.");
