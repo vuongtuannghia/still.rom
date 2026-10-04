@@ -47,7 +47,7 @@ export async function GET(_: Request, context: { params: Promise<{ userId: strin
     }).from(profilePosts).where(eq(profilePosts.accountId, userId))
       .orderBy(desc(profilePosts.createdAt)).limit(30);
 
-    const focus = await db.select({ total: sql<number>\`coalesce(sum(\${focusSessions.durationMinutes}),0)\` })
+    const focus = await db.select({ total: sql<number>`coalesce(sum(${focusSessions.durationMinutes}),0)` })
       .from(focusSessions).where(eq(focusSessions.workspaceId, account.workspaceId));
 
     let relationship: "self" | "friend" | "incoming" | "outgoing" | "none" = viewer === userId ? "self" : "none";
