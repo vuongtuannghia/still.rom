@@ -16,19 +16,11 @@ function readPersisted(): Persisted | null {
     if (!raw) return null;
     const value = JSON.parse(raw) as Partial<Persisted>;
     if (!value.scene || typeof value.scene.videoId !== "string") return null;
-    return {
-      scene: value.scene as YouTubeScene,
-      loop: value.loop !== false,
-      muted: value.muted === true,
-    };
-  } catch {
-    return null;
-  }
+    return { scene: value.scene as YouTubeScene, loop: value.loop !== false, muted: value.muted === true };
+  } catch { return null; }
 }
 
-function isInternalDashboard(pathname: string | null) {
-  return pathname === "/" || pathname === null;
-}
+function isInternalDashboard(pathname: string | null) { return pathname === "/" || pathname === null; }
 
 export function PersistentYouTubePlayer() {
   const pathname = usePathname();
@@ -39,10 +31,7 @@ export function PersistentYouTubePlayer() {
   useEffect(() => {
     const sync = () => setPersisted(readPersisted());
     sync();
-
-    const onStorage = (event: StorageEvent) => {
-      if (event.key === STORAGE_KEY) sync();
-    };
+    const onStorage = (event: StorageEvent) => { if (event.key === STORAGE_KEY) sync(); };
     const onSync = () => sync();
     const onHandoff = (event: Event) => {
       const detail = (event as CustomEvent<Persisted>).detail;
@@ -50,7 +39,6 @@ export function PersistentYouTubePlayer() {
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(detail)); } catch {}
       setPersisted(detail);
     };
-
     window.addEventListener("storage", onStorage);
     window.addEventListener("stillroom-youtube-sync", onSync);
     window.addEventListener("stillroom-youtube-handoff", onHandoff);
@@ -61,8 +49,6 @@ export function PersistentYouTubePlayer() {
     };
   }, []);
 
-  // Keep the player component mounted. Next navigation must not recreate the
-  // YouTube iframe: recreating it is what causes the audio/autoplay reset.
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
       if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -89,15 +75,9 @@ export function PersistentYouTubePlayer() {
     const silenceDuplicateRoomPlayer = (room: HTMLElement) => {
       const iframe = room.querySelector<HTMLIFrameElement>(".youtube-scene-player iframe");
       if (!iframe?.contentWindow) return;
-      // The visible/authoritative iframe is this persistent player. If the room
-      // component creates its legacy local iframe, silence it immediately so it
-      // cannot steal audio or fight the persistent player.
-      const message = (func: "mute" | "pauseVideo") => {
-        try {
-          iframe.contentWindow?.postMessage(JSON.stringify({ event: "command", func, args: [] }), "https://www.youtube.com");
-        } catch {}
-      };
-      message("mute");
+      try {
+        iframe.contentWindow.postMessage(JSON.stringify({ event: "command", func: "mute", args: [] }), "https://www.youtube.com");
+      } catch {}
     };
 
     const measure = () => {
@@ -123,8 +103,10 @@ export function PersistentYouTubePlayer() {
     mutationObserver = new MutationObserver(measure);
     mutationObserver.observe(document.body, { childList: true, subtree: true });
     const room = document.querySelector<HTMLElement>(".ambient-room-screen .ambient-video-area");
-    if (room) resizeObserver = new ResizeObserver(measure);
-    if (room) resizeObserver.observe(room);
+    if (room) {
+      resizeObserver = new ResizeObserver(measure);
+      resizeObserver.observe(room);
+    }
 
     return () => {
       cancelAnimationFrame(frame);
@@ -136,8 +118,6 @@ export function PersistentYouTubePlayer() {
     };
   }, [pathname]);
 
-  // If the room creates a different selected YouTube video, follow that id while
-  // keeping the same persistent iframe instance otherwise.
   useEffect(() => {
     const syncRoomVideo = () => {
       if (!persisted) return;
@@ -159,16 +139,10 @@ export function PersistentYouTubePlayer() {
   const visible = Boolean(persisted?.scene) && (!dashboardMode || inRoom);
   if (!persisted?.scene) return null;
 
-  const style = inRoom && roomRect
-    ? { left: roomRect.left, top: roomRect.top, width: roomRect.width, height: roomRect.height }
-    : undefined;
+  const style = inRoom && roomRect ? { left: roomRect.left, top: roomRect.top, width: roomRect.width, height: roomRect.height } : undefined;
 
   return (
-    <div
-      className={`persistent-youtube-player ${inRoom ? "persistent-youtube-room" : "persistent-youtube-mini"} ${visible ? "is-visible" : "is-hidden"}`}
-      aria-hidden={!visible}
-      style={style}
-    >
+    <div className={`persistent-youtube-player ${inRoom ? "persistent-youtube-room" : "persistent-youtube-mini"} ${visible ? "is-visible" : "is-hidden"}`} aria-hidden={!visible} style={style}>
       <YouTubeScenePlayer
         scene={persisted.scene}
         loop={persisted.loop}
