@@ -64,7 +64,8 @@ export async function POST(request: Request) {
     if (!(await canMessage(current.id, other.id, recipientEmail))) {
       throw new ApiError(403, "Hãy kết bạn hoặc nhập đúng email của người này.");
     }
-    if (typeof body.body !== "string" || !body.body.trim() || body.body.trim().length > 4000) {
+    const messageBody = typeof body.body === "string" ? body.body.trim() : "";
+    if (!messageBody || messageBody.length > 4000) {
       throw new ApiError(400, "Tin nhắn phải từ 1 đến 4000 ký tự.");
     }
 
@@ -81,7 +82,7 @@ export async function POST(request: Request) {
 
     const result = await db.transaction(async tx => {
       const [message] = await tx.insert(directMessages).values({
-        threadId: thread.id, senderId: current.id, body: body.body.trim(),
+        threadId: thread.id, senderId: current.id, body: messageBody,
       }).returning();
       if (!message) throw new ApiError(500, "Không thể lưu tin nhắn.");
       await tx.insert(notifications).values({
