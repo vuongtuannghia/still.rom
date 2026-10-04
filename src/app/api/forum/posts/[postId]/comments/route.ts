@@ -11,7 +11,7 @@ export async function GET(_: Request, context: { params: Promise<{ postId: strin
     const postId = positiveId((await context.params).postId);
     const [post] = await db.select({ id: forumPosts.id }).from(forumPosts).where(eq(forumPosts.id, postId)).limit(1);
     if (!post) throw new ApiError(404, "Không tìm thấy chủ đề.");
-    const rows = await db.select({ id: forumComments.id, postId: forumComments.postId, parentId: forumComments.parentId, body: forumComments.body, createdAt: forumComments.createdAt, authorId: accounts.id, authorName: accounts.name, authorPicture: accounts.picture })
+    const rows = await db.select({ id: forumComments.id, postId: forumComments.postId, parentId: forumComments.parentId, body: forumComments.body, createdAt: forumComments.createdAt, authorId: accounts.id, authorName: accounts.name, authorEmail: accounts.email, authorPicture: accounts.picture })
       .from(forumComments).innerJoin(accounts, eq(accounts.id, forumComments.accountId)).where(eq(forumComments.postId, postId)).orderBy(asc(forumComments.createdAt), asc(forumComments.id));
     return json(rows.map(row => ({ ...row, createdAt: row.createdAt.toISOString() })));
   } catch (error) { return apiError(error); }
@@ -38,6 +38,6 @@ export async function POST(request: Request, context: { params: Promise<{ postId
         await db.insert(notifications).values({ accountId: parent.accountId, actorId: account.id, type: "comment_reply", title: "Có người trả lời bạn", body: account.name + " đã trả lời bình luận của bạn." });
       }
     }
-    return json({ comment: { ...comment, createdAt: comment.createdAt.toISOString(), authorId: account.id, authorName: account.name, authorPicture: account.picture } }, 201);
+    return json({ comment: { ...comment, createdAt: comment.createdAt.toISOString(), authorId: account.id, authorName: account.name, authorEmail: account.email, authorPicture: account.picture } }, 201);
   } catch (error) { return apiError(error); }
 }
