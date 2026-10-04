@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { accounts, forumComments, forumPosts, sharedStudyRooms } from "@/db/schema";
-import { desc, eq, inArray } from "drizzle-orm";
+import { desc, eq, inArray, sql } from "drizzle-orm";
 import { ApiError, apiError, json, readBody, titleValue } from "@/lib/server-api";
 import { requireAccount } from "@/lib/community-auth";
 
@@ -11,7 +11,7 @@ export async function GET() {
     const rows = await db.select({
       id: forumPosts.id, title: forumPosts.title, body: forumPosts.body, meetRoomId: forumPosts.meetRoomId, pinned: forumPosts.pinned,
       createdAt: forumPosts.createdAt, updatedAt: forumPosts.updatedAt,
-      authorId: accounts.id, authorName: accounts.name, authorEmail: accounts.email, authorPicture: accounts.picture,
+      authorId: accounts.id, authorName: accounts.name, authorEmail: accounts.email, authorPicture: sql<string | null>`coalesce(${accounts.customPicture}, ${accounts.picture})`,
       meetTitle: sharedStudyRooms.title, meetUrl: sharedStudyRooms.meetUrl,
     }).from(forumPosts).innerJoin(accounts, eq(accounts.id, forumPosts.accountId))
       .leftJoin(sharedStudyRooms, eq(sharedStudyRooms.id, forumPosts.meetRoomId))
