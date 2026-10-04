@@ -19,8 +19,24 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "still. room — Tập trung & tiến độ",
-  description: "Một không gian đen trắng cho Pomodoro, nhiệm vụ, thói quen từng ngày và biểu đồ tiến độ của riêng bạn.",
+  metadataBase: new URL("https://still-room-original.onrender.com"),
+  title: {
+    default: "still. room — Tập trung & học cùng nhau",
+    template: "%s · still. room",
+  },
+  description: "still.room là không gian tập trung đen trắng để học, theo dõi Pomodoro, tiến độ, thói quen và học cùng nhau qua Google Meet.",
+  alternates: { canonical: "/" },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    type: "website",
+    url: "https://still-room-original.onrender.com/",
+    siteName: "still. room",
+    title: "still. room — Tập trung & học cùng nhau",
+    description: "Không gian tập trung tối giản để học, theo dõi tiến độ và học cùng nhau.",
+  },
   verification: {
     google: "60AZJX28Fhl1X0rdSnAZ9qt-5u7OVactK34Ukmw2i7s",
   },
