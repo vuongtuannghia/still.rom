@@ -790,3 +790,30 @@ section[id] { scroll-margin-top: 28px; }
   .forum-intro { padding:22px; }.forum-intro-mark{display:none}
   .messages-layout{min-height:unset}.messages-people-list{max-height:280px}.messages-list{min-height:360px;max-height:520px}
 }
+
+
+/* Keep the Tasks and Sound Studio panels equal-height in the two-column dashboard. */
+.lower-grid {
+  align-items: stretch !important;
+}
+.lower-grid > .tasks-card,
+.lower-grid > .ambient-card {
+  min-height: 100% !important;
+  height: 100% !important;
+  box-sizing: border-box !important;
+}
+.lower-grid > .tasks-card {
+  display: flex !important;
+  flex-direction: column !important;
+}
+.lower-grid > .tasks-card .task-list {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+}
+@media (max-width: 960px) {
+  .lower-grid > .tasks-card,
+  .lower-grid > .ambient-card {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+}
