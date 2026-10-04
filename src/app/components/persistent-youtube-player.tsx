@@ -6,8 +6,6 @@ import { YouTubeScenePlayer } from "./youtube-scene";
 import type { YouTubeScene } from "@/lib/scene-domain";
 
 type Persisted = { scene: YouTubeScene; loop: boolean; muted: boolean };
-type Rect = { left: number; top: number; width: number; height: number };
-
 const STORAGE_KEY = "stillroom.youtube.persistent.v1";
 
 function readPersisted(): Persisted | null {
@@ -16,22 +14,28 @@ function readPersisted(): Persisted | null {
     if (!raw) return null;
     const value = JSON.parse(raw) as Partial<Persisted>;
     if (!value.scene || typeof value.scene.videoId !== "string") return null;
-    return { scene: value.scene as YouTubeScene, loop: value.loop !== false, muted: value.muted === true };
-  } catch { return null; }
+    return {
+      scene: value.scene as YouTubeScene,
+      loop: value.loop !== false,
+      muted: value.muted === true,
+    };
+  } catch {
+    return null;
+  }
 }
-
-function isInternalDashboard(pathname: string | null) { return pathname === "/" || pathname === null; }
 
 export function PersistentYouTubePlayer() {
   const pathname = usePathname();
   const router = useRouter();
   const [persisted, setPersisted] = useState<Persisted | null>(null);
-  const [roomRect, setRoomRect] = useState<Rect | null>(null);
+  const [roomPresent, setRoomPresent] = useState(false);
 
   useEffect(() => {
     const sync = () => setPersisted(readPersisted());
     sync();
-    const onStorage = (event: StorageEvent) => { if (event.key === STORAGE_KEY) sync(); };
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === STORAGE_KEY) sync();
+    };
     const onSync = () => sync();
     const onHandoff = (event: Event) => {
       const detail = (event as CustomEvent<Persisted>).detail;
@@ -49,6 +53,7 @@ export function PersistentYouTubePlayer() {
     };
   }, []);
 
+  // Keep Next.js client navigation so the player stays mounted between sections.
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
       if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -67,82 +72,23 @@ export function PersistentYouTubePlayer() {
     return () => document.removeEventListener("click", onClick, true);
   }, [router]);
 
+  // A study-room dialog is top-layer content, so the background player must yield
+  // to the local player inside that dialog instead of trying to overlay it.
   useEffect(() => {
-    let frame = 0;
-    let resizeObserver: ResizeObserver | null = null;
-    let mutationObserver: MutationObserver | null = null;
-
-    const silenceDuplicateRoomPlayer = (room: HTMLElement) => {
-      const iframe = room.querySelector<HTMLIFrameElement>(".youtube-scene-player iframe");
-      if (!iframe?.contentWindow) return;
-      try {
-        iframe.contentWindow.postMessage(JSON.stringify({ event: "command", func: "mute", args: [] }), "https://www.youtube.com");
-      } catch {}
-    };
-
-    const measure = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        const room = document.querySelector<HTMLElement>(".ambient-room-screen .ambient-video-area");
-        if (!room) {
-          setRoomRect(null);
-          document.documentElement.classList.remove("stillroom-room-player-active");
-          return;
-        }
-        const rect = room.getBoundingClientRect();
-        if (rect.width <= 0 || rect.height <= 0) return;
-        setRoomRect({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });
-        document.documentElement.classList.add("stillroom-room-player-active");
-        silenceDuplicateRoomPlayer(room);
-      });
-    };
-
-    measure();
-    window.addEventListener("resize", measure);
-    window.addEventListener("scroll", measure, true);
-    mutationObserver = new MutationObserver(measure);
-    mutationObserver.observe(document.body, { childList: true, subtree: true });
-    const room = document.querySelector<HTMLElement>(".ambient-room-screen .ambient-video-area");
-    if (room) {
-      resizeObserver = new ResizeObserver(measure);
-      resizeObserver.observe(room);
-    }
-
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener("resize", measure);
-      window.removeEventListener("scroll", measure, true);
-      mutationObserver?.disconnect();
-      resizeObserver?.disconnect();
-      document.documentElement.classList.remove("stillroom-room-player-active");
-    };
+    const update = () => setRoomPresent(Boolean(document.querySelector(".ambient-room-screen")));
+    update();
+    const observer = new MutationObserver(update);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
   }, [pathname]);
 
-  useEffect(() => {
-    const syncRoomVideo = () => {
-      if (!persisted) return;
-      const roomPlayer = document.querySelector<HTMLElement>(".ambient-room-screen .youtube-scene-player");
-      const roomVideoId = roomPlayer?.getAttribute("data-video-id") || "";
-      if (!roomVideoId || roomVideoId === persisted.scene.videoId) return;
-      const next: Persisted = { ...persisted, scene: { ...persisted.scene, videoId: roomVideoId, startSeconds: 0 } };
-      setPersisted(next);
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch {}
-    };
-    const observer = new MutationObserver(syncRoomVideo);
-    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-video-id"] });
-    syncRoomVideo();
-    return () => observer.disconnect();
-  }, [persisted]);
+  const dashboard = pathname === "/" || pathname === null;
+  const active = Boolean(persisted?.scene) && !dashboard && !roomPresent;
 
-  const dashboardMode = isInternalDashboard(pathname);
-  const inRoom = Boolean(roomRect);
-  const visible = Boolean(persisted?.scene) && (!dashboardMode || inRoom);
   if (!persisted?.scene) return null;
 
-  const style = inRoom && roomRect ? { left: roomRect.left, top: roomRect.top, width: roomRect.width, height: roomRect.height } : undefined;
-
   return (
-    <div className={`persistent-youtube-player ${inRoom ? "persistent-youtube-room" : "persistent-youtube-mini"} ${visible ? "is-visible" : "is-hidden"}`} aria-hidden={!visible} style={style}>
+    <div className={"persistent-youtube-player persistent-youtube-mini" + (active ? " is-visible" : " is-hidden")} aria-hidden={!active}>
       <YouTubeScenePlayer
         scene={persisted.scene}
         loop={persisted.loop}
@@ -159,7 +105,8 @@ export function PersistentYouTubePlayer() {
         onFallback={() => {}}
         ambientView
         sessionRole="persistent"
-        claimOwnership={true}
+        claimOwnership={false}
+        active={active}
       />
     </div>
   );
