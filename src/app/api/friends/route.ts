@@ -111,3 +111,22 @@ export async function POST(request: Request) {
     return json({ request: { id: requestRow.id, recipientId: target.id, recipientName: target.name, recipientEmail: target.email, status: requestRow.status } }, 201);
   } catch (error) { return apiError(error); }
 }
+
+
+export async function DELETE(request: Request) {
+  try {
+    const current = await requireAccount(request);
+    const body = await readBody(request);
+    const userId = typeof body.userId === "string" ? body.userId : "";
+    if (!/^[0-9a-f-]{36}$/i.test(userId) || userId === current.id) throw new ApiError(400, "Tài khoản không hợp lệ.");
+    const a = current.id < userId ? current.id : userId;
+    const b = current.id < userId ? userId : current.id;
+    const [deleted] = await db.delete(friendships)
+      .where(and(eq(friendships.accountAId, a), eq(friendships.accountBId, b)))
+      .returning({ id: friendships.id });
+    if (!deleted) throw new ApiError(404, "Hai bạn không còn là bạn bè.");
+    return json({ ok: true, status: "none" });
+  } catch (error) {
+    return apiError(error);
+  }
+}
