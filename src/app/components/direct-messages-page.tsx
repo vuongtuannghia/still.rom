@@ -187,7 +187,7 @@ export function DirectMessagesPage() {
             <section className="message-list-section">
               <div className="message-list-title"><div><span className="small-label">TIN NHẮN CHÍNH</span><h3>Bạn bè</h3></div><span>{primaryThreads.length}</span></div>
               {primaryThreads.length === 0 ? <div className="message-list-empty">Chưa có cuộc trò chuyện với bạn bè.</div> :
-                primaryThreads.map(thread => <button className="message-row" type="button" key={thread.threadId} onClick={() => router.push("/tin-nhan/" + thread.other.id)}>
+                primaryThreads.map(thread => <div className="message-row" role="button" tabIndex={0} key={thread.threadId} onClick={() => router.push("/tin-nhan/" + thread.other.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") router.push("/tin-nhan/" + thread.other.id); }}>
                   <ProfileAvatarMenu id={thread.other.id} name={thread.other.name} picture={thread.other.picture} size="normal" />
                   <span className="message-row-copy"><strong>{thread.other.name}</strong><small>{thread.lastBody}</small></span>
                   <span className="message-row-meta"><span>{timeLabel(thread.lastCreatedAt)}</span>{thread.unreadCount > 0 && <b>{thread.unreadCount}</b>}</span>
@@ -198,7 +198,7 @@ export function DirectMessagesPage() {
             <section className="message-list-section pending-message-section">
               <div className="message-list-title"><div><span className="small-label">TIN NHẮN CHỜ</span><h3>Người lạ</h3></div><span>{pendingThreads.length}</span></div>
               {pendingThreads.length === 0 ? <div className="message-list-empty">Không có tin nhắn chờ.</div> :
-                pendingThreads.map(thread => <button className="message-row pending" type="button" key={thread.threadId} onClick={() => router.push("/tin-nhan/" + thread.other.id)}>
+                pendingThreads.map(thread => <div className="message-row pending" role="button" tabIndex={0} key={thread.threadId} onClick={() => router.push("/tin-nhan/" + thread.other.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") router.push("/tin-nhan/" + thread.other.id); }}>
                   <ProfileAvatarMenu id={thread.other.id} name={thread.other.name} picture={thread.other.picture} size="normal" />
                   <span className="message-row-copy"><strong>{thread.other.name}</strong><small>{thread.lastBody}</small></span>
                   <span className="message-row-meta"><span>{timeLabel(thread.lastCreatedAt)}</span>{thread.unreadCount > 0 && <b>{thread.unreadCount}</b>}</span>
