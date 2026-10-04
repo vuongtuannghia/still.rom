@@ -87,3 +87,17 @@
 .recovery-page p { color:var(--muted); font-size:13px; line-height:1.8; }
 .recovery-page button { margin:15px 8px 0 0; }
 @media(max-width:600px){.account-sync-banner{flex-wrap:wrap;padding:13px;gap:10px}.account-sync-banner > div{flex-basis:calc(100% - 48px)}.account-sync-banner > button{margin-left:47px}.account-sync-banner strong{font-size:11px}.account-sync-banner > div > span{font-size:10px}.account-intro h3{font-size:22px}.google-auth-page{padding:15px}.google-auth-card{padding:23px 17px}.google-auth-card h1{font-size:26px}.privacy-page{padding:13px}.privacy-page > article{padding:24px 18px}.privacy-page h1{font-size:28px}}
+
+
+.account-control { margin-top: 10px; }
+.account-sidebar-login { display:flex; min-width:0; flex-direction:column; gap:9px; padding:11px; border:1px solid var(--border); border-radius:10px; background:var(--soft); }
+.account-sidebar-login > div { display:flex; min-width:0; flex-direction:column; gap:3px; }
+.account-sidebar-login strong { color:var(--ink); font-size:11px; font-weight:650; }
+.account-sidebar-login span { color:var(--muted); font-size:9px; line-height:1.5; overflow-wrap:anywhere; }
+.account-google-small { width:100%; min-height:34px; padding-inline:9px; font-size:10px; }
+.google-letter { display:grid; width:18px; height:18px; place-items:center; border:1px solid var(--border); border-radius:50%; background:var(--surface); color:var(--ink) !important; font-size:11px !important; font-weight:700; }
+.account-sidebar { align-items:center; padding:11px; }
+.account-sidebar > .account-avatar { overflow:hidden; }
+.account-sidebar > .account-avatar img { width:100%; height:100%; object-fit:cover; }
+.account-sidebar > div:last-child { min-width:0; flex:1; }
+.account-sidebar .icon-button { width:28px; height:28px; }
