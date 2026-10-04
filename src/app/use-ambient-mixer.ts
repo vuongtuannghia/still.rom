@@ -4,10 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { SOUND_CATALOG, emptyLevels, prepareLoop, synthesizeSound, type MixerLevels, type SoundId } from "@/lib/sound-engine";
 import { isRecord } from "@/lib/focus-domain";
 
-type Channel = { source: AudioBufferSourceNode; filter: BiquadFilterNode; gain: GainNode };
+type Channel = { source: AudioBufferSourceNode; highpass: BiquadFilterNode; filter: BiquadFilterNode; gain: GainNode };
 type Engine = { context: AudioContext; master: GainNode; channels: Map<SoundId, Channel>; buffers: Map<SoundId, AudioBuffer>; pending: Map<SoundId, Promise<void>>; controller: AbortController };
 export function useAmbientMixer(workspaceId: string | null) {
-  const [levels, setLevelsState] = useState<MixerLevels>(() => ({ ...emptyLevels(), lofi: 18 }));
+  const [levels, setLevelsState] = useState<MixerLevels>(() => ({ ...emptyLevels(), rain: 24 }));
   const [master, setMasterState] = useState(60);
   const [playing, setPlaying] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -19,13 +19,13 @@ export function useAmbientMixer(workspaceId: string | null) {
   const remembered = useRef<Partial<MixerLevels>>({});
   const generation = useRef(0);
   const mounted = useRef(false);
-  const key = workspaceId ? `stillroom.mixer.v4:${workspaceId}` : "";
+  const key = workspaceId ? `stillroom.mixer.v5:${workspaceId}` : "";
   const invalidatePending = useCallback(() => { generation.current += 1; }, []);
 
   useEffect(() => {
     if (!workspaceId) return;
     mounted.current = true;
-    let restored = { ...emptyLevels(), lofi: 18 };
+    let restored = { ...emptyLevels(), rain: 24 };
     let restoredMaster = 60;
     try {
       const value: unknown = JSON.parse(localStorage.getItem(key) ?? "null");
@@ -43,10 +43,25 @@ export function useAmbientMixer(workspaceId: string | null) {
       mounted.current = false; invalidatePending();
       const active = engine.current; engine.current = null;
       active?.controller.abort();
-      for (const channel of active?.channels.values() ?? []) { try { channel.source.stop(); } catch { /* Already stopped. */ } channel.source.disconnect(); channel.filter.disconnect(); channel.gain.disconnect(); }
+      for (const channel of active?.channels.values() ?? []) { try { channel.source.stop(); } catch { /* Already stopped. */ } channel.source.disconnect(); channel.highpass.disconnect(); channel.filter.disconnect(); channel.gain.disconnect(); }
       void active?.context.close().catch(() => {});
     };
   }, [workspaceId, key, invalidatePending]);
+  useEffect(() => {
+    const resumeIfPlaying = () => {
+      const active = engine.current;
+      if (active && latest.current.playing && active.context.state === "suspended") {
+        void active.context.resume().catch(() => {});
+      }
+    };
+    window.addEventListener("focus", resumeIfPlaying);
+    document.addEventListener("visibilitychange", resumeIfPlaying);
+    return () => {
+      window.removeEventListener("focus", resumeIfPlaying);
+      document.removeEventListener("visibilitychange", resumeIfPlaying);
+    };
+  }, []);
+
   function persist() { if (key) try { localStorage.setItem(key, JSON.stringify({ levels: latest.current.levels, master: latest.current.master })); } catch { /* Optional settings persistence. */ } }
   function gainFor(id: SoundId) {
     const count = Object.values(latest.current.levels).filter((level) => level > 0).length;
@@ -74,7 +89,7 @@ export function useAmbientMixer(workspaceId: string | null) {
     highpass.frequency.value = id === "thunder" || id === "brown" ? 28 : 55;
     highpass.Q.value = 0.16;
     source.connect(highpass).connect(filter).connect(gain).connect(active.master);
-    source.onended = () => { source.disconnect(); filter.disconnect(); gain.disconnect(); };
+    source.onended = () => { source.disconnect(); highpass.disconnect(); filter.disconnect(); gain.disconnect(); };
     source.start(); active.channels.set(id, { source, filter, gain });
     gain.gain.setTargetAtTime(gainFor(id), active.context.currentTime, 0.28);
   }
