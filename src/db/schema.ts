@@ -1,4 +1,4 @@
-import { boolean, date, index, integer, jsonb, pgTable, serial, timestamp, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
+import { boolean, date, index, integer, jsonb, pgTable, serial, text, timestamp, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
 import type { Preferences } from "@/lib/focus-domain";
 import type { RoomSettings } from "@/lib/scene-domain";
 
@@ -17,10 +17,23 @@ export const accounts = pgTable("accounts", {
   email: varchar("email", { length: 320 }).notNull(),
   name: varchar("name", { length: 120 }).notNull(),
   picture: varchar("picture", { length: 2048 }),
+  customPicture: text("custom_picture"),
+  coverPicture: text("cover_picture"),
+  bio: varchar("bio", { length: 280 }),
   workspaceId: uuid("workspace_id").notNull().unique().references(() => workspaces.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   lastSignInAt: timestamp("last_sign_in_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+export const profilePosts = pgTable("profile_posts", {
+  id: serial("id").primaryKey(),
+  accountId: uuid("account_id").notNull().references(() => accounts.id, { onDelete: "cascade" }),
+  body: varchar("body", { length: 2000 }),
+  imageData: text("image_data"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index("profile_posts_account_created_idx").on(table.accountId, table.createdAt),
+]);
 
 export const accountSessions = pgTable("account_sessions", {
   id: uuid("id").defaultRandom().primaryKey(),
