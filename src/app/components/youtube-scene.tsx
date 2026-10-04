@@ -153,7 +153,20 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
     let progressTimer = 0;
     void loadYouTubeAPI().then((api) => {
       if (disposed) return;
-      const playerVars: Record<string, number | string> = { enablejsapi: 1, origin: window.location.origin, autoplay: 1, mute: 1, playsinline: 1, controls: 1, rel: 0, hl: "vi", start: scene.startSeconds };
+      const playerVars: Record<string, number | string> = {
+        enablejsapi: 1,
+        origin: window.location.origin,
+        autoplay: 1,
+        // Do not force-mute a player whose stored/user preference is sound-on.
+        // Browsers may still block audible autoplay; in that case onAutoplayBlocked
+        // provides the explicit in-player fallback.
+        mute: userMuted.current ? 1 : 0,
+        playsinline: 1,
+        controls: 1,
+        rel: 0,
+        hl: "vi",
+        start: scene.startSeconds
+      };
       if (!scene.videoId && scene.playlistId) { playerVars.list = scene.playlistId; playerVars.listType = "playlist"; if (loop) playerVars.loop = 1; }
       else if (loop && scene.videoId) { playerVars.loop = 1; playerVars.playlist = scene.videoId; }
       player.current = new api.Player(container, { videoId: scene.videoId || undefined, playerVars, events: {
