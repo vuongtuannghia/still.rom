@@ -8,6 +8,7 @@ import { accountForWorkspace, findAccountSession } from "./account-sessions";
 import { ACCESS_FIELD, validAccessToken, validWorkspaceProof, type WorkspaceProof } from "./access-protocol";
 
 const COOKIE = "stillroom.workspace.v2";
+export const ACCOUNT_COOKIE = "stillroom.account.v1";
 const hashToken = (value: string) => createHash("sha256").update(value).digest("hex");
 const requestBodies = new WeakMap<Request, Promise<Record<string, unknown>>>();
 export class ApiError extends Error { constructor(public status: number, message: string) { super(message); } }
@@ -124,7 +125,17 @@ export async function bootstrapWorkspace(request: Request, browserToken: unknown
   return workspace;
 }
 export async function getWorkspace(request: Request, create = false) {
-  // Explicit JSON proof is authoritative. Never downgrade an invalid proof to a valid cookie.
+  // An authenticated account always wins over the browser guest proof.
+  // The account cookie is HttpOnly, so a stale guest token in the request body cannot
+  // accidentally downgrade an authenticated user to a different workspace.
+  const accountToken = (await cookies()).get(ACCOUNT_COOKIE)?.value;
+  if (validAccessToken(accountToken)) {
+    const accountSession = await findAccountSession(accountToken);
+    if (accountSession?.active) return accountSession.workspace;
+    if (accountSession && !accountSession.active) throw new ApiError(401, "Phiên tài khoản đã hết hạn. Vui lòng đăng nhập lại.");
+  }
+
+  // Explicit JSON proof is authoritative for guest sessions.
   if (request.method !== "GET" && request.method !== "HEAD" && request.headers.get("content-type")?.includes("application/json")) {
     assertSameOrigin(request);
     const proof = bodyProof(await rawRequestBody(request));
