@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { DashboardData } from "@/lib/focus-domain";
 import { Icon } from "../icons";
-import { ProfileAvatarMenu } from "./profile-avatar-menu";
 import { ProfileActionMenu } from "./profile-action-menu";
 
 type Room = {
@@ -178,7 +177,7 @@ export function SharedStudyPage() {
       {publicRooms.length === 0 ? <div className="study-empty"><div className="empty-orbit">+</div><strong>Chưa có phòng nào.</strong><p>Hãy bấm “Tạo phòng Meet”, sau đó dán link vào đây.</p></div> :
         <div className="study-room-grid">{publicRooms.map((room) => <article className="study-room-card" key={room.id}>
           <div className="study-room-card-top"><span className="room-live"><i /> đang mở</span><span>{timeLabel(room.createdAt)}</span></div>
-          <div className="study-room-person"><ProfileActionMenu person={{ id: room.creatorId, name: room.creatorName, picture: null }}><ProfileAvatarMenu id={room.creatorId} name={room.creatorName} picture={null} size="normal" /></ProfileActionMenu><div><h4>{room.title}</h4><p><a className="profile-inline-link" href={"/nguoi-dung/" + room.creatorId}>{room.creatorName}</a></p></div></div>
+          <div className="study-room-person"><ProfileActionMenu person={{ id: room.creatorId, name: room.creatorName, picture: null }}><span className="community-avatar">{avatar(room.creatorName, null)}</span></ProfileActionMenu><div><h4>{room.title}</h4><p><a className="profile-inline-link" href={"/nguoi-dung/" + room.creatorId}>{room.creatorName}</a></p></div></div>
           <div className="study-room-card-actions"><a className="button-primary" href={room.meetUrl} target="_blank" rel="noreferrer"><Icon name="radio" size={14} /> Vào học</a><button className="button-secondary" type="button" onClick={() => void toggleComments(room.id)}><Icon name="book" size={14} /> Bình luận{comments[room.id]?.length ? ` · ${comments[room.id].length}` : ""}</button></div>
           {account?.email === ADMIN && <div className="admin-room-actions"><button type="button" onClick={() => void pin(room.id, true)}><Icon name="target" size={13} /> Ghim</button><button type="button" onClick={() => void remove(room.id)}><Icon name="close" size={13} /> Xóa</button></div>}
           {openComments === room.id && <CommentThread account={account} roomId={room.id} comments={comments[room.id] ?? []} loading={loadingComments === room.id} draft={drafts[room.id] ?? ""} replyId={replyingTo[room.id] ?? null} onDraft={(value) => setDrafts((current) => ({ ...current, [room.id]: value }))} onReply={(id) => setReplyingTo((current) => ({ ...current, [room.id]: id }))} onSend={() => void addComment(room.id)} onRefresh={() => void refreshComments(room.id)} />}</article>)}</div>}
@@ -211,5 +210,5 @@ function CommentThread({ account, roomId, comments, loading, draft, replyId, onD
 
 function CommentItem({ comment, compact = false, onReply }: { comment: Comment; compact?: boolean; onReply: (id: number | null) => void }) {
   const router = useRouter();
-  return <div className={compact ? "comment-item compact" : "comment-item"}><ProfileActionMenu person={{ id: comment.authorId, name: comment.authorName, picture: comment.authorPicture }}><ProfileAvatarMenu id={comment.authorId} name={comment.authorName} picture={comment.authorPicture} size="normal" /></ProfileActionMenu><div className="comment-body"><div className="comment-meta"><strong>{comment.authorName}</strong><span>{timeLabel(comment.createdAt)}</span></div><p>{comment.body}</p><button type="button" className="comment-reply" onClick={() => onReply(comment.id)}>Trả lời</button></div></div>;
+  return <div className={compact ? "comment-item compact" : "comment-item"}><ProfileActionMenu person={{ id: comment.authorId, name: comment.authorName, picture: comment.authorPicture }}><span className="community-avatar">{avatar(comment.authorName, comment.authorPicture)}</span></ProfileActionMenu><div className="comment-body"><div className="comment-meta"><strong>{comment.authorName}</strong><span>{timeLabel(comment.createdAt)}</span></div><p>{comment.body}</p><button type="button" className="comment-reply" onClick={() => onReply(comment.id)}>Trả lời</button></div></div>;
 }
