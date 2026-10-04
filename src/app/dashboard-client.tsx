@@ -9,13 +9,12 @@ import { HabitMatrix } from "./components/habit-matrix";
 import { AmbientPlayer } from "./components/ambient-player";
 import { SessionHistory, SessionLogDialog } from "./components/session-history";
 import { ConfirmDialog, Dialog, EntityDialog, SettingsDialog, type Confirmation, type EntityEditor } from "./components/dialogs";
-import { accessIsPersistent, errorMessage, requestJson } from "@/lib/client-api";
+import { errorMessage, requestJson } from "@/lib/client-api";
 import { useAmbientMixer } from "./use-ambient-mixer";
 import { TaskTree, type TaskTreeResult } from "./components/task-tree";
 import { SceneBanner, ScenePickerDialog } from "./components/scene-picker";
 import { StudyRoom } from "./components/study-room";
 import { SceneBackdrop } from "./components/scene-backdrop";
-import { WorkspaceAccessBar } from "./components/workspace-access";
 import { AccountControl } from "./components/account-control";
 import type { RoomSettings } from "@/lib/scene-domain";
 import {
