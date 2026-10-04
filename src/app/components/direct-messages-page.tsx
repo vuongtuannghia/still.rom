@@ -43,7 +43,7 @@ function initial(name: string) {
   return name.trim().split(/\s+/).at(-1)?.[0]?.toUpperCase() ?? "U";
 }
 
-export function DirectMessagesPage() {
+export function DirectMessagesPage({ initialUserId }: { initialUserId?: string } = {}) {
   const router = useRouter();
   const [account, setAccount] = useState<DashboardData["account"]>(null);
   const [friends, setFriends] = useState<Person[]>([]);
@@ -95,6 +95,26 @@ export function DirectMessagesPage() {
   }
 
   useEffect(() => { void loadStatus(); }, []);
+
+  useEffect(() => {
+    if (!account || !initialUserId) return;
+    void (async () => {
+      try {
+        const response = await fetch("/api/users/" + encodeURIComponent(initialUserId), { cache: "no-store", credentials: "same-origin" });
+        if (!response.ok) return;
+        const payload = await response.json() as { profile: { id: string; name: string; email: string | null; picture: string | null }; relationship?: Relationship };
+        if (payload.profile) {
+          await openConversation({
+            id: payload.profile.id,
+            name: payload.profile.name,
+            email: payload.profile.email ?? "",
+            picture: payload.profile.picture,
+            relationship: payload.relationship ?? "lookup",
+          });
+        }
+      } catch {}
+    })();
+  }, [account?.id, initialUserId]);
   useEffect(() => {
     if (!account) return;
     void loadFriends();
@@ -187,11 +207,11 @@ export function DirectMessagesPage() {
             <section className="message-list-section">
               <div className="message-list-title"><div><span className="small-label">TIN NHẮN CHÍNH</span><h3>Bạn bè</h3></div><span>{primaryThreads.length}</span></div>
               {primaryThreads.length === 0 ? <div className="message-list-empty">Chưa có cuộc trò chuyện với bạn bè.</div> :
-                primaryThreads.map(thread => <div className="message-row" role="button" tabIndex={0} key={thread.threadId} onClick={() => router.push("/tin-nhan/" + thread.other.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") router.push("/tin-nhan/" + thread.other.id); }}>
+                primaryThreads.map(thread => <div className="message-row" role="button" tabIndex={0} key={thread.threadId} onClick={() => router.push("/tin-nhan/" + encodeURIComponent(thread.other.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") router.push("/tin-nhan/" + encodeURIComponent(thread.other.id)); }}>
                   <ProfileAvatarMenu id={thread.other.id} name={thread.other.name} picture={thread.other.picture} size="normal" />
                   <span className="message-row-copy"><strong>{thread.other.name}</strong><small>{thread.lastBody}</small></span>
                   <span className="message-row-meta"><span>{timeLabel(thread.lastCreatedAt)}</span>{thread.unreadCount > 0 && <b>{thread.unreadCount}</b>}</span>
-                </button>)
+                </div>)
               }
             </section>
 
@@ -202,7 +222,7 @@ export function DirectMessagesPage() {
                   <ProfileAvatarMenu id={thread.other.id} name={thread.other.name} picture={thread.other.picture} size="normal" />
                   <span className="message-row-copy"><strong>{thread.other.name}</strong><small>{thread.lastBody}</small></span>
                   <span className="message-row-meta"><span>{timeLabel(thread.lastCreatedAt)}</span>{thread.unreadCount > 0 && <b>{thread.unreadCount}</b>}</span>
-                </button>)
+                </div>)
               }
             </section>
           </main>
