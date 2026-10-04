@@ -1,7 +1,7 @@
 import type { CheckIn, FocusSession, Habit, Preferences, Subtask, Task } from "./focus-domain";
 import type { RoomSettings } from "./scene-domain";
 
-export type AccountSummary = { id: string; name: string; email: string; picture: string | null; createdAt: string };
+export type AccountSummary = { id: string; name: string; email: string; picture: string | null; role: "user" | "admin"; lockedUntil: string | null; createdAt: string };
 export type VerifiedGoogleIdentity = { subject: string; email: string; name: string; picture: string | null };
 export type MergeSummary = { tasks: number; habits: number; sessions: number; subtaskCount: number; snapshotId: string | null };
 export type WorkspaceBackup = {
