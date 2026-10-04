@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { accounts, forumComments, forumPosts, notifications } from "@/db/schema";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { ApiError, apiError, json, positiveId, readBody } from "@/lib/server-api";
 import { requireAccount } from "@/lib/community-auth";
 
@@ -11,7 +11,7 @@ export async function GET(_: Request, context: { params: Promise<{ postId: strin
     const postId = positiveId((await context.params).postId);
     const [post] = await db.select({ id: forumPosts.id, accountId: forumPosts.accountId }).from(forumPosts).where(eq(forumPosts.id, postId)).limit(1);
     if (!post) throw new ApiError(404, "Không tìm thấy chủ đề.");
-    const rows = await db.select({ id: forumComments.id, postId: forumComments.postId, parentId: forumComments.parentId, body: forumComments.body, createdAt: forumComments.createdAt, authorId: accounts.id, authorName: accounts.name, authorEmail: accounts.email, authorPicture: accounts.picture })
+    const rows = await db.select({ id: forumComments.id, postId: forumComments.postId, parentId: forumComments.parentId, body: forumComments.body, createdAt: forumComments.createdAt, authorId: accounts.id, authorName: accounts.name, authorEmail: accounts.email, authorPicture: sql<string | null>`coalesce(${accounts.customPicture}, ${accounts.picture})` })
       .from(forumComments).innerJoin(accounts, eq(accounts.id, forumComments.accountId)).where(eq(forumComments.postId, postId)).orderBy(asc(forumComments.createdAt), asc(forumComments.id));
     return json(rows.map(row => ({ ...row, createdAt: row.createdAt.toISOString() })));
   } catch (error) { return apiError(error); }
@@ -46,6 +46,6 @@ export async function POST(request: Request, context: { params: Promise<{ postId
         body: parentId ? account.name + " đã trả lời bình luận của bạn." : account.name + " đã bình luận bài viết của bạn.",
       });
     }
-    return json({ comment: { ...comment, createdAt: comment.createdAt.toISOString(), authorId: account.id, authorName: account.name, authorEmail: account.email, authorPicture: account.picture } }, 201);
+    return json({ comment: { ...comment, createdAt: comment.createdAt.toISOString(), authorId: account.id, authorName: account.name, authorEmail: account.email, authorPicture: account.customPicture || account.picture } }, 201);
   } catch (error) { return apiError(error); }
 }
