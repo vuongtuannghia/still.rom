@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { DashboardData } from "@/lib/focus-domain";
 import { Icon } from "../icons";
-import { ProfileAvatarMenu } from "./profile-avatar-menu";
+import { ProfileActionMenu } from "./profile-action-menu";
 
 type Relationship = "friend" | "lookup" | "incoming" | "outgoing" | "conversation" | "blocked";
 type Person = { id: string; name: string; email: string; picture: string | null; relationship?: Relationship; requestId?: number };
@@ -208,7 +208,7 @@ export function DirectMessagesPage({ initialUserId }: { initialUserId?: string }
               <div className="message-list-title"><div><span className="small-label">TIN NHẮN CHÍNH</span><h3>Bạn bè</h3></div><span>{primaryThreads.length}</span></div>
               {primaryThreads.length === 0 ? <div className="message-list-empty">Chưa có cuộc trò chuyện với bạn bè.</div> :
                 primaryThreads.map(thread => <div className="message-row" role="button" tabIndex={0} key={thread.threadId} onClick={() => router.push("/tin-nhan/" + encodeURIComponent(thread.other.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") router.push("/tin-nhan/" + encodeURIComponent(thread.other.id)); }}>
-                  <ProfileAvatarMenu id={thread.other.id} name={thread.other.name} picture={thread.other.picture} size="normal" />
+                  <ProfileActionMenu person={{ id: thread.other.id, name: thread.other.name, picture: thread.other.picture }}><span className="community-avatar">{thread.other.picture ? <img src={thread.other.picture} alt="" /> : initial(thread.other.name)}</span></ProfileActionMenu>
                   <span className="message-row-copy"><strong>{thread.other.name}</strong><small>{thread.lastBody}</small></span>
                   <span className="message-row-meta"><span>{timeLabel(thread.lastCreatedAt)}</span>{thread.unreadCount > 0 && <b>{thread.unreadCount}</b>}</span>
                 </div>)
@@ -219,7 +219,7 @@ export function DirectMessagesPage({ initialUserId }: { initialUserId?: string }
               <div className="message-list-title"><div><span className="small-label">TIN NHẮN CHỜ</span><h3>Người lạ</h3></div><span>{pendingThreads.length}</span></div>
               {pendingThreads.length === 0 ? <div className="message-list-empty">Không có tin nhắn chờ.</div> :
                 pendingThreads.map(thread => <div className="message-row pending" role="button" tabIndex={0} key={thread.threadId} onClick={() => router.push("/tin-nhan/" + thread.other.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") router.push("/tin-nhan/" + thread.other.id); }}>
-                  <ProfileAvatarMenu id={thread.other.id} name={thread.other.name} picture={thread.other.picture} size="normal" />
+                  <ProfileActionMenu person={{ id: thread.other.id, name: thread.other.name, picture: thread.other.picture }}><span className="community-avatar">{(thread.other.name).slice(0, 1).toUpperCase()}</span></ProfileActionMenu>
                   <span className="message-row-copy"><strong>{thread.other.name}</strong><small>{thread.lastBody}</small></span>
                   <span className="message-row-meta"><span>{timeLabel(thread.lastCreatedAt)}</span>{thread.unreadCount > 0 && <b>{thread.unreadCount}</b>}</span>
                 </div>)
@@ -236,7 +236,7 @@ export function DirectMessagesPage({ initialUserId }: { initialUserId?: string }
                   searchResults.map(person => {
                     const relation = relationshipFor(person.id);
                     return <div className="friend-search-row" key={person.id}>
-                      <ProfileAvatarMenu id={person.id} name={person.name} picture={person.picture} size="small" />
+                      <ProfileActionMenu person={{ id: person.id, name: person.name, picture: person.picture }}><span className="community-avatar small">{person.picture ? <img src={person.picture} alt="" /> : initial(person.name)}</span></ProfileActionMenu>
                       <div className="friend-search-copy"><strong>{person.name}</strong><small>{person.email}</small></div>
                       {relation === "friend" ? <button type="button" onClick={() => void unfriend(person.id)}>Hủy KB</button> :
                        relation === "outgoing" ? <button type="button" onClick={() => void cancelFriendRequest(person.requestId)}>Hủy lời mời</button> :
@@ -246,7 +246,7 @@ export function DirectMessagesPage({ initialUserId }: { initialUserId?: string }
                     </div>;
                   })}
               </div> : <>
-                {incomingCount > 0 && <div className="friend-requests-mini"><div className="small-label">LỜI MỜI MỚI</div>{incoming.slice(0, 4).map(request => <div className="mini-request-row" key={request.id}><ProfileAvatarMenu id={request.senderId!} name={request.senderName ?? "U"} picture={request.senderPicture ?? null} size="small" /><span><strong>{request.senderName}</strong><small>{request.senderEmail}</small></span><button type="button" onClick={() => void respondToRequest(request.id, "accept")}>✓</button><button type="button" onClick={() => void respondToRequest(request.id, "reject")}>×</button></div>)}</div>}
+                {incomingCount > 0 && <div className="friend-requests-mini"><div className="small-label">LỜI MỜI MỚI</div>{incoming.slice(0, 4).map(request => <div className="mini-request-row" key={request.id}><ProfileActionMenu person={{ id: request.senderId!, name: request.senderName ?? "U", picture: request.senderPicture ?? null }}><span className="community-avatar small">{(request.senderName ?? "U").slice(0, 1).toUpperCase()}</span></ProfileActionMenu><span><strong>{request.senderName}</strong><small>{request.senderEmail}</small></span><button type="button" onClick={() => void respondToRequest(request.id, "accept")}>✓</button><button type="button" onClick={() => void respondToRequest(request.id, "reject")}>×</button></div>)}</div>}
                 {outgoing.length > 0 && <div className="friend-outgoing-mini">{outgoing.slice(0, 4).map(request => <div key={request.id}><span>{request.recipientName}</span><button type="button" onClick={() => void cancelFriendRequest(request.id)}>Hủy</button></div>)}</div>}
               </>}
             </section>
