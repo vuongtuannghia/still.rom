@@ -88,15 +88,19 @@ export function SettingsDialog({ preferences, onSaved, onClose }: { preferences:
 }
 
 export type EntityEditor = { kind: "task" | "habit"; entity: Task | Habit | null };
+
 export function EntityDialog({ editor, onSaved, onClose }: { editor: EntityEditor; onSaved: (kind: "task" | "habit", entity: Task | Habit) => void; onClose: () => void }) {
   const [title, setTitle] = useState(editor.entity?.title ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const clientId = useRef<string | null>(null);
   const noun = editor.kind === "habit" ? "thói quen" : "nhiệm vụ";
+
   async function save(event: FormEvent) {
-    event.preventDefault(); if (busy || !title.trim()) return;
-    setBusy(true); setError("");
+    event.preventDefault();
+    if (busy || !title.trim()) return;
+    setBusy(true);
+    setError("");
     try {
       clientId.current ??= crypto.randomUUID();
       try {
@@ -131,13 +135,83 @@ export function EntityDialog({ editor, onSaved, onClose }: { editor: EntityEdito
         }
       }
       onClose();
-    } catch (error) {
-      setError(errorMessage(error));
+    } catch (reason) {
+      setError(errorMessage(reason));
     } finally {
       setBusy(false);
     }
   }
+
+  return <Dialog
+    title={`${editor.entity ? "Chỉnh sửa" : "Thêm"} ${noun}`}
+    description={editor.kind === "habit" ? "Một hành động nhỏ, lặp lại mỗi ngày." : "Đặt tên rõ ràng cho việc bạn muốn hoàn thành."}
+    onClose={onClose}
+    busy={busy}
+  >
+    <form onSubmit={save} className="entity-form">
+      <label className="field">
+        <span>Tên {noun}</span>
+        <input
+          autoFocus
+          required
+          maxLength={editor.kind === "habit" ? 80 : 180}
+          value={title}
+          onChange={(event) => {
+            clientId.current = null;
+            setTitle(event.target.value);
+          }}
+          placeholder={editor.kind === "habit" ? "Ví dụ: Viết nhật ký 5 phút" : "Ví dụ: Hoàn thiện đề cương"}
+        />
+      </label>
+      {error && <p className="form-error" role="alert">{error}</p>}
+      <div className="dialog-footer">
+        <button type="button" className="button-secondary" disabled={busy} onClick={onClose}>Hủy</button>
+        <button className="button-primary" type="submit" disabled={busy || !title.trim()}>
+          {busy ? "Đang lưu…" : "Lưu"}
+        </button>
+      </div>
+    </form>
+  </Dialog>;
+}
+
+export type Confirmation = {
+  title: string;
+  description: string;
+  label: string;
+  danger?: boolean;
+  action: () => void | Promise<void>;
+};
+
+export function ConfirmDialog({ confirmation, onClose }: { confirmation: Confirmation; onClose: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  async function confirm() {
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      await confirmation.action();
+      onClose();
+    } catch (reason) {
+      setError(errorMessage(reason));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return <Dialog title={confirmation.title} description={confirmation.description} onClose={onClose} busy={busy}>
-    {error && <p className="form-error" role="alert">{error}</p>}<div className="dialog-footer"><button className="button-secondary" type="button" disabled={busy} onClick={onClose}>Giữ lại</button><button className={`button-primary ${confirmation.danger ? "danger-button" : ""}`} type="button" disabled={busy} onClick={() => void confirm()}>{busy ? "Đang xử lý…" : confirmation.label}</button></div>
+    {error && <p className="form-error" role="alert">{error}</p>}
+    <div className="dialog-footer">
+      <button className="button-secondary" type="button" disabled={busy} onClick={onClose}>Giữ lại</button>
+      <button
+        className={`button-primary ${confirmation.danger ? "danger-button" : ""}`}
+        type="button"
+        disabled={busy}
+        onClick={() => void confirm()}
+      >
+        {busy ? "Đang xử lý…" : confirmation.label}
+      </button>
+    </div>
   </Dialog>;
 }
