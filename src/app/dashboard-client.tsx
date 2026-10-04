@@ -545,7 +545,7 @@ export default function DashboardClient() {
           </section>}
           {widgets.sound && <AmbientPlayer mixer={mixer} />}
         </div>}
-        {widgets.history && <SessionHistory sessions={data.sessions} onAdd={() => setLogOpen(true)} />}
+        {widgets.history && <SessionHistory sessions={data.sessions} onAdd={() => setLogOpen(true)} canAdd={Boolean(data.account && (data.account.role === "admin" || data.account.email.toLowerCase() === "vuongtuannghia585@gmail.com"))} />}
       </>}
       <footer className="page-footer"><span>Một không gian nhỏ cho những ngày cần tập trung.</span><span>still. room · study spaces & ambient background · 3.5</span></footer>
     </div></main>
