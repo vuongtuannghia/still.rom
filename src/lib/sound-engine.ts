@@ -258,7 +258,7 @@ export function synthesizeSound(context: AudioContext, id: SoundId): AudioBuffer
       out = low * .62 * gust + pink * .18;
     } else if (id === "forest-night") {
       out = pink * .18;
-    } else if (id === "forest" || id === "birds") {
+    } else if (id === "forest") {
       out = low * .30 + pink * .33;
       for (const event of birdEvents) {
         const age = time - event.at;
