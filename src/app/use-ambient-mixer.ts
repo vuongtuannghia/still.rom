@@ -90,7 +90,7 @@ export function useAmbientMixer(workspaceId: string | null) {
     highpass.Q.value = 0.16;
     source.connect(highpass).connect(filter).connect(gain).connect(active.master);
     source.onended = () => { source.disconnect(); highpass.disconnect(); filter.disconnect(); gain.disconnect(); };
-    source.start(); active.channels.set(id, { source, filter, gain });
+    source.start(); active.channels.set(id, { source, highpass, filter, gain });
     gain.gain.setTargetAtTime(gainFor(id), active.context.currentTime, 0.28);
   }
   function ensureChannel(active: Engine, id: SoundId) {
