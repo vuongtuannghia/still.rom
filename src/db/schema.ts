@@ -68,6 +68,65 @@ export const sharedStudyRooms = pgTable("shared_study_rooms", {
   index("shared_study_rooms_pinned_idx").on(table.pinned, table.createdAt),
 ]);
 
+export const forumPosts = pgTable("forum_posts", {
+  id: serial("id").primaryKey(),
+  accountId: uuid("account_id").notNull().references(() => accounts.id, { onDelete: "cascade" }),
+  title: varchar("title", { length: 160 }).notNull(),
+  body: varchar("body", { length: 5000 }).notNull(),
+  meetRoomId: integer("meet_room_id").references(() => sharedStudyRooms.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index("forum_posts_account_idx").on(table.accountId, table.createdAt),
+  index("forum_posts_created_idx").on(table.createdAt),
+  index("forum_posts_meet_room_idx").on(table.meetRoomId),
+]);
+
+export const forumComments = pgTable("forum_comments", {
+  id: serial("id").primaryKey(),
+  postId: integer("post_id").notNull().references(() => forumPosts.id, { onDelete: "cascade" }),
+  accountId: uuid("account_id").notNull().references(() => accounts.id, { onDelete: "cascade" }),
+  parentId: integer("parent_id"),
+  body: varchar("body", { length: 2000 }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index("forum_comments_post_idx").on(table.postId, table.createdAt),
+  index("forum_comments_parent_idx").on(table.parentId),
+]);
+
+export const meetRoomComments = pgTable("meet_room_comments", {
+  id: serial("id").primaryKey(),
+  roomId: integer("room_id").notNull().references(() => sharedStudyRooms.id, { onDelete: "cascade" }),
+  accountId: uuid("account_id").notNull().references(() => accounts.id, { onDelete: "cascade" }),
+  parentId: integer("parent_id"),
+  body: varchar("body", { length: 2000 }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index("meet_room_comments_room_idx").on(table.roomId, table.createdAt),
+  index("meet_room_comments_parent_idx").on(table.parentId),
+]);
+
+export const directThreads = pgTable("direct_threads", {
+  id: serial("id").primaryKey(),
+  accountAId: uuid("account_a_id").notNull().references(() => accounts.id, { onDelete: "cascade" }),
+  accountBId: uuid("account_b_id").notNull().references(() => accounts.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("direct_threads_pair_idx").on(table.accountAId, table.accountBId),
+]);
+
+export const directMessages = pgTable("direct_messages", {
+  id: serial("id").primaryKey(),
+  threadId: integer("thread_id").notNull().references(() => directThreads.id, { onDelete: "cascade" }),
+  senderId: uuid("sender_id").notNull().references(() => accounts.id, { onDelete: "cascade" }),
+  body: varchar("body", { length: 4000 }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  readAt: timestamp("read_at", { withTimezone: true }),
+}, (table) => [
+  index("direct_messages_thread_idx").on(table.threadId, table.createdAt),
+  index("direct_messages_sender_idx").on(table.senderId, table.createdAt),
+]);
+
 export const workspaceAccessKeys = pgTable("workspace_access_keys", {
   tokenHash: varchar("token_hash", { length: 64 }).primaryKey(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
