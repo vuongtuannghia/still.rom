@@ -329,23 +329,26 @@ export function DirectMessagesPage() {
           <div className="messages-people-list">
             {loading ? <p className="messages-muted">Đang tải…</p> :
               shownFriends.length === 0 ? <p className="messages-muted">{query.trim() ? "Nhập tên hoặc email để tìm người chưa là bạn." : "Chưa có bạn bè. Nhập đúng email để tìm người."}</p> :
-              shownFriends.map(person => <button type="button" key={person.id} className={selected?.id === person.id ? "message-person active" : "message-person"} onClick={() => void openConversation(person)}>
-                <span className="community-avatar">{avatar(person)}</span><span><strong>{person.name}</strong><small>{person.email}</small></span><Icon name="arrow" size={13} />
-              </button>)
+              shownFriends.map(person => <div className={selected?.id === person.id ? "message-person active" : "message-person"} key={person.id}>
+                <button type="button" className="message-person-main" onClick={() => void openConversation(person)}>
+                  <span className="community-avatar">{avatar(person)}</span><span><strong>{person.name}</strong><small>{person.email}</small></span>
+                </button>
+                <a className="message-person-profile" href={"/nguoi-dung/" + person.id} aria-label="Xem hồ sơ"><Icon name="arrow" size={13} /></a>
+              </div>)
             }
           </div>
         </aside>
 
         <section className="messages-chat panel">
           {selected ? <>
-            <header className="messages-chat-head"><div className="message-person-head"><span className="community-avatar">{avatar(selected)}</span><div><h3>{selected.name}</h3><span>{selected.relationship === "friend" ? "Bạn bè · trò chuyện riêng" : "Tin nhắn chờ"}</span></div></div><div className="chat-head-actions"><button type="button" className="icon-button chat-profile-btn" title="Xem hồ sơ" aria-label="Xem hồ sơ" onClick={() => window.location.href = "/nguoi-dung/" + selected.id}><Icon name="arrow" size={14} /></button>{selected.relationship === "conversation" && <button type="button" className="button-secondary chat-add-friend" onClick={() => void sendFriendRequestFor(selected)}><Icon name="arrow" size={13} /> Kết bạn</button>}{selected.relationship === "outgoing" && <button type="button" className="relationship-action" onClick={() => void cancelFriendRequest(selected.requestId!)}>Hủy</button>}<button type="button" className="chat-block-btn" onClick={() => void toggleBlock(selected.id)}>{blockStatus === "blocked_by_me" ? "Bỏ chặn" : "Chặn"}</button></div></header>
+            <header className="messages-chat-head"><div className="message-person-head"><span className="community-avatar">{avatar(selected)}</span><div><h3>{selected.name}</h3><span>{selected.relationship === "friend" ? "Bạn bè · trò chuyện riêng" : "Tin nhắn chờ"}</span></div></div><div className="chat-head-actions"><button type="button" className="icon-button chat-profile-btn" title="Xem hồ sơ" aria-label="Xem hồ sơ" onClick={() => window.location.href = "/nguoi-dung/" + selected.id}><Icon name="arrow" size={14} /></button>{selected.relationship === "conversation" && <button type="button" className="button-secondary chat-add-friend" onClick={() => void sendFriendRequestFor(selected)}><Icon name="arrow" size={13} /> Kết bạn</button>}{selected.relationship === "outgoing" && <button type="button" className="relationship-action" onClick={() => void cancelFriendRequest(selected.requestId!)}>Hủy</button>}{blockStatus !== "blocked_you" && <button type="button" className="chat-block-btn" onClick={() => void toggleBlock(selected.id)}>{blockStatus === "blocked_by_me" ? "Bỏ chặn" : "Chặn"}</button>}</div></header>
             <div className="messages-list">
               {loadingChat ? <div className="messages-muted centered">Đang mở cuộc trò chuyện…</div> :
                 messages.length === 0 ? <div className="messages-empty"><div className="empty-orbit">+</div><strong>Bắt đầu bằng một câu đơn giản.</strong><span>Chào người bạn muốn học cùng.</span></div> :
                 messages.map(message => <article key={message.id} className={message.senderId === account.id ? "message-bubble mine" : "message-bubble"}><p>{message.body}</p><small>{timeLabel(message.createdAt)}</small></article>)
               }
             </div>
-            {blockStatus === "blocked_you" ? <div className="messages-blocked-note">Tài khoản này đã chặn bạn.</div> : <div className="messages-composer"><input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void sendMessage(); } }} placeholder="Viết tin nhắn…" maxLength={4000} /><button className="button-primary" type="button" onClick={() => void sendMessage()} disabled={sending || blockStatus !== "none" || !draft.trim()}><Icon name="arrow" size={15} /> Gửi</button></div>}
+            {blockStatus === "blocked_you" ? <div className="messages-blocked-note">Tài khoản này đã chặn bạn. <a href={"/nguoi-dung/" + selected.id}>Xem hồ sơ</a></div> : <div className="messages-composer"><input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void sendMessage(); } }} placeholder="Viết tin nhắn…" maxLength={4000} /><button className="button-primary" type="button" onClick={() => void sendMessage()} disabled={sending || blockStatus !== "none" || !draft.trim()}><Icon name="arrow" size={15} /> Gửi</button></div>}
           </> : <div className="messages-empty messages-empty-large"><div className="messages-big-icon"><Icon name="arrow" size={24} /></div><strong>Chọn một người bạn.</strong><span>Danh sách chỉ hiện bạn bè; tìm người khác bằng email chính xác.</span></div>}
         </section>
       </div>}
