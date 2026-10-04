@@ -293,3 +293,26 @@
 .profile-action-popover button:hover{background:#f1f1ec}
 .profile-friend-info{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:1;min-width:0;border:0;background:transparent;text-align:left;cursor:pointer}
 .profile-friend-info>span{display:flex;min-width:0;flex-direction:column;gap:3px}.profile-friend-info strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}.profile-friend-info small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#8c8c85;font-size:8px}
+
+/* Messenger-style inbox: pending messages look like normal conversations, but stay in a compact second section. */
+.message-list-section{border:1px solid #deddd7;border-radius:12px;background:#fff;overflow:hidden}
+.message-list-title{display:flex;align-items:flex-end;justify-content:space-between;padding:13px 15px 8px;border-bottom:1px solid #ecebe5}
+.message-list-title>div{display:flex;flex-direction:column;gap:3px}.message-list-title h3{margin:0;font-size:16px;letter-spacing:-.025em}.message-list-title>span{color:#999;font-size:8px}
+.message-row{display:flex;align-items:center;gap:9px;min-height:64px;padding:10px 15px;border-bottom:1px solid #efeee8;background:#fff;cursor:pointer;transition:background .12s ease}
+.message-row:last-child{border-bottom:0}.message-row:hover,.message-row:focus-visible{background:#f5f5f0;outline:none}
+.message-row.pending{background:#fbfbf8}.message-row.pending:hover{background:#f0f0eb}
+.message-row-copy{display:flex;min-width:0;flex:1;flex-direction:column;gap:3px}.message-row-copy strong{font-size:10px}.message-row-copy small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#7f7f79;font-size:8px}
+.message-row-meta{display:flex;align-items:flex-end;gap:6px;flex-direction:column;color:#aaa;font-size:7px}.message-row-meta b{display:grid;min-width:17px;height:17px;place-items:center;padding:0 4px;border-radius:999px;background:#222;color:#fff;font-size:7px}
+.pending-message-section .message-row{min-height:58px}
+.profile-action-menu{position:relative;display:inline-flex;flex:0 0 auto}.profile-action-trigger{display:inline-flex;cursor:pointer}
+.profile-action-popover{position:absolute;z-index:1200;top:calc(100% + 7px);left:0;width:210px;padding:7px;border:1px solid #d9d8d1;border-radius:11px;background:#fff;box-shadow:0 14px 35px rgba(0,0,0,.12)}
+.profile-action-popover.left{right:0;left:auto}.profile-action-popover.right{left:0}
+.profile-action-person{display:flex;flex-direction:column;gap:2px;padding:8px}.profile-action-person strong{font-size:10px}.profile-action-person span{font-size:7px;color:#999}
+.profile-action-popover button{display:flex;align-items:center;gap:8px;width:100%;padding:8px;border:0;border-radius:7px;background:transparent;color:#222;font-size:9px;text-align:left;cursor:pointer}
+.profile-action-popover button:hover{background:#f1f1ec}
+.notification-item .profile-action-menu{align-self:flex-start}.notification-item .profile-action-popover{top:calc(100% + 5px)}
+.friend-search-row{display:flex;align-items:center;gap:7px;padding:7px;border:1px solid #e5e4de;border-radius:8px;background:#fff}
+.friend-search-copy{display:flex;min-width:0;flex:1;flex-direction:column;gap:2px}.friend-search-copy strong{font-size:8px}.friend-search-copy small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#999;font-size:7px}
+.friend-search-row>button{border:1px solid #deddd7;border-radius:6px;background:#f6f6f2;padding:5px 7px;color:#333;font-size:7px;cursor:pointer}.friend-search-row .dark-mini-btn{background:#222;color:#fff;border-color:#222}
+.profile-nav-link{margin-bottom:4px}
+@media(max-width:900px){.message-row{min-height:58px;padding:8px 12px}.message-row-copy strong{font-size:9px}.message-row-copy small{font-size:7px}.message-row-meta{font-size:6px}.profile-action-popover{width:195px}}
