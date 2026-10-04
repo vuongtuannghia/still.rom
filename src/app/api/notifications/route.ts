@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     const rows = await db.select({
       id: notifications.id, type: notifications.type, title: notifications.title, body: notifications.body,
       requestId: notifications.requestId, threadId: notifications.threadId, readAt: notifications.readAt,
-      createdAt: notifications.createdAt, actorId: accounts.id, actorName: accounts.name, actorPicture: accounts.picture,
+      createdAt: notifications.createdAt, actorId: accounts.id, actorName: accounts.name, actorPicture: accounts.customPicture, googlePicture: accounts.picture,
     }).from(notifications)
       .leftJoin(accounts, eq(accounts.id, notifications.actorId))
       .where(unreadOnly ? and(eq(notifications.accountId, current.id), isNull(notifications.readAt)) : eq(notifications.accountId, current.id))
@@ -22,7 +22,12 @@ export async function GET(request: Request) {
     const unreadCount = rows.filter(row => row.readAt === null).length;
     return json({
       unreadCount,
-      notifications: rows.map(row => ({ ...row, createdAt: row.createdAt.toISOString(), readAt: row.readAt?.toISOString() ?? null })),
+      notifications: rows.map(row => ({
+        ...row,
+        actorPicture: row.actorPicture || row.googlePicture || null,
+        createdAt: row.createdAt.toISOString(),
+        readAt: row.readAt?.toISOString() ?? null,
+      })),
     });
   } catch (error) { return apiError(error); }
 }
