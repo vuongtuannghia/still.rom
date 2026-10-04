@@ -78,3 +78,5 @@
   .messages-layout{min-height:unset}.messages-people-list{max-height:280px}.messages-list{min-height:360px;max-height:520px}
   .shared-page-hero h2 { font-size:30px; }
 }
+
+.forum-delete-button{color:#555!important}.forum-delete-button:hover{color:#111!important;background:#f0f0eb!important;border-radius:6px}
