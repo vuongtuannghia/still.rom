@@ -255,8 +255,8 @@ export default function DashboardClient() {
     if (id === "forum") { window.location.href = "/dien-dan"; return; }
     if (id === "messages") { window.location.href = "/tin-nhan"; return; }
     if (id === "profile") {
-      if (data.account?.id) { window.location.href = "/nguoi-dung/" + encodeURIComponent(data.account.id); }
-      else { setActiveNav("profile"); setNotice("Đăng nhập Google để mở trang cá nhân."); }
+      if (data?.account?.id) { window.location.href = "/nguoi-dung/" + encodeURIComponent(data.account.id); }
+      else { setActiveNav("profile"); notice("Đăng nhập Google để mở trang cá nhân.", true); }
       return;
     }
     setActiveNav(id);
