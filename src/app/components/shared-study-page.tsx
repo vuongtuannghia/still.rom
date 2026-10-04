@@ -194,18 +194,20 @@ function CommentThread({ account, roomId, comments, loading, draft, replyId, onD
   account: DashboardData["account"]; roomId: number; comments: Comment[]; loading: boolean; draft: string; replyId: number | null;
   onDraft: (value: string) => void; onReply: (id: number | null) => void; onSend: () => void; onRefresh: () => void;
 }) {
+  const router = useRouter();
   const top = comments.filter((comment) => !comment.parentId);
   return <div className="comment-thread">
     <div className="comment-thread-heading"><strong>Trao đổi về phòng học</strong><button type="button" onClick={onRefresh}>{loading ? "Đang tải…" : "Làm mới"}</button></div>
     {!comments.length && !loading && <p className="comment-empty">Chưa có bình luận. Bắt đầu cuộc trò chuyện.</p>}
     <div className="comment-list">{top.map((comment) => <div className="comment-block" key={comment.id}>
-      <CommentItem comment={comment} onReply={onReply} router={router} />
-      <div className="comment-replies">{comments.filter((child) => child.parentId === comment.id).map((child) => <CommentItem key={child.id} comment={child} compact onReply={onReply} router={router} />)}</div>
+      <CommentItem comment={comment} onReply={onReply} />
+      <div className="comment-replies">{comments.filter((child) => child.parentId === comment.id).map((child) => <CommentItem key={child.id} comment={child} compact onReply={onReply} />)}</div>
     </div>)}</div>
     <div className="comment-composer">{replyId && <div className="replying">Đang trả lời một bình luận <button type="button" onClick={() => onReply(null)}>Hủy</button></div>}<div className="comment-input-row"><span className="community-avatar small">{account ? avatar(account.name, account.picture) : "?"}</span><input value={draft} onChange={(e) => onDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(); } }} placeholder={account ? "Viết bình luận…" : "Đăng nhập để bình luận"} disabled={!account} maxLength={2000} /><button className="icon-button" type="button" onClick={onSend} disabled={!account || !draft.trim()} aria-label="Gửi bình luận"><Icon name="arrow" size={16} /></button></div></div>
   </div>;
 }
 
-function CommentItem({ comment, compact = false, onReply, router }: { comment: Comment; compact?: boolean; onReply: (id: number | null) => void; router: ReturnType<typeof useRouter> }) {
+function CommentItem({ comment, compact = false, onReply }: { comment: Comment; compact?: boolean; onReply: (id: number | null) => void }) {
+  const router = useRouter();
   return <div className={compact ? "comment-item compact" : "comment-item"}><span className="community-avatar">{avatar(comment.authorName, comment.authorPicture)}</span><div className="comment-body"><div className="comment-meta"><strong>{comment.authorName}</strong><span>{timeLabel(comment.createdAt)}</span></div><p>{comment.body}</p><button type="button" className="comment-reply" onClick={() => onReply(comment.id)}>Trả lời</button><button type="button" className="comment-reply comment-direct-link" onClick={() => router.push("/tin-nhan?user=" + encodeURIComponent(comment.authorId) + "&email=" + encodeURIComponent(comment.authorEmail))}>Nhắn riêng</button></div></div>;
 }
