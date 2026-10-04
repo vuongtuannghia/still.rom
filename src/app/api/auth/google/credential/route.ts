@@ -8,6 +8,14 @@ import { getWorkspace, ACCOUNT_COOKIE, ApiError, apiError, json, readBody } from
 
 export const dynamic = "force-dynamic";
 
+function formatLockDuration(milliseconds: number) {
+  const totalMinutes = Math.max(1, Math.ceil(milliseconds / 60000));
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  if (days > 0) return hours > 0 ? days + " ngày " + hours + " giờ" : days + " ngày";
+  return hours > 0 ? hours + " giờ" : totalMinutes + " phút";
+}
+
 export async function POST(request: Request) {
   try {
     if (!googleConfigured()) throw new ApiError(503, "Google OAuth chưa được cấu hình.");
@@ -17,7 +25,6 @@ export async function POST(request: Request) {
     }
 
     const identity = await verifyGoogleCredential(body.credential);
-    const guestWorkspace = await getWorkspace(request, true);
 
     const [existing] = await db.select().from(accounts)
       .where(eq(accounts.googleSubject, identity.subject))
@@ -27,6 +34,7 @@ export async function POST(request: Request) {
     let hasSnapshot = false;
 
     if (!account) {
+      const guestWorkspace = await getWorkspace(request, true);
       [account] = await db.insert(accounts).values({
         googleSubject: identity.subject,
         email: identity.email,
@@ -37,7 +45,7 @@ export async function POST(request: Request) {
       }).returning();
     } else {
       if (account.lockedUntil && account.lockedUntil.getTime() > Date.now()) {
-        throw new ApiError(403, "Tài khoản đang bị khóa. Vui lòng thử lại sau.");
+        throw new ApiError(403, "Tài khoản đang bị khóa. Còn " + formatLockDuration(account.lockedUntil.getTime() - Date.now()) + ".");
       }
       await db.update(accounts).set({
         email: identity.email,
