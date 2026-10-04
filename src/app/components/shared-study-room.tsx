@@ -102,23 +102,33 @@ export function SharedStudyRoom({ account, onNotice }: {
   const publicRooms = rooms.filter((room) => !room.pinned);
 
   return <section className="panel shared-study-card" id="study-room">
-    <div className="panel-heading shared-study-heading">
-      <div>
-        <span className="eyebrow"><span className="tiny-dot" /> HỌC CHUNG · GOOGLE MEET</span>
-        <h2>Phòng học cùng nhau</h2>
-        <p>Bật camera, mic và học trực tiếp với mọi người. still.room chỉ lưu link — cuộc gọi chạy trên Google Meet.</p>
+    <div className="shared-study-hero">
+      <div className="shared-study-copy">
+        <span className="shared-kicker"><span className="shared-live-dot" /> HỌC CHUNG · GOOGLE MEET</span>
+        <h2>Ngồi xuống.<br /><em>Mở camera. Học cùng nhau.</em></h2>
+        <p>Một góc chung để mọi người tự tạo phòng Meet và vào học ngay. still.room chỉ giữ danh sách phòng; cuộc gọi chạy trên Google Meet.</p>
+        <div className="shared-hero-meta">
+          <span><Icon name="radio" size={14} /> {rooms.length} phòng đang có</span>
+          <span><Icon name="signal" size={14} /> Camera & mic trên Meet</span>
+        </div>
       </div>
-      <span className="stat-icon"><Icon name="radio" size={20} /></span>
+      <div className="shared-study-art" aria-hidden="true">
+        <div className="shared-art-orbit orbit-a" />
+        <div className="shared-art-orbit orbit-b" />
+        <div className="shared-art-circle">STILL<br /><span>TOGETHER</span></div>
+      </div>
     </div>
 
     {pinned && <div className="shared-pinned">
-      <div><span className="small-label">PHÒNG HỌC CHÍNH</span><strong>{pinned.title}</strong><span>{pinned.creatorName} · được quản trị viên ghim</span></div>
+      <div className="shared-pinned-badge"><span className="shared-pin-dot" /> PHÒNG HỌC CHÍNH</div>
+      <div className="shared-pinned-main"><strong>{pinned.title}</strong><span>{pinned.creatorName} · được quản trị viên ghim</span></div>
       <div className="shared-pinned-actions">
         <a className="button-primary" href={pinned.meetUrl} target="_blank" rel="noreferrer"><Icon name="radio" size={15} /> Vào học</a>
         {account?.email === "vuongtuannghia585@gmail.com" && <button type="button" className="button-secondary" onClick={() => void setPinned(pinned, false)}>Bỏ ghim</button>}
       </div>
     </div>}
 
+    <div className="shared-section-label"><span>THÊM PHÒNG HỌC</span><small>Dán link Google Meet của bạn</small></div>
     <div className="shared-room-form">
       <div className="shared-field"><label htmlFor="study-room-title">Tên phòng</label><input id="study-room-title" value={title} maxLength={120} onChange={(event) => setTitle(event.target.value)} placeholder="VD: Ôn giải phẫu tối nay" disabled={!account || posting} /></div>
       <div className="shared-field"><label htmlFor="study-room-link">Link Google Meet</label><input id="study-room-link" value={meetUrl} onChange={(event) => setMeetUrl(event.target.value)} placeholder="https://meet.google.com/..." disabled={!account || posting} /></div>
@@ -127,15 +137,16 @@ export function SharedStudyRoom({ account, onNotice }: {
 
     {!account && <p className="shared-signin-note"><Icon name="signal" size={14} /> Đăng nhập Google để đăng link phòng học.</p>}
 
+    <div className="shared-section-label shared-list-label"><span>PHÒNG ĐANG MỞ</span><small>Chọn một phòng và vào học</small></div>
     <div className="shared-room-list">
       {loading ? <p className="empty-chart-note">Đang tải phòng học…</p> : publicRooms.length === 0 ? <p className="empty-chart-note">Chưa có phòng nào. Hãy tạo phòng Google Meet rồi chia sẻ link cho mọi người.</p> :
         publicRooms.map((room) => <article className="shared-room-item" key={room.id}>
           <div className="shared-room-main">
-            <strong>{room.title}</strong>
-            <span>{room.creatorName}</span>
+            <span className="shared-room-avatar">{room.creatorName.slice(0, 1).toUpperCase()}</span>
+            <div><strong>{room.title}</strong><span>{room.creatorName}</span></div>
           </div>
           <div className="shared-room-actions">
-            <a className="button-secondary" href={room.meetUrl} target="_blank" rel="noreferrer"><Icon name="radio" size={14} /> Vào</a>
+            <a className="button-secondary" href={room.meetUrl} target="_blank" rel="noreferrer"><Icon name="radio" size={14} /> Vào học</a>
             {account && account.email === "vuongtuannghia585@gmail.com" && <>
               <button type="button" className="icon-button" title="Ghim phòng này" onClick={() => void setPinned(room, true)}><Icon name="target" size={15} /></button>
               <button type="button" className="icon-button" title="Xóa phòng này" onClick={() => void remove(room)}><Icon name="close" size={15} /></button>
