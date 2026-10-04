@@ -1,162 +1,336 @@
-type Recording = { src: string; sourcePage: string; author: string; license: "CC0" | "Public Domain" };
+type Recording = {
+  src: string;
+  sourcePage: string;
+  author: string;
+  license: "CC0" | "Public Domain";
+};
 
 const RAW_AUDIO = "https://raw.githubusercontent.com/twtrubiks/moonseal/main/public/audio";
+
+/**
+ * The 7 external recordings are taken from the CC0 / Public Domain asset set documented
+ * by the upstream project. The runtime also has a procedural fallback for every sound,
+ * so a blocked CDN/CORS request never leaves a channel silent.
+ */
 const RECORDING_SOURCES: Record<string, Recording> = {
-  rain: { src: RAW_AUDIO + "/rain.mp3", sourcePage: "https://freesound.org/s/81818/", author: "Silencyo", license: "CC0" },
-  roof: { src: RAW_AUDIO + "/rain.mp3", sourcePage: "https://freesound.org/s/81818/", author: "Silencyo", license: "CC0" },
-  thunder: { src: RAW_AUDIO + "/thunder.mp3", sourcePage: "https://archive.org/details/1HourThunderstorm", author: "Public Domain source", license: "Public Domain" },
-  ocean: { src: RAW_AUDIO + "/ocean.mp3", sourcePage: "https://freesound.org/s/156598/", author: "Rmutt", license: "CC0" },
-  river: { src: RAW_AUDIO + "/stream.mp3", sourcePage: "https://archive.org/details/GOLD_TAPE_53_54_Water", author: "archive.org source", license: "CC0" },
-  wind: { src: RAW_AUDIO + "/wind.mp3", sourcePage: "https://archive.org/details/GOLD_TAPE_55_56_Weather-Wind", author: "archive.org source", license: "CC0" },
-  forest: { src: RAW_AUDIO + "/birds.mp3", sourcePage: "https://freesound.org/s/578523/", author: "SamsterBirdies", license: "CC0" },
-  birds: { src: RAW_AUDIO + "/birds.mp3", sourcePage: "https://freesound.org/s/578523/", author: "SamsterBirdies", license: "CC0" },
-  fireplace: { src: RAW_AUDIO + "/fireplace.mp3", sourcePage: "https://archive.org/details/Red_Library_Fire", author: "archive.org source", license: "CC0" },
-  "forest-night": { src: RAW_AUDIO + "/birds.mp3", sourcePage: "https://freesound.org/s/578523/", author: "SamsterBirdies", license: "CC0" },
-  waterfall: { src: RAW_AUDIO + "/stream.mp3", sourcePage: "https://archive.org/details/GOLD_TAPE_53_54_Water", author: "archive.org source", license: "CC0" },
-  "storm-rain": { src: RAW_AUDIO + "/thunder.mp3", sourcePage: "https://archive.org/details/1HourThunderstorm", author: "Public Domain source", license: "Public Domain" },
-  "mountain-stream": { src: RAW_AUDIO + "/stream.mp3", sourcePage: "https://archive.org/details/GOLD_TAPE_53_54_Water", author: "archive.org source", license: "CC0" },
+  rain: { src: RAW_AUDIO + "/rain.mp3", sourcePage: "https://freesound.org/people/silencyo/sounds/81818/", author: "Silencyo", license: "CC0" },
+  ocean: { src: RAW_AUDIO + "/ocean.mp3", sourcePage: "https://freesound.org/people/Rmutt/sounds/156598/", author: "Rmutt", license: "CC0" },
+  river: { src: RAW_AUDIO + "/stream.mp3", sourcePage: "https://archive.org/details/GOLD_TAPE_53_54_Water", author: "USC GOLD Tape source", license: "CC0" },
+  wind: { src: RAW_AUDIO + "/wind.mp3", sourcePage: "https://archive.org/details/GOLD_TAPE_55_56_Weather-Wind", author: "USC GOLD Tape source", license: "CC0" },
+  birds: { src: RAW_AUDIO + "/birds.mp3", sourcePage: "https://freesound.org/people/SamsterBirdies/sounds/578523/", author: "SamsterBirdies", license: "CC0" },
+  fireplace: { src: RAW_AUDIO + "/fireplace.mp3", sourcePage: "https://archive.org/details/Red_Library_Fire", author: "Archive.org source", license: "CC0" },
+  thunder: { src: RAW_AUDIO + "/thunder.mp3", sourcePage: "https://archive.org/details/1HourThunderstorm", author: "Archive.org source", license: "Public Domain" },
 };
 
-function recorded(id: string, page: string): Recording | undefined {
+function recorded(id: string): Recording | undefined {
   return RECORDING_SOURCES[id];
 }
+
+export type SoundId =
+  | "lofi" | "rain" | "roof" | "thunder" | "ocean" | "river" | "wind" | "forest" | "birds"
+  | "fireplace" | "cafe" | "keyboard" | "chimes" | "purr" | "forest-night" | "waterfall"
+  | "storm-rain" | "mountain-stream" | "white" | "pink" | "brown";
+
 export type SoundDefinition = {
-  id: SoundId; label: string; detail: string; icon: "headphones" | "water" | "moon" | "leaf" | "fire" | "coffee" | "tasks" | "spark" | "volume";
-  group: "Thiên nhiên" | "Không gian" | "Noise"; recording?: Recording;
+  id: SoundId;
+  label: string;
+  detail: string;
+  icon: "headphones" | "water" | "moon" | "leaf" | "fire" | "coffee" | "tasks" | "spark" | "volume";
+  group: "Thiên nhiên" | "Không gian" | "Noise";
+  recording?: Recording;
 };
-export type SoundId = "lofi" | "rain" | "roof" | "thunder" | "ocean" | "river" | "wind" | "forest" | "birds" | "fireplace" | "cafe" | "keyboard" | "chimes" | "purr" | "forest-night" | "waterfall" | "storm-rain" | "mountain-stream" | "white" | "pink" | "brown";
+
 export const SOUND_CATALOG: SoundDefinition[] = [
-  { id: "lofi", label: "Lo-fi piano", detail: "Hợp âm mềm · nhạc tổng hợp", icon: "headphones", group: "Không gian" },
-  { id: "rain", label: "Mưa dịu", detail: "Mưa thật dưới mái che", icon: "water", group: "Thiên nhiên", recording: recorded("rain", "rain-under-an-umbrella-s2679.html") },
-  { id: "roof", label: "Mưa trên mái", detail: "Giọt mưa trên mái xe", icon: "water", group: "Thiên nhiên", recording: recorded("roof", "rain-on-car-roof-s1293.html") },
-  { id: "thunder", label: "Sấm xa", detail: "Sấm thật · đặt nhỏ để nghe nhẹ", icon: "moon", group: "Thiên nhiên", recording: recorded("thunder", "thunder-s2718.html") },
-  { id: "ocean", label: "Sóng biển", detail: "Sóng nhỏ vỗ bãi cát", icon: "water", group: "Thiên nhiên", recording: recorded("ocean", "small-waves-and-beach-1-s1446.html") },
-  { id: "river", label: "Suối chảy", detail: "Dòng suối nhỏ trên núi", icon: "water", group: "Thiên nhiên", recording: recorded("river", "small-stream-4-s1354.html") },
-  { id: "wind", label: "Gió nhẹ", detail: "Gió qua một cánh đồng", icon: "leaf", group: "Thiên nhiên", recording: recorded("wind", "wind-in-a-cornfield-s1097.html") },
-  { id: "forest", label: "Rừng yên", detail: "Chim và nền rừng · bản thu CC0", icon: "leaf", group: "Thiên nhiên", recording: recorded("forest", "forest-s0100.html") },
-  { id: "birds", label: "Chim hót", detail: "Tiếng chim lúc chiều xuống", icon: "leaf", group: "Thiên nhiên", recording: recorded("birds", "evening-birds-s1859.html") },
-  { id: "fireplace", label: "Lò sưởi", detail: "Củi cháy, than nổ nhẹ", icon: "fire", group: "Không gian", recording: recorded("fireplace", "fireplace-5-s2857.html") },
-  { id: "cafe", label: "Quán cà phê", detail: "Không gian quán · âm tổng hợp", icon: "coffee", group: "Không gian" },
-  { id: "keyboard", label: "Gõ bàn phím", detail: "Nhịp phím nhẹ · âm tổng hợp", icon: "tasks", group: "Không gian" },
-  { id: "chimes", label: "Chuông gió", detail: "Âm ngân tổng hợp · thưa và mềm", icon: "spark", group: "Không gian" },
-  { id: "purr", label: "Mèo ngủ", detail: "Rừ rừ nhẹ · âm tổng hợp", icon: "moon", group: "Không gian" },
-  { id: "forest-night", label: "Rừng sau mưa", detail: "Rừng đêm · bản thu CC0", icon: "moon", group: "Thiên nhiên", recording: recorded("forest-night", "forest-at-night-after-rain-s0555.html") },
-  { id: "waterfall", label: "Thác nước", detail: "Thác nhỏ bên cối xay cũ", icon: "water", group: "Thiên nhiên", recording: recorded("waterfall", "small-cascade-s0507.html") },
-  { id: "storm-rain", label: "Mưa giông", detail: "Mưa lớn, sấm và chim", icon: "moon", group: "Thiên nhiên", recording: recorded("storm-rain", "storm-and-rain-3-s2717.html") },
-  { id: "mountain-stream", label: "Suối núi", detail: "Dòng torrent trên núi", icon: "water", group: "Thiên nhiên", recording: recorded("mountain-stream", "mountain-stream-7-s3222.html") },
-  { id: "white", label: "White noise", detail: "Nền sáng · lọc bớt cao chói", icon: "volume", group: "Noise" },
-  { id: "pink", label: "Pink noise", detail: "Nền cân bằng, mềm hơn", icon: "volume", group: "Noise" },
-  { id: "brown", label: "Brown noise", detail: "Nền trầm · êm và đều", icon: "volume", group: "Noise" },
+  { id: "lofi", label: "Lo-fi piano", detail: "Hợp âm piano mềm · không lời", icon: "headphones", group: "Không gian" },
+  { id: "rain", label: "Mưa dịu", detail: "Mưa thật trong phòng · vòng lặp mượt", icon: "water", group: "Thiên nhiên", recording: recorded("rain") },
+  { id: "roof", label: "Mưa trên mái", detail: "Giọt mưa dày · nhịp rõ hơn", icon: "water", group: "Thiên nhiên" },
+  { id: "thunder", label: "Sấm xa", detail: "Sấm thật · để âm lượng thấp", icon: "moon", group: "Thiên nhiên", recording: recorded("thunder") },
+  { id: "ocean", label: "Sóng biển", detail: "Sóng Point Reyes · nền rộng", icon: "water", group: "Thiên nhiên", recording: recorded("ocean") },
+  { id: "river", label: "Suối chảy", detail: "Dòng nước thật · đều và sáng", icon: "water", group: "Thiên nhiên", recording: recorded("river") },
+  { id: "wind", label: "Gió nhẹ", detail: "Gió thật · nền trầm", icon: "leaf", group: "Thiên nhiên", recording: recorded("wind") },
+  { id: "forest", label: "Rừng yên", detail: "Gió + nước + chim · âm tạo", icon: "leaf", group: "Thiên nhiên" },
+  { id: "birds", label: "Chim hót", detail: "Chim thật · bình minh", icon: "leaf", group: "Thiên nhiên", recording: recorded("birds") },
+  { id: "fireplace", label: "Lò sưởi", detail: "Củi cháy thật · nổ lách tách", icon: "fire", group: "Không gian", recording: recorded("fireplace") },
+  { id: "cafe", label: "Quán cà phê", detail: "Room tone + ly tách · âm tạo", icon: "coffee", group: "Không gian" },
+  { id: "keyboard", label: "Gõ bàn phím", detail: "Nhịp phím nhẹ · âm tạo", icon: "tasks", group: "Không gian" },
+  { id: "chimes", label: "Chuông gió", detail: "Âm ngân thưa · âm tạo", icon: "spark", group: "Không gian" },
+  { id: "purr", label: "Mèo ngủ", detail: "Rừ rừ rất nhẹ · âm tạo", icon: "moon", group: "Không gian" },
+  { id: "forest-night", label: "Rừng sau mưa", detail: "Gió đêm + côn trùng · âm tạo", icon: "moon", group: "Thiên nhiên" },
+  { id: "waterfall", label: "Thác nước", detail: "Nước dày + bọt · âm tạo", icon: "water", group: "Thiên nhiên" },
+  { id: "storm-rain", label: "Mưa giông", detail: "Mưa lớn + sấm · âm tạo", icon: "moon", group: "Thiên nhiên" },
+  { id: "mountain-stream", label: "Suối núi", detail: "Nước nhanh + không khí · âm tạo", icon: "water", group: "Thiên nhiên" },
+  { id: "white", label: "White noise", detail: "Nền sáng · đều", icon: "volume", group: "Noise" },
+  { id: "pink", label: "Pink noise", detail: "Nền cân bằng · mềm", icon: "volume", group: "Noise" },
+  { id: "brown", label: "Brown noise", detail: "Nền trầm · êm và ổn định", icon: "volume", group: "Noise" },
 ];
+
 export type MixerLevels = Record<SoundId, number>;
 export const emptyLevels = (): MixerLevels => Object.fromEntries(SOUND_CATALOG.map((sound) => [sound.id, 0])) as MixerLevels;
+
 export const MIX_PRESETS = [
-  { id: "rain-desk", label: "Bàn học ngày mưa", detail: "Mưa thật + piano mềm", levels: { rain: 45, lofi: 25 } },
-  { id: "forest", label: "Một góc rừng", detail: "Suối + gió + chim", levels: { river: 35, wind: 20, birds: 18 } },
-  { id: "warm", label: "Đêm bên lửa", detail: "Lửa + mưa mái + mèo", levels: { fireplace: 40, roof: 20, purr: 18 } },
-  { id: "cafe", label: "Quán vắng", detail: "Cà phê + piano", levels: { cafe: 28, lofi: 30 } },
-  { id: "deep", label: "Tập trung sâu", detail: "Brown noise + sóng biển", levels: { brown: 40, ocean: 22 } },
+  { id: "rain-desk", label: "Bàn học ngày mưa", detail: "Mưa dịu + piano", levels: { rain: 45, lofi: 22 } },
+  { id: "forest", label: "Một góc rừng", detail: "Suối + gió + chim", levels: { river: 32, wind: 16, birds: 17 } },
+  { id: "warm", label: "Đêm bên lửa", detail: "Lửa + mưa mái", levels: { fireplace: 40, roof: 19 } },
+  { id: "cafe", label: "Quán vắng", detail: "Cà phê + piano", levels: { cafe: 26, lofi: 28 } },
+  { id: "deep", label: "Tập trung sâu", detail: "Brown noise + biển", levels: { brown: 38, ocean: 18 } },
+  { id: "storm", label: "Mưa giông", detail: "Mưa lớn + sấm xa", levels: { storm-rain: 28, thunder: 12 } },
 ] as const;
 
-/** Downsample to a practical memory size and splice a constant-power crossfade at the loop boundary. */
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function mulberry32(seed: number) {
+  let state = seed >>> 0;
+  return () => {
+    state += 0x6D2B79F5;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function seedFor(id: string) {
+  let seed = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    seed ^= id.charCodeAt(i);
+    seed = Math.imul(seed, 16777619);
+  }
+  return seed >>> 0;
+}
+
+function writeStereo(buffer: AudioBuffer, generator: (channel: number, time: number, random: () => number) => number) {
+  const length = buffer.length;
+  const rate = buffer.sampleRate;
+  const seeds = [seedFor("left" + buffer.sampleRate + length), seedFor("right" + buffer.sampleRate + length)];
+  for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+    const out = buffer.getChannelData(channel);
+    const random = mulberry32(seeds[channel] ?? seeds[0]);
+    for (let i = 0; i < length; i++) out[i] = generator(channel, i / rate, random);
+  }
+}
+
+function onePole(value: number, previous: number, coefficient: number) {
+  return previous + coefficient * (value - previous);
+}
+
+/** Downsample and create a constant-power self-loop. */
 export function prepareLoop(context: AudioContext, input: AudioBuffer): AudioBuffer {
   const rate = 22050;
-  const originalLength = Math.floor(Math.min(input.duration, 50) * rate);
-  const overlap = Math.min(Math.floor(rate * 1.6), Math.floor(originalLength / 5));
+  const duration = Math.max(1, Math.min(input.duration, 70));
+  const originalLength = Math.max(1, Math.floor(duration * rate));
+  const overlap = Math.min(Math.floor(rate * 1.8), Math.floor(originalLength / 5));
   const length = Math.max(1, originalLength - overlap);
   const result = context.createBuffer(2, length, rate);
-  let peak = 0, energy = 0, samples = 0;
+
+  let peak = 0;
+  let energy = 0;
+  let samples = 0;
+
   for (let channel = 0; channel < 2; channel++) {
     const source = input.getChannelData(Math.min(channel, input.numberOfChannels - 1));
-    const read = (index: number) => {
-      const pos = index * input.sampleRate / rate;
-      const base = Math.min(source.length - 1, Math.floor(pos));
-      const fraction = pos - base;
-      return source[base] * (1 - fraction) + source[Math.min(source.length - 1, base + 1)] * fraction;
-    };
     const out = result.getChannelData(channel);
+    const read = (index: number) => {
+      const position = clamp(index * input.sampleRate / rate, 0, source.length - 1);
+      const base = Math.floor(position);
+      const frac = position - base;
+      const a = source[base] ?? 0;
+      const b = source[Math.min(source.length - 1, base + 1)] ?? a;
+      return a + (b - a) * frac;
+    };
     for (let i = 0; i < length; i++) {
       if (i < overlap) {
         const angle = i / Math.max(1, overlap - 1) * Math.PI / 2;
-        out[i] = read(length + i) * Math.cos(angle) + read(i) * Math.sin(angle);
+        out[i] = read(i) * Math.sin(angle) + read(length + i) * Math.cos(angle);
       } else out[i] = read(i);
-      peak = Math.max(peak, Math.abs(out[i]));
-      energy += out[i] * out[i]; samples++;
+      const sample = out[i];
+      peak = Math.max(peak, Math.abs(sample));
+      energy += sample * sample;
+      samples++;
     }
   }
-  // Conservative loudness matching. Limit peaks before layering multiple channels.
+
   const rms = Math.sqrt(energy / Math.max(1, samples));
-  const gain = Math.min(4, 0.085 / Math.max(0.001, rms), 0.6 / Math.max(0.001, peak));
+  const gain = Math.min(1.15, 0.075 / Math.max(0.003, rms), 0.72 / Math.max(0.003, peak));
   for (let channel = 0; channel < 2; channel++) {
-    const out = result.getChannelData(channel); for (let i = 0; i < out.length; i++) out[i] *= gain;
+    const out = result.getChannelData(channel);
+    for (let i = 0; i < out.length; i++) out[i] *= gain;
   }
   return result;
 }
 
-/** Only music, chimes and noise are synthesized; natural/place sounds load recordings. */
+/**
+ * Procedural fallback engine. It is intentionally deterministic per sound, so every
+ * browser gets the same character and the loop is seamless even when network audio fails.
+ */
 export function synthesizeSound(context: AudioContext, id: SoundId): AudioBuffer {
-  if (SOUND_CATALOG.find((sound) => sound.id === id)?.recording) throw new Error("Âm thanh này cần bản thu, không dùng tiếng giả thay thế.");
   const rate = 22050;
-  const seconds = id === "lofi" ? 32 : 24;
-  const buffer = context.createBuffer(2, rate * seconds, rate);
-  const chords = [[48, 55, 60, 64, 71], [45, 52, 57, 60, 67], [41, 48, 53, 57, 64], [43, 50, 55, 59, 65]];
-  for (let channel = 0; channel < 2; channel++) {
-    const out = buffer.getChannelData(channel);
-    let brown = 0, smooth = 0, b0 = 0, b1 = 0, b2 = 0;
-    for (let i = 0; i < out.length; i++) {
-      const time = i / rate;
-      const white = Math.random() * 2 - 1;
-      brown = (brown + white * 0.02) / 1.02;
-      smooth += (white - smooth) * 0.23;
-      b0 = 0.99765 * b0 + white * 0.099046; b1 = 0.963 * b1 + white * 0.2965164; b2 = 0.57 * b2 + white * 1.0526913;
-      if (id === "white") out[i] = smooth * 0.55;
-      else if (id === "pink") out[i] = (b0 + b1 + b2 + white * 0.1848) * 0.055;
-      else if (id === "brown") out[i] = brown * 0.9;
-      else if (id === "chimes") {
-        const local = time % 8;
-        for (const [index, note] of [523.25, 659.25, 783.99].entries()) {
-          const age = local - index * 1.45;
-          if (age > 0) out[i] += Math.sin(2 * Math.PI * note * age + channel * 0.12) * Math.exp(-age * 1.6) * Math.min(1, age * 12) * 0.08;
-        }
-      } else if (id === "purr") {
-        const mod = 0.55 + 0.45 * Math.sin(2 * Math.PI * 26 * time);
-        const rumble = Math.sin(2 * Math.PI * 72 * time) * 0.10 + Math.sin(2 * Math.PI * 118 * time) * 0.035;
-        out[i] = (brown * 0.85 + rumble) * mod * 0.55;
-      } else if (id === "keyboard") {
-        const cycle = time % 1.6;
-        const taps = [0.18, 0.43, 0.76, 1.12, 1.39];
-        let click = 0;
-        for (let t = 0; t < taps.length; t++) {
-          const age = cycle - taps[t];
-          if (age >= 0 && age < 0.055) {
-            const envelope = Math.exp(-age * 95);
-            click += (Math.sin(2 * Math.PI * (850 + t * 90) * age) + white * 0.7) * envelope * 0.075;
-          }
-        }
-        out[i] = click;
-      } else if (id === "cafe") {
-        const room = (brown * 0.72 + smooth * 0.16);
-        const clinkPhase = time % 6.7;
-        const age = clinkPhase - 3.25;
-        const clink = age >= 0 && age < 0.22
-          ? Math.sin(2 * Math.PI * (1500 - age * 1800) * age) * Math.exp(-age * 22) * 0.035
-          : 0;
-        out[i] = room * 0.22 + clink;
-      } else {
-        const chordIndex = Math.floor(time / 8);
-        for (let delay = 0; delay < 2; delay++) {
-          const index = (chordIndex - delay + 4) % 4;
-          for (const [noteIndex, midi] of chords[index].entries()) {
-            const age = time - (chordIndex - delay) * 8 - noteIndex * 0.52;
-            if (age < 0) continue;
-            const frequency = 440 * Math.pow(2, (midi - 69) / 12) * (1 + channel * 0.0003);
-            const envelope = (1 - Math.exp(-age * 14)) * Math.exp(-age * 0.6);
-            const amplitude = 0.04 * (noteIndex < 2 ? 0.8 : 1);
-            out[i] += (Math.sin(2 * Math.PI * frequency * age) + 0.12 * Math.sin(4 * Math.PI * frequency * age)) * envelope * amplitude;
-          }
+  const seconds = id === "lofi" ? 32 : 26;
+  const buffer = context.createBuffer(2, Math.floor(rate * seconds), rate);
+  const random = mulberry32(seedFor(id));
+  let lowL = 0, lowR = 0;
+  let pinkL = [0, 0, 0, 0, 0, 0, 0];
+  let pinkR = [0, 0, 0, 0, 0, 0, 0];
+
+  const birdEvents = Array.from({ length: 13 }, () => ({
+    at: 1 + random() * 24,
+    length: 0.18 + random() * 0.32,
+    base: 1800 + random() * 2300,
+    sweep: 500 + random() * 1600,
+  })).sort((a, b) => a.at - b.at);
+
+  const thunderEvents = [4.3, 10.8, 17.7, 24.0].map((at, index) => ({
+    at,
+    length: 1.6 + (index % 2) * .5,
+    base: 48 + index * 5,
+  }));
+
+  const pianoChords = [
+    [45, 52, 57, 60, 64],
+    [42, 49, 54, 57, 61],
+    [40, 47, 52, 55, 59],
+    [43, 50, 55, 59, 62],
+  ];
+
+  const notesToFrequency = (midi: number) => 440 * Math.pow(2, (midi - 69) / 12);
+  const noiseWhite = (channel: number, rnd: () => number) => (rnd() * 2 - 1) * (channel ? .98 : 1);
+  const pinkNoise = (channel: number, rnd: () => number) => {
+    const state = channel ? pinkR : pinkL;
+    const white = rnd() * 2 - 1;
+    state[0] = .99886 * state[0] + white * .0555179;
+    state[1] = .99332 * state[1] + white * .0750759;
+    state[2] = .96900 * state[2] + white * .1538520;
+    state[3] = .86650 * state[3] + white * .3104856;
+    state[4] = .55000 * state[4] + white * .5329522;
+    state[5] = -.7616 * state[5] - white * .0168980;
+    state[6] = white * .5362;
+    return state[0] + state[1] + state[2] + state[3] + state[4] + state[5] + state[6] + white * .115926;
+  };
+
+  writeStereo(buffer, (channel, time, rnd) => {
+    const white = noiseWhite(channel, rnd);
+    const pink = pinkNoise(channel, rnd) * .11;
+    const prevLow = channel ? lowR : lowL;
+    let low = onePole(white, prevLow, .018);
+    if (channel) lowR = low; else lowL = low;
+
+    let out = 0;
+
+    if (id === "white") out = white * .12;
+    else if (id === "pink") out = pink * .78;
+    else if (id === "brown") out = low * 2.6;
+    else if (id === "rain" || id === "roof" || id === "storm-rain") {
+      const density = id === "roof" ? .045 : .032;
+      let drops = 0;
+      if (rnd() < density) drops += (rnd() * 2 - 1) * (id === "roof" ? .28 : .20);
+      const texture = onePole(white, 0, .055);
+      out = texture * (id === "roof" ? .42 : .32) + drops;
+      if (id === "storm-rain") {
+        const tail = thunderEvents.reduce((sum, event) => {
+          const age = time - event.at;
+          if (age < 0 || age > event.length) return sum;
+          const env = Math.exp(-age * 2.2) * (1 - Math.exp(-age * 22));
+          const rumble = Math.sin(2 * Math.PI * event.base * age) + .42 * Math.sin(2 * Math.PI * (event.base * 1.7) * age);
+          return sum + rumble * env * .055;
+        }, 0);
+        out += tail;
+      }
+    } else if (id === "thunder") {
+      out = low * .7;
+      for (const event of thunderEvents) {
+        const age = time - event.at;
+        if (age >= 0 && age < event.length) {
+          const env = Math.exp(-age * 1.55) * (1 - Math.exp(-age * 9));
+          out += (Math.sin(2 * Math.PI * event.base * age) + .25 * Math.sin(2 * Math.PI * 97 * age)) * env * .16;
         }
       }
+    } else if (id === "ocean") {
+      const swell = .35 + .65 * Math.pow(Math.max(0, Math.sin(2 * Math.PI * time / 7.8)), 2);
+      out = onePole(white, low, .025) * .20 * swell + Math.sin(2 * Math.PI * .18 * time) * .014 * swell;
+    } else if (id === "river" || id === "mountain-stream" || id === "waterfall") {
+      const fast = id === "waterfall" ? .055 : id === "mountain-stream" ? .040 : .028;
+      const flow = onePole(white, low, fast);
+      out = flow * (id === "waterfall" ? .46 : .34);
+      if (id !== "river") out += pink * (id === "mountain-stream" ? .45 : .7);
+      if (rnd() < (id === "waterfall" ? .0028 : .0015)) out += (rnd() * 2 - 1) * .3;
+    } else if (id === "wind" || id === "forest-night") {
+      const gust = .35 + .65 * Math.pow(Math.max(0, (Math.sin(2 * Math.PI * time / 8.8) + 1) / 2), 2);
+      out = low * .8 * gust + pink * .4;
+    } else if (id === "forest" || id === "birds") {
+      out = low * .30 + pink * .33;
+      for (const event of birdEvents) {
+        const age = time - event.at;
+        if (age >= 0 && age < event.length) {
+          const progress = age / event.length;
+          const envelope = Math.sin(Math.PI * progress);
+          const frequency = event.base + event.sweep * Math.sin(progress * Math.PI * 1.15);
+          out += Math.sin(2 * Math.PI * frequency * age) * envelope * .06;
+        }
+      }
+      if (id === "forest") out += onePole(white, low, .025) * .14;
+    } else if (id === "fireplace") {
+      out = pink * .34 + low * .28;
+      if (rnd() < .0019) {
+        const crack = (rnd() * 2 - 1) * .42;
+        out += crack;
+      }
+    } else if (id === "cafe") {
+      out = pink * .28 + low * .08;
+      const cycle = time % 7.2;
+      const age = cycle - 4.8;
+      if (age >= 0 && age < .28) out += Math.sin(2 * Math.PI * (1200 - age * 1200) * age) * Math.exp(-age * 16) * .045;
+      if (rnd() < .00035) out += (rnd() * 2 - 1) * .07;
+    } else if (id === "keyboard") {
+      const cycle = time % 1.55;
+      const taps = [0.15, 0.42, 0.72, 0.98, 1.24];
+      let click = 0;
+      taps.forEach((tap, index) => {
+        const age = cycle - tap;
+        if (age >= 0 && age < .05) {
+          const envelope = Math.exp(-age * 120);
+          click += (Math.sin(2 * Math.PI * (700 + index * 110) * age) + white * .8) * envelope * .065;
+        }
+      });
+      out = click;
+    } else if (id === "chimes") {
+      const cycle = time % 8.5;
+      const bells = [0, 1.8, 4.5];
+      bells.forEach((start, index) => {
+        const age = cycle - start;
+        if (age >= 0 && age < 2.1) {
+          const envelope = Math.exp(-age * (1.15 + index * .1)) * Math.sin(Math.min(1, age * 10) * Math.PI / 2);
+          const freq = [523.25, 659.25, 783.99][index];
+          out += (Math.sin(2 * Math.PI * freq * age) + .18 * Math.sin(2 * Math.PI * freq * 2 * age)) * envelope * .055;
+        }
+      });
+    } else if (id === "purr") {
+      const modulation = .58 + .42 * Math.sin(2 * Math.PI * 26 * time);
+      out = (low * .5 + Math.sin(2 * Math.PI * 72 * time) * .08 + Math.sin(2 * Math.PI * 118 * time) * .025) * modulation;
+    } else if (id === "lofi") {
+      const chordIndex = Math.floor(time / 8) % pianoChords.length;
+      const notePhase = time % 8;
+      pianoChords[chordIndex].forEach((midi, noteIndex) => {
+        const onset = noteIndex * .47;
+        const age = notePhase - onset;
+        if (age >= 0 && age < 4.8) {
+          const freq = notesToFrequency(midi) * (channel ? 1.0004 : 1);
+          const attack = 1 - Math.exp(-age * 9);
+          const release = Math.exp(-age * .72);
+          const tone = Math.sin(2 * Math.PI * freq * age) + .20 * Math.sin(2 * Math.PI * freq * 2 * age) + .06 * Math.sin(2 * Math.PI * freq * 3 * age);
+          out += tone * attack * release * (noteIndex < 2 ? .025 : .035);
+        }
+      });
+      out += pink * .045;
     }
-  }
+
+    const stereoSpread = channel === 0 ? .995 : 1.005;
+    return clamp(out * stereoSpread, -0.85, 0.85);
+  });
+
   return prepareLoop(context, buffer);
+}
+
+export function recordingCredits() {
+  return Object.entries(RECORDING_SOURCES).map(([id, source]) => ({ id, ...source }));
 }
