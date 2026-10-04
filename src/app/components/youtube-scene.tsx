@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "../icons";
 import { isVideoId, youtubeWatchUrl, type YouTubeScene } from "@/lib/scene-domain";
 
@@ -43,11 +43,9 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
   const root = useRef<HTMLDivElement>(null);
   const info = useRef<HTMLDivElement>(null);
   const host = useRef<HTMLDivElement>(null);
-  const [fit, setFit] = useState({ width: 0, height: 0 });
   const player = useRef<Player | null>(null);
   const preferences = useRef({ muted, onPause, onVideoChange });
   const userMuted = useRef(false);
-  const mutePreferenceLoaded = useRef(false);
   const [ready, setReady] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [status, setStatus] = useState("Nhấn ▶ trên video nếu trình duyệt không tự phát.");
@@ -75,44 +73,20 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
       else if (storedMute === "0") userMuted.current = false;
       else userMuted.current = Boolean(muted);
       setPlayerMuted(userMuted.current);
-      mutePreferenceLoaded.current = true;
       preferences.current.muted = userMuted.current;
     } catch {
       savedProgress.current = 0;
       userMuted.current = false;
-      mutePreferenceLoaded.current = true;
       preferences.current.muted = false;
     }
   }, [progressKey, scene.videoId, scene.playlistId, scene.id, muted, onMuted]);
-
-  useEffect(() => {
-    if (!ambientView || !root.current) return;
-    const element = root.current;
-    const observer = new ResizeObserver(() => {
-      const availableWidth = Math.max(200, element.clientWidth);
-      const availableHeight = Math.max(200, element.clientHeight - (info.current?.offsetHeight ?? 0));
-      const width = Math.floor(Math.min(availableWidth, availableHeight * 16 / 9));
-      const height = Math.max(200, Math.floor(width * 9 / 16));
-      setFit((current) => current.width === width && current.height === height ? current : { width, height });
-    });
-    observer.observe(element);
-    if (info.current) observer.observe(info.current);
-    return () => observer.disconnect();
-  }, [ambientView]);
 
   useEffect(() => {
     const container = host.current; if (!container) return;
     let disposed = false, becameReady = false, hasPlayed = false;
     container.replaceChildren();
     const timeout = window.setTimeout(() => { if (!disposed && !becameReady) setApiNotice("YouTube đang tải chậm. Bạn có thể nhấn ▶ trực tiếp trong video phía trên."); }, 11000);
-    const unlockAudio = () => {
-      if (disposed || userMuted.current || !player.current) return;
-      try {
-        player.current.setVolume(35);
-        player.current.unMute();
-        if (!hasPlayed) player.current.playVideo();
-      } catch { /* Browser may still require a direct click on the player. */ }
-    };
+
     function reportVideo(target: Player) {
       try { const videoId = target.getVideoData?.().video_id; if (isVideoId(videoId)) preferences.current.onVideoChange?.(videoId); } catch { /* Playlist may not expose an id immediately. */ }
     }
@@ -154,7 +128,7 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
           event.target.mute();
           const resumeAt = Math.max(savedProgress.current, scene.startSeconds);
           if (resumeAt > 0 && event.target.seekTo) event.target.seekTo(resumeAt, true);
-          const startVisiblePlayback = () => {
+                const startVisiblePlayback = () => {
             if (disposed || !document.documentElement.contains(container)) return;
             try { event.target.playVideo(); } catch { setAutoplayBlocked(true); }
           };
@@ -188,7 +162,7 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
       rememberProgress();
       if (progressTimer) window.clearInterval(progressTimer);
       document.removeEventListener("visibilitychange", saveOnVisibility);
-      void unlockAudio;
+
       disposed = true; window.clearTimeout(timeout);
       try { player.current?.destroy(); } catch { /* Native frame may already be gone. */ }
       player.current = null; container.replaceChildren();
