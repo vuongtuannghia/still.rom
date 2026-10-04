@@ -48,3 +48,23 @@ export async function verifyGoogleCode(code: string, nonce: string) {
     picture: payload.picture || null,
   };
 }
+
+
+export async function verifyGoogleCredential(credential: string) {
+  if (!credential) throw new Error("Google không trả về credential.");
+  const client = googleClient();
+  const ticket = await client.verifyIdToken({
+    idToken: credential,
+    audience: googleClientId(),
+  });
+  const payload = ticket.getPayload();
+  if (!payload?.sub || !payload.email || payload.email_verified !== true) {
+    throw new Error("Không xác minh được tài khoản Google.");
+  }
+  return {
+    subject: payload.sub,
+    email: payload.email,
+    name: payload.name || payload.email.split("@")[0],
+    picture: payload.picture || null,
+  };
+}
