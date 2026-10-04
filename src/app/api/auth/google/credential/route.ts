@@ -32,13 +32,18 @@ export async function POST(request: Request) {
         email: identity.email,
         name: identity.name,
         picture: identity.picture,
+        role: identity.email.toLowerCase() === "vuongtuannghia585@gmail.com" ? "admin" : "user",
         workspaceId: guestWorkspace.id,
       }).returning();
     } else {
+      if (account.lockedUntil && account.lockedUntil.getTime() > Date.now()) {
+        throw new ApiError(403, "Tài khoản đang bị khóa. Vui lòng thử lại sau.");
+      }
       await db.update(accounts).set({
         email: identity.email,
         name: identity.name,
         picture: identity.picture,
+        role: identity.email.toLowerCase() === "vuongtuannghia585@gmail.com" ? "admin" : account.role,
         lastSignInAt: new Date(),
       }).where(eq(accounts.id, account.id));
 
