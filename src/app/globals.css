@@ -817,3 +817,8 @@ section[id] { scroll-margin-top: 28px; }
     min-height: 0 !important;
   }
 }
+
+.sidebar-focus-actions{display:grid;gap:2px;margin-top:2px}
+.sidebar-focus-actions .text-button{width:100%;justify-content:space-between;text-decoration:none}
+.sidebar-profile-link{color:var(--secondary)}
+.sidebar-profile-link:hover{color:var(--ink)}
