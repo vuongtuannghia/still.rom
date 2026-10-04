@@ -6,9 +6,9 @@ import { Dialog } from "./dialogs";
 import { dateKey, formatMinutes, labelDate, sessionDay, sessionSeconds, shiftDay, type FocusSession, type SessionInput } from "@/lib/focus-domain";
 import { errorMessage, requestJson } from "@/lib/client-api";
 
-export function SessionHistory({ sessions, onAdd }: { sessions: FocusSession[]; onAdd: () => void }) {
+export function SessionHistory({ sessions, onAdd, canAdd = false }: { sessions: FocusSession[]; onAdd: () => void; canAdd?: boolean }) {
   const [limit, setLimit] = useState(6);
-  return <section id="history" className="panel history-card"><div className="panel-heading"><div><span className="eyebrow">THỜI GIAN BẠN ĐÃ DÀNH CHO MÌNH</span><h2>Lịch sử tập trung</h2><p>Phiên đã đồng bộ, ghi theo thời điểm hoàn thành thực tế.</p></div><button className="button-secondary" type="button" onClick={onAdd}><Icon name="plus" size={16} /> Ghi phiên thủ công</button></div>
+  return <section id="history" className="panel history-card"><div className="panel-heading"><div><span className="eyebrow">THỜI GIAN BẠN ĐÃ DÀNH CHO MÌNH</span><h2>Lịch sử tập trung</h2><p>Phiên đã đồng bộ, ghi theo thời điểm hoàn thành thực tế.</p></div>{canAdd && <button className="button-secondary" type="button" onClick={onAdd}><Icon name="plus" size={16} /> Ghi phiên thủ công</button>}</div>
     {sessions.length === 0 ? <div className="empty-state compact"><span className="empty-icon"><Icon name="clock" size={24} /></span><h3>Phiên đầu tiên đang chờ bạn.</h3><p>Chưa có dữ liệu lịch sử. Bạn có thể hoàn thành timer hoặc ghi lại một phiên đã làm.</p></div> : <><div className="history-scroll"><table className="history-table"><caption className="sr-only">Các phiên tập trung đã hoàn thành</caption><thead><tr><th scope="col">Thời điểm</th><th scope="col">Nhiệm vụ</th><th scope="col">Thời lượng</th><th scope="col">Trạng thái</th></tr></thead><tbody>{sessions.slice(0, limit).map((session) => <tr key={session.id}><td><strong>{labelDate(sessionDay(session), { day: "numeric", month: "numeric", year: "numeric" })}</strong><span>{new Date(session.endedAt ?? session.createdAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</span></td><td>{session.taskTitle ?? "Tập trung tự do"}</td><td><strong>{formatMinutes(sessionSeconds(session) / 60)}</strong></td><td><span className="saved-tag"><Icon name="check" size={13} /> Đã lưu</span></td></tr>)}</tbody></table></div>{sessions.length > limit && <button className="text-button history-more" type="button" onClick={() => setLimit(limit + 12)}>Xem thêm {Math.min(12, sessions.length - limit)} phiên <Icon name="chevron" size={14} /></button>}</>}
   </section>;
 }
@@ -37,7 +37,7 @@ export function SessionLogDialog({ workspaceId, onSaved, onClose }: { workspaceI
         return;
       }
       try {
-        const result = await requestJson<{ session: FocusSession }>("/api/focus-sessions", { method: "POST", body: JSON.stringify(payloadRef.current) });
+        const result = await requestJson<{ session: FocusSession }>("/api/focus-sessions", { method: "POST", body: JSON.stringify({ ...payloadRef.current, manual: true }) });
         onSaved(result.session); onClose();
       } catch (serverError) {
         // Keep manual sessions usable even while the database/API is not provisioned.
