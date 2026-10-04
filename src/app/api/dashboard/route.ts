@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { workspaces, tasks, subtasks, habits, habitCheckIns, focusSessions } from "@/db/schema";
+import { workspaces, tasks, subtasks, habits, habitCheckIns, focusSessions, accountSnapshots } from "@/db/schema";
 import { and, asc, desc, eq, gte } from "drizzle-orm";
 import { apiError, getWorkspace, json, readBody } from "@/lib/server-api";
 import { workspaceGrant } from "@/lib/access-protocol";
@@ -41,6 +41,21 @@ async function dashboard(request: Request, legacyRead: boolean) {
       db.select({ id: subtasks.id, taskId: subtasks.taskId, title: subtasks.title, completed: subtasks.completed, completedAt: subtasks.completedAt, createdAt: subtasks.createdAt }).from(subtasks).innerJoin(tasks, eq(tasks.id, subtasks.taskId)).where(eq(tasks.workspaceId, workspace.id)).orderBy(asc(subtasks.id)),
     ]);
     const owner = await accountForWorkspace(workspace.id);
+    if (owner) {
+      const [snapshot] = await db.select({ data: accountSnapshots.data })
+        .from(accountSnapshots)
+        .where(eq(accountSnapshots.accountId, owner.id))
+        .orderBy(desc(accountSnapshots.createdAt))
+        .limit(1);
+      if (snapshot?.data) {
+        return json({
+          ...snapshot.data,
+          account: accountSummary(owner),
+          workspaceId: workspace.id,
+          access: workspaceGrant(workspace.id),
+        });
+      }
+    }
     return json({ account: owner ? accountSummary(owner) : null, workspaceId: workspace.id, access: workspaceGrant(workspace.id), preferences: normalizePreferences(workspace.preferences), room: normalizeRoom(workspace.roomSettings), tasks: taskRows, habits: habitRows, checkIns, sessions, subtasks: subtaskRows });
   } catch (error) { return apiError(error); }
 }
