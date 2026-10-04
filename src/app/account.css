@@ -117,3 +117,5 @@
 
 .account-admin-badge{display:inline-flex;align-items:center;gap:5px;align-self:flex-start;width:max-content;max-width:100%;margin-top:3px;padding:4px 7px;border-radius:999px;background:#20201e;color:#f4f4ef;font-size:7px;font-weight:800;letter-spacing:.09em;line-height:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .account-admin-badge::first-letter{color:#f1ce72}
+
+.account-google-disclosure{display:block!important;margin-top:5px!important;color:#85857f!important;font-size:8px!important;line-height:1.5!important}
