@@ -185,10 +185,18 @@ export default function DashboardClient() {
     const scene = data.room.scenes.find((item) => item.id === data.room.selectedId);
     try {
       if (scene) {
+        let muted = data.room.youtubeMuted;
+        try {
+          const raw = localStorage.getItem(PERSISTENT_YOUTUBE_KEY);
+          const previous = raw ? JSON.parse(raw) as { scene?: { videoId?: string }; muted?: boolean } : null;
+          if (previous?.scene?.videoId === scene.videoId && typeof previous.muted === "boolean") {
+            muted = previous.muted;
+          }
+        } catch {}
         localStorage.setItem(PERSISTENT_YOUTUBE_KEY, JSON.stringify({
           scene,
           loop: data.room.loop,
-          muted: data.room.youtubeMuted,
+          muted,
         }));
       } else {
         localStorage.removeItem(PERSISTENT_YOUTUBE_KEY);
