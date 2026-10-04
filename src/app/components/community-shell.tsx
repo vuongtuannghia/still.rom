@@ -3,6 +3,7 @@
 import { ReactNode } from "react";
 import { AccountControl } from "./account-control";
 import { Icon } from "../icons";
+import { ProfileNavItem } from "./profile-nav-item";
 
 type Section = "home" | "study" | "forum" | "messages";
 
@@ -91,7 +92,7 @@ export function CommunityShell({ active, title, eyebrow, description, children }
       <div className="workspace-label"><span className="workspace-icon"><Icon name="layout" size={19} /></span><div><strong>Không gian cá nhân</strong><span>Một nhịp cho riêng bạn</span></div><span className="workspace-badge">3.5</span></div>
       <span className="nav-label">KHÔNG GIAN</span>
       <nav className="side-nav" aria-label="Điều hướng chính">
-        {links.map((item) => <a key={item.id} className={item.id === active ? "nav-link active" : "nav-link"} href={item.href}><Icon name={item.icon} size={19} /><span>{item.label}</span></a>)}
+        {links.map((item) => <a key={item.id} className={item.id === active ? "nav-link active" : "nav-link"} href={item.href}><Icon name={item.icon} size={19} /><span>{item.label}</span></a>)}<ProfileNavItem />
       </nav>
       <div className="sidebar-art"><div className="arch-art" aria-hidden="true"><i /><i /><i /></div><span className="small-label">LESS, BUT BETTER.</span><p>Ít hơn một chút.<br /><strong>Hiện diện nhiều hơn.</strong></p><a className="text-button" href="/">Vào phòng tập trung <Icon name="arrow" size={15} /></a></div>
       <div className="sidebar-account"><AccountControl data={null} onChanged={() => window.location.reload()} /></div>
@@ -102,7 +103,7 @@ export function CommunityShell({ active, title, eyebrow, description, children }
       <div className="mobile-topbar"><a href="/" className="brand"><span className="brand-mark" aria-hidden="true"><i /><i /><i /><i /></span><span>still<span className="brand-period">.</span><small>ROOM</small></span></a></div>
       <div className="mobile-account-control"><AccountControl data={null} onChanged={() => window.location.reload()} /></div>
       <nav className="mobile-nav" aria-label="Điều hướng trên di động">
-        {links.map((item) => <a key={item.id} className={item.id === active ? "active" : ""} href={item.href}><Icon name={item.icon} size={16} />{item.label}</a>)}
+        {links.map((item) => <a key={item.id} className={item.id === active ? "active" : ""} href={item.href}><Icon name={item.icon} size={16} />{item.label}</a>)}<ProfileNavItem />
       </nav>
       <div className="page-content community-page-content">
         <header className="page-header community-page-header">
@@ -114,3 +115,10 @@ export function CommunityShell({ active, title, eyebrow, description, children }
     </main>
   </div>;
 }
+
+<style>
+.profile-nav-link{margin-top:2px}
+.profile-nav-link svg{flex:0 0 auto}
+.profile-nav-link{font-weight:650}
+.mobile-nav .profile-nav-link{display:inline-flex!important}
+</style>
