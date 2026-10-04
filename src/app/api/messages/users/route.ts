@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     let rows;
     if (!q) {
       rows = friendIds.length
-        ? await db.select({ id: accounts.id, name: accounts.name, email: accounts.email, picture: accounts.picture })
+        ? await db.select({ id: accounts.id, name: accounts.name, email: accounts.email, picture: accounts.customPicture, googlePicture: accounts.picture })
             .from(accounts).where(inArray(accounts.id, friendIds)).orderBy(asc(accounts.name))
         : [];
     } else {
@@ -34,17 +34,17 @@ export async function GET(request: Request) {
     }
 
     const result = await Promise.all(rows.map(async person => {
-      if (friendIds.includes(person.id)) return { ...person, relationship: "friend" as const };
+      if (friendIds.includes(person.id)) return { ...person, picture: person.picture || person.googlePicture || null, relationship: "friend" as const };
 
       const [incoming] = await db.select({ id: friendRequests.id }).from(friendRequests)
         .where(and(eq(friendRequests.senderId, person.id), eq(friendRequests.recipientId, current.id), eq(friendRequests.status, "pending"))).limit(1);
-      if (incoming) return { ...person, relationship: "incoming" as const, requestId: incoming.id };
+      if (incoming) return { ...person, picture: person.picture || person.googlePicture || null, relationship: "incoming" as const, requestId: incoming.id };
 
       const [outgoing] = await db.select({ id: friendRequests.id }).from(friendRequests)
         .where(and(eq(friendRequests.senderId, current.id), eq(friendRequests.recipientId, person.id), eq(friendRequests.status, "pending"))).limit(1);
-      if (outgoing) return { ...person, relationship: "outgoing" as const, requestId: outgoing.id };
+      if (outgoing) return { ...person, picture: person.picture || person.googlePicture || null, relationship: "outgoing" as const, requestId: outgoing.id };
 
-      return { ...person, relationship: "lookup" as const };
+      return { ...person, picture: person.picture || person.googlePicture || null, relationship: "lookup" as const };
     }));
 
     return json(result);
