@@ -339,7 +339,7 @@ export default function ProfilePage() {
           </div>}
       <input ref={avatarInput} hidden type="file" accept="image/*" onChange={e => void chooseAvatar(e.target.files?.[0])} />
       <div className="profile-main-info">
-        <div className="profile-name-row"><h1>{data.profile.name}</h1>{data.profile.isAdmin && <span className="profile-role">ADMIN</span>}</div>
+        <div className="profile-name-row"><h1>{data.profile.name}</h1>{data.profile.isAdmin && <span className="profile-admin-badge"><span className="profile-admin-crown">♛</span><span>QUẢN TRỊ VIÊN</span></span>}</div>
         <p className="profile-bio">{data.profile.bio || "Chưa thêm phần giới thiệu."}</p>
         <div className="profile-meta-line">
           <span><Icon name="clock" size={13} /> Thành viên từ {new Date(data.profile.createdAt).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}</span>
