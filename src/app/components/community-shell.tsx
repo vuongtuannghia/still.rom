@@ -80,7 +80,6 @@ export function CommunityShell({ active, title, eyebrow, description, children }
     { id: "study", label: "Học chung", href: "/hoc-chung", icon: "radio" },
     { id: "forum", label: "Diễn đàn", href: "/dien-dan", icon: "book" },
     { id: "messages", label: "Tin nhắn", href: "/tin-nhan", icon: "arrow" },
-    { id: "discover", label: "Khám phá", href: "/kham-pha", icon: "target" },
     { id: "analytics", label: "Thống kê", href: "/#analytics", icon: "chart" },
     { id: "habits", label: "Thói quen", href: "/#habits", icon: "habit" },
     { id: "tasks", label: "Nhiệm vụ", href: "/#tasks", icon: "tasks" },
@@ -104,7 +103,7 @@ export function CommunityShell({ active, title, eyebrow, description, children }
       <div className="mobile-topbar"><a href="/" className="brand"><span className="brand-mark" aria-hidden="true"><i /><i /><i /><i /></span><span>still<span className="brand-period">.</span><small>ROOM</small></span></a></div>
       <div className="mobile-account-control"><AccountControl data={null} onChanged={() => window.location.reload()} /></div>
       <nav className="mobile-nav" aria-label="Điều hướng trên di động">
-        <ProfileNavItem /><AdminNavItem mobile />{links.map((item) => <a key={item.id} className={item.id === active ? "active" : "" href={item.href}><Icon name={item.icon} size={16} />{item.label}</a>)}
+        <ProfileNavItem /><AdminNavItem mobile />{links.map((item) => <a key={item.id} className={item.id === active ? "active" : ""} href={item.href}><Icon name={item.icon} size={16} />{item.label}</a>)}
       </nav>
       <div className="page-content community-page-content">
         <header className="page-header community-page-header">
