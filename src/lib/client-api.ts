@@ -75,7 +75,7 @@ async function establishWorkspace(force = false): Promise<string> {
   const operation = (async () => {
     const allocated = await decodeResponse(await sameOriginFetch("/api/workspace", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ browserToken: token }) }));
     if (!isUuid(allocated.workspaceId) || allocated.transport !== "json-body") throw new RequestError("Máy chủ chưa hỗ trợ cách kết nối mới. Hãy làm mới khung preview.");
-    if (establishedWorkspace && establishedWorkspace !== allocated.workspaceId) throw new RequestError("Không gian đã thay đổi. Hãy tải lại trang trước khi chỉnh sửa để tránh lưu nhầm dữ liệu.", 409);
+    if (establishedWorkspace && establishedWorkspace !== allocated.workspaceId && !force) throw new RequestError("Không gian đã thay đổi. Hãy tải lại trang trước khi chỉnh sửa để tránh lưu nhầm dữ liệu.", 409);
     const verified = await decodeResponse(await sameOriginFetch("/api/workspace/access", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify(authenticatedEnvelope(token, allocated.workspaceId)),
