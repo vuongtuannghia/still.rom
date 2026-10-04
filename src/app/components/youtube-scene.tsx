@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Icon } from "../icons";
 import { isVideoId, youtubeWatchUrl, type YouTubeScene } from "@/lib/scene-domain";
 
@@ -44,7 +44,6 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
   const info = useRef<HTMLDivElement>(null);
   const host = useRef<HTMLDivElement>(null);
   const [fit, setFit] = useState({ width: 0, height: 0 });
-  const frame = useRef<HTMLIFrameElement | null>(null);
   const player = useRef<Player | null>(null);
   const preferences = useRef({ muted, onPause, onVideoChange });
   const [ready, setReady] = useState(false);
@@ -52,7 +51,6 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
   const [status, setStatus] = useState("Nhấn ▶ trên video nếu trình duyệt không tự phát.");
   const [fatal, setFatal] = useState("");
   const [apiNotice, setApiNotice] = useState("");
-  const id = useId().replaceAll(":", "");
   const progressKey = `stillroom.youtube.progress:${scene.videoId || scene.playlistId || scene.id}`;
   const savedProgress = useRef(0);
 
@@ -117,6 +115,7 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
       if (!scene.videoId && scene.playlistId) {
         playerVars.list = scene.playlistId;
         playerVars.listType = "playlist";
+        if (loop) playerVars.loop = 1;
       } else if (loop && scene.videoId) {
         playerVars.loop = 1;
         playerVars.playlist = scene.videoId;
@@ -126,12 +125,27 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
           if (disposed) return;
           becameReady = true; window.clearTimeout(timeout); setReady(true); setApiNotice("");
           reportVideo(event.target);
-          // Ambient video always starts muted so it can autoplay without requiring fullscreen
-          // or a fresh click. Sound is enabled only after an explicit user action.
+          // Start muted. For a normal embedded player this is the most reliable way to
+          // satisfy browser autoplay rules while keeping the video playable in a small window.
           event.target.mute();
           const resumeAt = Math.max(savedProgress.current, scene.startSeconds);
           if (resumeAt > 0 && event.target.seekTo) event.target.seekTo(resumeAt, true);
-          event.target.playVideo();
+          const startVisiblePlayback = () => {
+            if (disposed || !document.documentElement.contains(container)) return;
+            try { event.target.playVideo(); } catch { /* YouTube will report autoplayBlocked if blocked. */ }
+          };
+          if ("IntersectionObserver" in window) {
+            const observer = new IntersectionObserver((entries) => {
+              if (entries.some((entry) => entry.isIntersecting && entry.intersectionRatio >= 0.5)) {
+                observer.disconnect();
+                window.requestAnimationFrame(startVisiblePlayback);
+              }
+            }, { threshold: [0, 0.5, 1] });
+            observer.observe(container);
+            if (observer) window.setTimeout(() => observer.disconnect(), 12000);
+          } else {
+            window.requestAnimationFrame(startVisiblePlayback);
+          }
           if (!ambientView && !preferences.current.muted) { event.target.setVolume(35); event.target.unMute(); }
           progressTimer = window.setInterval(rememberProgress, 1000);
         },
