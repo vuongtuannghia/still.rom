@@ -197,23 +197,21 @@ export function DirectMessagesPage() {
               }
             </section>
 
-            <section className={"pending-inbox-card" + (pendingOpen ? " open" : "")}>
-              <button type="button" className="pending-inbox-trigger" onClick={() => setPendingOpen(current => !current)} aria-expanded={pendingOpen}>
-                <span className="pending-inbox-icon"><Icon name="arrow" size={16} /></span>
-                <span className="pending-inbox-copy"><strong>Tin nhắn chờ</strong><small>{pendingThreads.length ? pendingThreads.length + " người đang chờ bạn xem tin nhắn." : "Không có tin nhắn mới."}</small></span>
-                <span className="pending-inbox-count">{pendingThreads.length}</span>
-                <span className="pending-inbox-chevron">{pendingOpen ? "↑" : "↓"}</span>
-              </button>
-              {pendingOpen && <div className="pending-inbox-list">
-                {pendingThreads.length === 0 ? <div className="message-list-empty">Không có tin nhắn chờ.</div> :
-                  pendingThreads.map(thread => <div className="message-row pending" role="button" tabIndex={0} key={thread.threadId} onClick={() => router.push("/tin-nhan/" + encodeURIComponent(thread.other.id))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") router.push("/tin-nhan/" + encodeURIComponent(thread.other.id)); }}>
-                    <ProfileActionMenu person={{ id: thread.other.id, name: thread.other.name, picture: thread.other.picture }}><span className="community-avatar">{thread.other.picture ? <img src={thread.other.picture} alt="" /> : initial(thread.other.name)}</span></ProfileActionMenu>
-                    <span className="message-row-copy"><strong>{thread.other.name}</strong><small>{thread.lastBody}</small></span>
-                    <span className="message-row-meta"><span>{timeLabel(thread.lastCreatedAt)}</span>{thread.unreadCount > 0 && <b>{thread.unreadCount}</b>}</span>
-                  </div>)
-                }
-              </div>}
-            </section>
+            {pendingThreads.length > 0 && <section className="message-list-section pending-message-section">
+              <div className="message-list-title">
+                <div><span className="small-label">TIN NHẮN CHỜ</span><h3>Người lạ</h3></div>
+                <span>{pendingThreads.length}</span>
+              </div>
+              {pendingThreads.map(thread => <div className="message-row pending" role="button" tabIndex={0} key={thread.threadId}
+                onClick={() => router.push("/tin-nhan/" + encodeURIComponent(thread.other.id))}
+                onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") router.push("/tin-nhan/" + encodeURIComponent(thread.other.id)); }}>
+                <ProfileActionMenu person={{ id: thread.other.id, name: thread.other.name, picture: thread.other.picture }}>
+                  <span className="community-avatar">{thread.other.picture ? <img src={thread.other.picture} alt="" /> : initial(thread.other.name)}</span>
+                </ProfileActionMenu>
+                <span className="message-row-copy"><strong>{thread.other.name}</strong><small>{thread.lastBody}</small></span>
+                <span className="message-row-meta"><span>{timeLabel(thread.lastCreatedAt)}</span>{thread.unreadCount > 0 && <b>{thread.unreadCount}</b>}</span>
+              </div>)}
+            </section>}
           </main>
 
           <aside className="messages-inbox-side">
