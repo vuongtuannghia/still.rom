@@ -11,7 +11,6 @@ import "./admin.css";
 import "./persistent-youtube-fix.css";
 import { NotificationBell } from "./components/notification-bell";
 import { AccountLockGuard } from "./components/account-lock-guard";
-import { PersistentYouTubePlayer } from "./components/persistent-youtube-player";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -43,5 +42,5 @@ export const metadata: Metadata = {
   },
 };
 export default function RootLayout({ children }: { children: ReactNode }) {
-  return <html lang="vi"><body>{children}<PersistentYouTubePlayer /><NotificationBell /><AccountLockGuard /></body></html>;
+  return <html lang="vi"><body>{children}<NotificationBell /><AccountLockGuard /></body></html>;
 }
