@@ -82,6 +82,16 @@ export function DirectMessagesPage({ initialUserId }: { initialUserId?: string }
           requestId: incomingRequest?.id ?? outgoingRequest?.id,
         };
       }));
+      setSelected(current => {
+        if (!current) return current;
+        if ((payload.blocks ?? []).includes(current.id)) return { ...current, relationship: "blocked" };
+        if (payload.friends.some(friend => friend.id === current.id)) return { ...current, relationship: "friend" };
+        const outgoing = payload.outgoing.find(item => item.recipientId === current.id);
+        if (outgoing) return { ...current, relationship: "outgoing", requestId: outgoing.id };
+        const incoming = payload.incoming.find(item => item.senderId === current.id);
+        if (incoming) return { ...current, relationship: "incoming", requestId: incoming.id };
+        return { ...current, relationship: "conversation" };
+      });
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Không tải được kết nối.");
     } finally { setLoading(false); }
@@ -207,7 +217,7 @@ export function DirectMessagesPage({ initialUserId }: { initialUserId?: string }
             <section className="message-list-section">
               <div className="message-list-title"><div><span className="small-label">TIN NHẮN CHÍNH</span><h3>Bạn bè</h3></div><span>{primaryThreads.length}</span></div>
               {primaryThreads.length === 0 ? <div className="message-list-empty">Chưa có cuộc trò chuyện với bạn bè.</div> :
-                primaryThreads.map(thread => <div className="message-row" role="button" tabIndex={0} key={thread.threadId} onClick={() => router.push("/tin-nhan?user=" + encodeURIComponent(thread.other.id) + (thread.other.email ? "&email=" + encodeURIComponent(thread.other.email) : ""))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") router.push("/tin-nhan/" + encodeURIComponent(thread.other.id)); }}>
+                primaryThreads.map(thread => <div className="message-row" role="button" tabIndex={0} key={thread.threadId} onClick={() => router.push("/tin-nhan?user=" + encodeURIComponent(thread.other.id) + (thread.other.email ? "&email=" + encodeURIComponent(thread.other.email) : ""))} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") router.push("/tin-nhan?user=" + encodeURIComponent(thread.other.id) + (thread.other.email ? "&email=" + encodeURIComponent(thread.other.email) : "")); }}>
                   <ProfileActionMenu person={{ id: thread.other.id, name: thread.other.name, picture: thread.other.picture }}><span className="community-avatar">{thread.other.picture ? <img src={thread.other.picture} alt="" /> : initial(thread.other.name)}</span></ProfileActionMenu>
                   <span className="message-row-copy"><strong>{thread.other.name}</strong><small>{thread.lastBody}</small></span>
                   <span className="message-row-meta"><span>{timeLabel(thread.lastCreatedAt)}</span>{thread.unreadCount > 0 && <b>{thread.unreadCount}</b>}</span>
@@ -238,7 +248,7 @@ export function DirectMessagesPage({ initialUserId }: { initialUserId?: string }
                     return <div className="friend-search-row" key={person.id}>
                       <ProfileActionMenu person={{ id: person.id, name: person.name, picture: person.picture }}><span className="community-avatar small">{person.picture ? <img src={person.picture} alt="" /> : initial(person.name)}</span></ProfileActionMenu>
                       <div className="friend-search-copy"><strong>{person.name}</strong><small>{person.email}</small></div>
-                      {relation === "friend" ? <button type="button" onClick={() => void unfriend(person.id)}>Hủy KB</button> :
+                      {relation === "friend" ? <button type="button" onClick={() => void unfriend(person.id)}>Hủy kết bạn</button> :
                        relation === "outgoing" ? <button type="button" onClick={() => void cancelFriendRequest(person.requestId)}>Hủy lời mời</button> :
                        relation === "incoming" ? <div className="mini-request-actions"><button type="button" onClick={() => void respondToRequest(person.requestId!, "accept")}>Nhận</button><button type="button" onClick={() => void respondToRequest(person.requestId!, "reject")}>Từ</button></div> :
                        relation === "blocked" ? <span>Đã chặn</span> :
