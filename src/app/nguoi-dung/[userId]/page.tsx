@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Icon } from "@/app/icons";
+import { ProfileAvatarMenu } from "@/app/components/profile-avatar-menu";
 
 type ProfileData = {
   profile: {
@@ -389,9 +390,10 @@ export default function ProfilePage() {
     {tab === "friends"
       ? <section className="profile-friends-grid">
           {data.friends.length === 0 ? <div className="profile-empty">Chưa có bạn bè công khai.</div> :
-            data.friends.map(friend => <button key={friend.id} className="profile-friend-card" type="button" onClick={() => router.push("/nguoi-dung/" + friend.id)}>
-              {avatar(friend.name, friend.picture, "small")}<span><strong>{friend.name}</strong><small>{friend.bio || "Thành viên still.room"}</small></span><Icon name="arrow" size={14} />
-            </button>)}
+            data.friends.map(friend => <div key={friend.id} className="profile-friend-card">
+              <ProfileAvatarMenu id={friend.id} name={friend.name} picture={friend.picture} size="normal" />
+              <button type="button" className="profile-friend-info" onClick={() => router.push("/nguoi-dung/" + friend.id)}><span><strong>{friend.name}</strong><small>{friend.bio || "Thành viên still.room"}</small></span><Icon name="arrow" size={14} /></button>
+            </div>)}
         </section>
       : tab === "photos"
       ? <section className="profile-feed">
@@ -419,7 +421,7 @@ export default function ProfilePage() {
           </div>
           <aside className="profile-side">
             <section className="profile-side-card"><span className="small-label">VỀ BẠN</span><h3>{data.profile.bio || "Một người đang học tại still.room."}</h3><div className="profile-side-metric"><strong>{Math.floor(data.stats.focusMinutes / 60)}h</strong><span>tập trung tích lũy</span></div></section>
-            <section className="profile-side-card"><div className="profile-side-head"><span className="small-label">BẠN BÈ</span><button type="button" onClick={() => setTab("friends")}>Xem tất cả</button></div><div className="profile-mini-friends">{data.friends.slice(0, 6).map(friend => <button key={friend.id} type="button" onClick={() => router.push("/nguoi-dung/" + friend.id)} title={friend.name}>{avatar(friend.name, friend.picture, "tiny")}</button>)}</div></section>
+            <section className="profile-side-card"><div className="profile-side-head"><span className="small-label">BẠN BÈ</span><button type="button" onClick={() => setTab("friends")}>Xem tất cả</button></div><div className="profile-mini-friends">{data.friends.slice(0, 6).map(friend => <ProfileAvatarMenu key={friend.id} id={friend.id} name={friend.name} picture={friend.picture} size="tiny" />)}</div></section>
           </aside>
         </section>}
   </main>;
