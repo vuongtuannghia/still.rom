@@ -11,6 +11,7 @@ type ProfileData = {
   };
   relationship: "self" | "friend" | "incoming" | "outgoing" | "none";
   relationshipRequestId: number | null;
+  blockStatus: "none" | "blocked_by_me" | "blocked_you";
   stats: { friendCount: number; forumPostCount: number; photoPostCount: number; focusMinutes: number };
   friends: { id: string; name: string; picture: string | null; bio: string | null }[];
   forumPosts: { id: number; title: string; body: string; meetRoomId: number | null; pinned: boolean; createdAt: string }[];
@@ -138,6 +139,23 @@ export default function ProfilePage() {
       setNotice(action === "accept" ? "Đã trở thành bạn bè." : "Đã từ chối lời mời.");
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Không thể xử lý lời mời.");
+    }
+  }
+
+  async function toggleBlock() {
+    if (!data || data.relationship === "self") return;
+    const method = data.blockStatus === "blocked_by_me" ? "DELETE" : "POST";
+    try {
+      const response = await fetch("/api/blocks", {
+        method, credentials: "same-origin", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: data.profile.id }),
+      });
+      const payload = await response.json().catch(() => ({})) as { error?: string; status?: ProfileData["blockStatus"] };
+      if (!response.ok) throw new Error(payload.error || "Không thể cập nhật chặn.");
+      await load();
+      setNotice(method === "POST" ? "Đã chặn tài khoản này." : "Đã bỏ chặn.");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Không thể cập nhật chặn.");
     }
   }
 
@@ -274,6 +292,8 @@ export default function ProfilePage() {
       <div className="profile-actions">
         {isSelf
           ? <button className="button-primary" type="button" onClick={() => setEditMode(current => !current)}><Icon name="sliders" size={14} /> {editMode ? "Đang chỉnh sửa" : "Chỉnh hồ sơ"}</button>
+          : data.blockStatus !== "none"
+          ? <span className="relationship-label">{data.blockStatus === "blocked_by_me" ? "Đã chặn" : "Bị chặn"}</span>
           : data.relationship === "friend"
           ? <button className="button-primary" type="button" onClick={() => router.push("/tin-nhan?user=" + encodeURIComponent(data.profile.id))}><Icon name="arrow" size={14} /> Nhắn tin</button>
           : data.relationship === "incoming"
@@ -281,7 +301,9 @@ export default function ProfilePage() {
           : data.relationship === "outgoing"
           ? <span className="relationship-label">Đã gửi lời mời</span>
           : <button className="button-primary" type="button" onClick={() => void sendFriendRequest()}>Kết bạn</button>}
-        {!isSelf && <button className="button-secondary" type="button" onClick={() => router.push("/tin-nhan?user=" + encodeURIComponent(data.profile.id))}><Icon name="arrow" size={14} /> Nhắn riêng</button>}
+        {!isSelf && data.blockStatus !== "blocked_you" && <button className="button-secondary" type="button" onClick={() => router.push("/tin-nhan?user=" + encodeURIComponent(data.profile.id))}><Icon name="arrow" size={14} /> Nhắn riêng</button>}
+        {!isSelf && data.blockStatus !== "blocked_you" && <button className="profile-block-button" type="button" onClick={() => void toggleBlock()}>{data.blockStatus === "blocked_by_me" ? "Bỏ chặn" : "Chặn"}</button>}
+        {!isSelf && data.blockStatus === "blocked_you" && <span className="relationship-label">Tài khoản này đã chặn bạn</span>
       </div>
     </section>
 
