@@ -5,7 +5,7 @@ type Recording = {
   license: "CC0" | "Public Domain";
 };
 
-const RAW_AUDIO = "https://raw.githubusercontent.com/twtrubiks/moonseal/main/public/audio";
+const RAW_AUDIO = "https://raw.githubusercontent.com/euuuuuuan/todak-public/main/assets/ambience";
 
 /**
  * The 7 external recordings are taken from the CC0 / Public Domain asset set documented
@@ -13,13 +13,18 @@ const RAW_AUDIO = "https://raw.githubusercontent.com/twtrubiks/moonseal/main/pub
  * so a blocked CDN/CORS request never leaves a channel silent.
  */
 const RECORDING_SOURCES: Record<string, Recording> = {
-  rain: { src: RAW_AUDIO + "/rain.mp3", sourcePage: "https://freesound.org/people/silencyo/sounds/81818/", author: "Silencyo", license: "CC0" },
-  ocean: { src: RAW_AUDIO + "/ocean.mp3", sourcePage: "https://freesound.org/people/Rmutt/sounds/156598/", author: "Rmutt", license: "CC0" },
-  river: { src: RAW_AUDIO + "/stream.mp3", sourcePage: "https://archive.org/details/GOLD_TAPE_53_54_Water", author: "USC GOLD Tape source", license: "CC0" },
-  wind: { src: RAW_AUDIO + "/wind.mp3", sourcePage: "https://archive.org/details/GOLD_TAPE_55_56_Weather-Wind", author: "USC GOLD Tape source", license: "CC0" },
-  birds: { src: RAW_AUDIO + "/birds.mp3", sourcePage: "https://freesound.org/people/SamsterBirdies/sounds/578523/", author: "SamsterBirdies", license: "CC0" },
-  fireplace: { src: RAW_AUDIO + "/fireplace.mp3", sourcePage: "https://archive.org/details/Red_Library_Fire", author: "Archive.org source", license: "CC0" },
-  thunder: { src: RAW_AUDIO + "/thunder.mp3", sourcePage: "https://archive.org/details/1HourThunderstorm", author: "Archive.org source", license: "Public Domain" },
+  rain: { src: RAW_AUDIO + "/rain_soft.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "joedeshon (re-rendered by Todak)", license: "CC0" },
+  thunder: { src: RAW_AUDIO + "/storm_far.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "nickmaysoundmusic (re-rendered by Todak)", license: "CC0" },
+  ocean: { src: RAW_AUDIO + "/waves_calm.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "profispiesser (re-rendered by Todak)", license: "CC0" },
+  river: { src: RAW_AUDIO + "/stream_brook.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "cher1101 (re-rendered by Todak)", license: "CC0" },
+  birds: { src: RAW_AUDIO + "/birds_dawn.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "resaural (re-rendered by Todak)", license: "CC0" },
+  fireplace: { src: RAW_AUDIO + "/fire_hearth.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "uniuniversal (re-rendered by Todak)", license: "CC0" },
+  cafe: { src: RAW_AUDIO + "/cafe.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "arpeggio1980 (re-rendered by Todak)", license: "CC0" },
+  forest: { src: RAW_AUDIO + "/birds_forest.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "Todak project-authored", license: "Public Domain" },
+  "forest-night": { src: RAW_AUDIO + "/crickets.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "felixblume (re-rendered by Todak)", license: "CC0" },
+  waterfall: { src: RAW_AUDIO + "/stream_brook.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "cher1101 (re-rendered by Todak)", license: "CC0" },
+  "storm-rain": { src: RAW_AUDIO + "/storm_far.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "nickmaysoundmusic (re-rendered by Todak)", license: "CC0" },
+  "mountain-stream": { src: RAW_AUDIO + "/stream_brook.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "cher1101 (re-rendered by Todak)", license: "CC0" },
 };
 
 function recorded(id: string): Recording | undefined {
@@ -246,17 +251,19 @@ export function synthesizeSound(context: AudioContext, id: SoundId): AudioBuffer
         }
       }
     } else if (id === "ocean") {
-      const swell = .35 + .65 * Math.pow(Math.max(0, Math.sin(2 * Math.PI * time / 7.8)), 2);
-      out = onePole(white, low, .025) * .20 * swell + Math.sin(2 * Math.PI * .18 * time) * .014 * swell;
+      const swell = .35 + .65 * Math.pow(Math.max(0, Math.sin(2 * Math.PI * time / 8.6)), 2);
+      out = onePole(white, low, .02) * .14 * swell + Math.sin(2 * Math.PI * .16 * time) * .010 * swell;
     } else if (id === "river" || id === "mountain-stream" || id === "waterfall") {
       const fast = id === "waterfall" ? .055 : id === "mountain-stream" ? .040 : .028;
       const flow = onePole(white, low, fast);
       out = flow * (id === "waterfall" ? .46 : .34);
       if (id !== "river") out += pink * (id === "mountain-stream" ? .45 : .7);
       if (rnd() < (id === "waterfall" ? .0028 : .0015)) out += (rnd() * 2 - 1) * .3;
-    } else if (id === "wind" || id === "forest-night") {
-      const gust = .35 + .65 * Math.pow(Math.max(0, (Math.sin(2 * Math.PI * time / 8.8) + 1) / 2), 2);
-      out = low * .8 * gust + pink * .4;
+    } else if (id === "wind") {
+      const gust = .32 + .58 * Math.pow(Math.max(0, (Math.sin(2 * Math.PI * time / 9.6) + 1) / 2), 2);
+      out = low * .62 * gust + pink * .18;
+    } else if (id === "forest-night") {
+      out = pink * .18;
     } else if (id === "forest" || id === "birds") {
       out = low * .30 + pink * .33;
       for (const event of birdEvents) {
