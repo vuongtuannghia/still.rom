@@ -30,7 +30,7 @@ function timeLabel(value: string) {
 export function DirectMessagesPage() {
   const [account, setAccount] = useState<DashboardData["account"]>(null);
   const [friends, setFriends] = useState<Person[]>([]);
-  const [threads, setThreads] = useState<Array<{ threadId: number; other: Person; lastBody: string; lastSenderId: string; lastCreatedAt: string; unreadCount: number }>>([]);
+  const [threads, setThreads] = useState<Array<{ threadId: number; other: Person; isFriend: boolean; lastBody: string; lastSenderId: string; lastCreatedAt: string; unreadCount: number }>>([]);
   const [incoming, setIncoming] = useState<FriendRequest[]>([]);
   const [outgoing, setOutgoing] = useState<FriendRequest[]>([]);
   const [query, setQuery] = useState("");
@@ -55,7 +55,7 @@ export function DirectMessagesPage() {
     try {
       const response = await fetch("/api/messages/threads", { cache: "no-store", credentials: "same-origin" });
       if (!response.ok) return;
-      setThreads(await response.json() as Array<{ threadId: number; other: Person; lastBody: string; lastSenderId: string; lastCreatedAt: string; unreadCount: number }>);
+      setThreads(await response.json() as Array<{ threadId: number; other: Person; isFriend: boolean; lastBody: string; lastSenderId: string; lastCreatedAt: string; unreadCount: number }>);
     } catch {}
   }
 
@@ -67,6 +67,8 @@ export function DirectMessagesPage() {
       setFriends(payload.friends);
       setIncoming(payload.incoming);
       setOutgoing(payload.outgoing);
+      setSelected(current => current ? (payload.friends.some(friend => friend.id === current.id) ? { ...current, relationship: "friend" } : current) : current);
+      setLookup(current => current ? (payload.friends.some(friend => friend.id === current.id) ? { ...current, relationship: "friend" } : current) : current);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Không tải được bạn bè.");
     } finally { setLoading(false); }
@@ -194,6 +196,8 @@ export function DirectMessagesPage() {
     return () => window.clearInterval(timer);
   }, [selected?.id, selected?.relationship, selectedEmail, account?.id]);
 
+  const primaryThreads = useMemo(() => threads.filter(thread => thread.isFriend), [threads]);
+  const requestThreads = useMemo(() => threads.filter(thread => !thread.isFriend), [threads]);
   const shownFriends = useMemo(() => friends, [friends]);
 
   return <section className="messages-page">
@@ -222,9 +226,17 @@ export function DirectMessagesPage() {
           </div>}
 
           <div className="message-inbox-box">
-            <div className="messages-subheading"><span className="small-label">HỘP THƯ</span><strong>Cuộc trò chuyện</strong></div>
-            {threads.length === 0 ? <p className="messages-muted">Chưa có tin nhắn nào.</p> :
-              threads.map(thread => <button type="button" key={thread.threadId} className={selected?.id === thread.other.id ? "message-thread active" : "message-thread"} onClick={() => void openConversation({ ...thread.other, relationship: "conversation" })}>
+            <div className="messages-subheading"><span className="small-label">TIN NHẮN CHÍNH</span><strong>Bạn bè</strong><span>{primaryThreads.reduce((sum, item) => sum + item.unreadCount, 0) ? "Có tin mới" : ""}</span></div>
+            {primaryThreads.length === 0 ? <p className="messages-muted">Chưa có cuộc trò chuyện với bạn bè.</p> :
+              primaryThreads.map(thread => <button type="button" key={thread.threadId} className={selected?.id === thread.other.id ? "message-thread active" : "message-thread"} onClick={() => void openConversation({ ...thread.other, relationship: "friend" })}>
+                <span className="community-avatar small">{avatar(thread.other)}</span>
+                <span className="message-thread-copy"><strong>{thread.other.name}</strong><small>{thread.lastBody}</small></span>
+                {thread.unreadCount > 0 && <span className="message-unread">{thread.unreadCount}</span>}
+              </button>)
+            }
+            <div className="messages-subheading pending-heading"><span className="small-label">TIN NHẮN CHỜ</span><strong>Người chưa là bạn</strong><span>{requestThreads.reduce((sum, item) => sum + item.unreadCount, 0) ? (requestThreads.reduce((sum, item) => sum + item.unreadCount, 0) + " mới") : ""}</span></div>
+            {requestThreads.length === 0 ? <p className="messages-muted">Không có tin nhắn chờ.</p> :
+              requestThreads.map(thread => <button type="button" key={thread.threadId} className={selected?.id === thread.other.id ? "message-thread pending active" : "message-thread pending"} onClick={() => void openConversation({ ...thread.other, relationship: "conversation" })}>
                 <span className="community-avatar small">{avatar(thread.other)}</span>
                 <span className="message-thread-copy"><strong>{thread.other.name}</strong><small>{thread.lastBody}</small></span>
                 {thread.unreadCount > 0 && <span className="message-unread">{thread.unreadCount}</span>}
@@ -243,7 +255,7 @@ export function DirectMessagesPage() {
 
         <section className="messages-chat panel">
           {selected ? <>
-            <header className="messages-chat-head"><div className="message-person-head"><span className="community-avatar">{avatar(selected)}</span><div><h3>{selected.name}</h3><span>{selected.relationship === "friend" ? "Bạn bè · trò chuyện riêng" : "Trò chuyện riêng bằng email"}</span></div></div>{selected.relationship !== "friend" && selected.relationship !== "outgoing" && <button type="button" className="button-secondary chat-add-friend" onClick={() => void sendFriendRequestFor(selected)}><Icon name="arrow" size={13} /> Kết bạn</button>}{selected.relationship === "outgoing" && <span className="relationship-label">Đã gửi lời mời</span>}</header>
+            <header className="messages-chat-head"><div className="message-person-head"><span className="community-avatar">{avatar(selected)}</span><div><h3>{selected.name}</h3><span>{selected.relationship === "friend" ? "Bạn bè · trò chuyện riêng" : "Trò chuyện riêng bằng email"}</span></div></div>{selected.relationship === "conversation" && <button type="button" className="button-secondary chat-add-friend" onClick={() => void sendFriendRequestFor(selected)}><Icon name="arrow" size={13} /> Kết bạn</button>}{selected.relationship === "outgoing" && <span className="relationship-label">Đã gửi lời mời</span>}</header>
             <div className="messages-list">
               {loadingChat ? <div className="messages-muted centered">Đang mở cuộc trò chuyện…</div> :
                 messages.length === 0 ? <div className="messages-empty"><div className="empty-orbit">+</div><strong>Bắt đầu bằng một câu đơn giản.</strong><span>Chào người bạn muốn học cùng.</span></div> :
