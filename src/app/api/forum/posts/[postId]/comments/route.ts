@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export async function GET(_: Request, context: { params: Promise<{ postId: string }> }) {
   try {
     const postId = positiveId((await context.params).postId);
-    const [post] = await db.select({ id: forumPosts.id }).from(forumPosts).where(eq(forumPosts.id, postId)).limit(1);
+    const [post] = await db.select({ id: forumPosts.id, accountId: forumPosts.accountId }).from(forumPosts).where(eq(forumPosts.id, postId)).limit(1);
     if (!post) throw new ApiError(404, "Không tìm thấy chủ đề.");
     const rows = await db.select({ id: forumComments.id, postId: forumComments.postId, parentId: forumComments.parentId, body: forumComments.body, createdAt: forumComments.createdAt, authorId: accounts.id, authorName: accounts.name, authorEmail: accounts.email, authorPicture: accounts.picture })
       .from(forumComments).innerJoin(accounts, eq(accounts.id, forumComments.accountId)).where(eq(forumComments.postId, postId)).orderBy(asc(forumComments.createdAt), asc(forumComments.id));
