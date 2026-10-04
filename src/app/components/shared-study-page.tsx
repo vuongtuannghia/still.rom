@@ -103,6 +103,16 @@ export function SharedStudyPage() {
     finally { setPosting(false); }
   }
 
+  async function deleteComment(commentId: number, roomId: number) {
+    if (!(account?.role === "admin" || account?.email.toLowerCase() === ADMIN)) return;
+    if (!window.confirm("Xóa bình luận này?")) return;
+    try {
+      const response = await fetch("/api/study-rooms/comments/" + commentId, { method: "DELETE", credentials: "same-origin" });
+      if (!response.ok) throw new Error();
+      setComments(current => ({ ...current, [roomId]: (current[roomId] ?? []).filter(item => item.id !== commentId && item.parentId !== commentId) }));
+    } catch { setNotice("Không thể xóa bình luận."); }
+  }
+
   async function pin(roomId: number, pinned: boolean) {
     try {
       const response = await fetch(`/api/study-rooms/${roomId}`, {
@@ -167,8 +177,8 @@ export function SharedStudyPage() {
     {pinned && <section className="study-feature-room">
       <div className="study-feature-badge"><Icon name="target" size={13} /> PHÒNG HỌC CHÍNH</div>
       <div className="study-feature-main"><h3>{pinned.title}</h3><p><a className="profile-inline-link" href={"/nguoi-dung/" + pinned.creatorId}>{pinned.creatorName}</a> · được quản trị viên ghim</p></div>
-      <div className="study-feature-actions"><a className="button-primary" href={pinned.meetUrl} target="_blank" rel="noreferrer"><Icon name="radio" size={15} /> Vào học</a><button className="button-secondary" type="button" onClick={() => void toggleComments(pinned.id)}><Icon name="book" size={14} /> Bình luận</button>{account?.email === ADMIN && <button className="button-secondary" type="button" onClick={() => void pin(pinned.id, false)}>Bỏ ghim</button>}</div>
-      {openComments === pinned.id && <CommentThread account={account} roomId={pinned.id} comments={comments[pinned.id] ?? []} loading={loadingComments === pinned.id} draft={drafts[pinned.id] ?? ""} replyId={replyingTo[pinned.id] ?? null} onDraft={(value) => setDrafts((current) => ({ ...current, [pinned.id]: value }))} onReply={(id) => setReplyingTo((current) => ({ ...current, [pinned.id]: id }))} onSend={() => void addComment(pinned.id)} onRefresh={() => void refreshComments(pinned.id)} />}</section>}
+      <div className="study-feature-actions"><a className="button-primary" href={pinned.meetUrl} target="_blank" rel="noreferrer"><Icon name="radio" size={15} /> Vào học</a><button className="button-secondary" type="button" onClick={() => void toggleComments(pinned.id)}><Icon name="book" size={14} /> Bình luận</button>{account?.role === "admin" || account?.email.toLowerCase() === ADMIN && <button className="button-secondary" type="button" onClick={() => void pin(pinned.id, false)}>Bỏ ghim</button>}</div>
+      {openComments === pinned.id && <CommentThread account={account} roomId={pinned.id} comments={comments[pinned.id] ?? []} loading={loadingComments === pinned.id} draft={drafts[pinned.id] ?? ""} replyId={replyingTo[pinned.id] ?? null} onDraft={(value) => setDrafts((current) => ({ ...current, [pinned.id]: value }))} onReply={(id) => setReplyingTo((current) => ({ ...current, [pinned.id]: id }))} onSend={() => void addComment(pinned.id)} onRefresh={() => void refreshComments(pinned.id)} onDeleteComment={(commentId) => void deleteComment(commentId, pinned.id)} />}</section>}
 
     <section className="study-room-list-section">
       <div className="community-section-heading"><div><span className="small-label">MỌI NGƯỜI ĐANG HỌC</span><h3>Phòng đang mở</h3></div><span>Chia sẻ một link · người khác vào học</span></div>
@@ -178,8 +188,8 @@ export function SharedStudyPage() {
           <div className="study-room-card-top"><span className="room-live"><i /> đang mở</span><span>{timeLabel(room.createdAt)}</span></div>
           <div className="study-room-person"><ProfileActionMenu person={{ id: room.creatorId, name: room.creatorName, picture: room.creatorPicture }}><span className="community-avatar">{avatar(room.creatorName, room.creatorPicture)}</span></ProfileActionMenu><div><h4>{room.title}</h4><p><a className="profile-inline-link" href={"/nguoi-dung/" + room.creatorId}>{room.creatorName}</a></p></div></div>
           <div className="study-room-card-actions"><a className="button-primary" href={room.meetUrl} target="_blank" rel="noreferrer"><Icon name="radio" size={14} /> Vào học</a><button className="button-secondary" type="button" onClick={() => void toggleComments(room.id)}><Icon name="book" size={14} /> Bình luận{comments[room.id]?.length ? ` · ${comments[room.id].length}` : ""}</button></div>
-          {account?.email === ADMIN && <div className="admin-room-actions"><button type="button" onClick={() => void pin(room.id, true)}><Icon name="target" size={13} /> Ghim</button><button type="button" onClick={() => void remove(room.id)}><Icon name="close" size={13} /> Xóa</button></div>}
-          {openComments === room.id && <CommentThread account={account} roomId={room.id} comments={comments[room.id] ?? []} loading={loadingComments === room.id} draft={drafts[room.id] ?? ""} replyId={replyingTo[room.id] ?? null} onDraft={(value) => setDrafts((current) => ({ ...current, [room.id]: value }))} onReply={(id) => setReplyingTo((current) => ({ ...current, [room.id]: id }))} onSend={() => void addComment(room.id)} onRefresh={() => void refreshComments(room.id)} />}</article>)}</div>}
+          {account?.role === "admin" || account?.email.toLowerCase() === ADMIN && <div className="admin-room-actions"><button type="button" onClick={() => void pin(room.id, true)}><Icon name="target" size={13} /> Ghim</button><button type="button" onClick={() => void remove(room.id)}><Icon name="close" size={13} /> Xóa</button></div>}
+          {openComments === room.id && <CommentThread account={account} roomId={room.id} comments={comments[room.id] ?? []} loading={loadingComments === room.id} draft={drafts[room.id] ?? ""} replyId={replyingTo[room.id] ?? null} onDraft={(value) => setDrafts((current) => ({ ...current, [room.id]: value }))} onReply={(id) => setReplyingTo((current) => ({ ...current, [room.id]: id }))} onSend={() => void addComment(room.id)} onRefresh={() => void refreshComments(room.id)} onDeleteComment={(commentId) => void deleteComment(commentId, room.id)} />}</article>)}</div>}
 
     </section>
 
@@ -192,7 +202,7 @@ export function SharedStudyPage() {
 
 function CommentThread({ account, roomId, comments, loading, draft, replyId, onDraft, onReply, onSend, onRefresh }: {
   account: DashboardData["account"]; roomId: number; comments: Comment[]; loading: boolean; draft: string; replyId: number | null;
-  onDraft: (value: string) => void; onReply: (id: number | null) => void; onSend: () => void; onRefresh: () => void;
+  onDraft: (value: string) => void; onReply: (id: number | null) => void; onSend: () => void; onRefresh: () => void; onDeleteComment: (commentId: number) => void;
 }) {
   const router = useRouter();
   const top = comments.filter((comment) => !comment.parentId);
@@ -207,6 +217,6 @@ function CommentThread({ account, roomId, comments, loading, draft, replyId, onD
   </div>;
 }
 
-function CommentItem({ comment, compact = false, onReply }: { comment: Comment; compact?: boolean; onReply: (id: number | null) => void }) {
-  return <div className={compact ? "comment-item compact" : "comment-item"}><ProfileActionMenu person={{ id: comment.authorId, name: comment.authorName, picture: comment.authorPicture }}><span className="community-avatar small">{avatar(comment.authorName, comment.authorPicture)}</span></ProfileActionMenu><div className="comment-body"><div className="comment-meta"><strong>{comment.authorName}</strong><span>{timeLabel(comment.createdAt)}</span></div><p>{comment.body}</p><button type="button" className="comment-reply" onClick={() => onReply(comment.id)}>Trả lời</button></div></div>;
+function CommentItem({ comment, compact = false, onReply, canDelete = false, onDelete }: { comment: Comment; compact?: boolean; onReply: (id: number | null) => void; canDelete?: boolean; onDelete?: () => void }) {
+  return <div className={compact ? "comment-item compact" : "comment-item"}><ProfileActionMenu person={{ id: comment.authorId, name: comment.authorName, picture: comment.authorPicture }}><span className="community-avatar small">{avatar(comment.authorName, comment.authorPicture)}</span></ProfileActionMenu><div className="comment-body"><div className="comment-meta"><strong>{comment.authorName}</strong><span>{timeLabel(comment.createdAt)}</span></div><p>{comment.body}</p><span className="comment-action-row"><button type="button" className="comment-reply" onClick={() => onReply(comment.id)}>Trả lời</button>{canDelete && <button type="button" className="comment-reply" onClick={onDelete}>Xóa</button>}</span></div></div>;
 }
