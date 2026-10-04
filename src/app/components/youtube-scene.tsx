@@ -54,6 +54,7 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
   const [fatal, setFatal] = useState("");
   const [apiNotice, setApiNotice] = useState("");
   const [autoplayBlocked, setAutoplayBlocked] = useState(false);
+  const [playerMuted, setPlayerMuted] = useState(muted);
   const progressKey = `stillroom.youtube.progress:${scene.videoId || scene.playlistId || scene.id}`;
   const savedProgress = useRef(0);
 
@@ -61,16 +62,6 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
     preferences.current.onPause = onPause;
     preferences.current.onVideoChange = onVideoChange;
   }, [onPause, onVideoChange]);
-
-  useEffect(() => {
-    preferences.current.muted = muted;
-    if (!mutePreferenceLoaded.current) return;
-    userMuted.current = muted;
-    if (player.current && ready) {
-      if (muted) player.current.mute();
-      else { player.current.setVolume(35); player.current.unMute(); }
-    }
-  }, [muted, ready]);
 
   useEffect(() => {
     try {
@@ -82,11 +73,8 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
       const storedMute = sessionStorage.getItem(muteKey);
       if (storedMute === "1") userMuted.current = true;
       else if (storedMute === "0") userMuted.current = false;
-      else {
-        // Migrate older rooms that were accidentally stored as muted. New rooms default to sound on.
-        userMuted.current = false;
-        if (muted) onMuted(false);
-      }
+      else userMuted.current = Boolean(muted);
+      setPlayerMuted(userMuted.current);
       mutePreferenceLoaded.current = true;
       preferences.current.muted = userMuted.current;
     } catch {
@@ -125,9 +113,6 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
         if (!hasPlayed) player.current.playVideo();
       } catch { /* Browser may still require a direct click on the player. */ }
     };
-    const interactionHandler = () => unlockAudio();
-    document.addEventListener("pointerdown", interactionHandler, true);
-    document.addEventListener("keydown", interactionHandler, true);
     function reportVideo(target: Player) {
       try { const videoId = target.getVideoData?.().video_id; if (isVideoId(videoId)) preferences.current.onVideoChange?.(videoId); } catch { /* Playlist may not expose an id immediately. */ }
     }
@@ -203,8 +188,7 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
       rememberProgress();
       if (progressTimer) window.clearInterval(progressTimer);
       document.removeEventListener("visibilitychange", saveOnVisibility);
-      document.removeEventListener("pointerdown", interactionHandler, true);
-      document.removeEventListener("keydown", interactionHandler, true);
+      void unlockAudio;
       disposed = true; window.clearTimeout(timeout);
       try { player.current?.destroy(); } catch { /* Native frame may already be gone. */ }
       player.current = null; container.replaceChildren();
@@ -223,7 +207,7 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
       setApiNotice("Bấm nút ▶ của YouTube trong vùng video phía trên. Nếu khung B chặn YouTube, hãy thử Mở website riêng.");
     }
   }
-  return <div ref={root} className={`youtube-scene-player ${ambientView ? "ambient-player" : edgeToEdge ? "edge-player" : ""}`} style={ambientView && fit.width ? { "--ambient-frame-width": `${fit.width}px`, "--ambient-frame-height": `${fit.height}px` } as CSSProperties : undefined} data-player-view={ambientView ? "ambient" : edgeToEdge ? "edge" : "studio"}>
+  return <div ref={root} className={`youtube-scene-player ${ambientView ? "ambient-player" : edgeToEdge ? "edge-player" : ""}`} data-player-view={ambientView ? "ambient" : edgeToEdge ? "edge" : "studio"}>
     <div className="youtube-stage" ref={host} data-video-id={scene.videoId}>
       {autoplayBlocked && <button
         type="button"
@@ -248,13 +232,14 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
         const nextMuted = !userMuted.current;
         userMuted.current = nextMuted;
         preferences.current.muted = nextMuted;
+        setPlayerMuted(nextMuted);
         try { sessionStorage.setItem(`stillroom.youtube.muted:${scene.videoId || scene.playlistId || scene.id}`, nextMuted ? "1" : "0"); } catch {}
         onMuted(nextMuted);
         if (ready && player.current) {
           if (nextMuted) player.current.mute();
           else { player.current.setVolume(35); player.current.unMute(); player.current.playVideo(); }
         } else setApiNotice("Bạn có thể bật hoặc tắt tiếng bằng nút loa của YouTube trong video.");
-      }}><Icon name="volume" size={15} />{muted ? "Bật tiếng video" : "Tắt tiếng video"}</button></div></div>
+      }}><Icon name="volume" size={15} />{playerMuted ? "Bật tiếng video" : "Tắt tiếng video"}</button></div></div>
       {apiNotice && !fatal && <p className="youtube-api-notice" role="status">{apiNotice}</p>}
       {fatal && <div className="youtube-error" role="alert"><p>{fatal}</p><div><button type="button" className="button-secondary" onClick={onRetry}>Thử lại</button>{!standard && <button type="button" className="button-secondary" onClick={onStandard}>Thử trình phát tiêu chuẩn</button>}<button type="button" className="button-secondary" onClick={onFallback}>Dùng cảnh tĩnh</button></div></div>}
       <div className="youtube-external-actions"><a href={youtubeWatchUrl(scene)} target="_blank" rel="noopener" className="text-button">Mở trên YouTube <Icon name="arrow" size={13} /><span className="sr-only">, tab mới</span></a><a href="/" target="_blank" rel="noopener" className="text-button">Mở website riêng <Icon name="arrow" size={13} /><span className="sr-only">, tab mới</span></a></div>
