@@ -6,7 +6,7 @@ import { Icon } from "../icons";
 import { ProfileNavItem } from "./profile-nav-item";
 import { AdminNavItem } from "./admin-nav-item";
 
-type Section = "home" | "study" | "forum" | "messages" | "admin";
+type Section = "home" | "study" | "forum" | "messages" | "leaderboard" | "admin";
 
 
 const COMMUNITY_STYLES = String.raw`
@@ -80,6 +80,7 @@ export function CommunityShell({ active, title, eyebrow, description, children }
     { id: "study", label: "Học chung", href: "/hoc-chung", icon: "radio" },
     { id: "forum", label: "Diễn đàn", href: "/dien-dan", icon: "book" },
     { id: "messages", label: "Tin nhắn", href: "/tin-nhan", icon: "arrow" },
+    { id: "leaderboard", label: "Xếp hạng", href: "/xep-hang", icon: "chart" },
     { id: "analytics", label: "Thống kê", href: "/#analytics", icon: "chart" },
     { id: "habits", label: "Thói quen", href: "/#habits", icon: "habit" },
     { id: "tasks", label: "Nhiệm vụ", href: "/#tasks", icon: "tasks" },
