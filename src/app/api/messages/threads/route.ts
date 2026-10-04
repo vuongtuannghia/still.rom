@@ -34,7 +34,7 @@ export async function GET(request: Request) {
     const otherIds = [...new Set(latestRows.map(row => row.accountAId === current.id ? row.accountBId : row.accountAId))];
 
     const people = otherIds.length
-      ? await db.select({ id: accounts.id, name: accounts.name, email: accounts.email, picture: accounts.picture })
+      ? await db.select({ id: accounts.id, name: accounts.name, email: accounts.email, picture: accounts.customPicture, googlePicture: accounts.picture })
           .from(accounts).where(inArray(accounts.id, otherIds))
       : [];
 
@@ -65,7 +65,7 @@ export async function GET(request: Request) {
       const other = peopleById.get(otherId);
       return {
         threadId: row.threadId,
-        other: other ? { ...other, relationship: friendIds.has(other.id) ? "friend" as const : "conversation" as const } : null,
+        other: other ? { id: other.id, name: other.name, email: other.email, picture: other.picture || other.googlePicture || null, relationship: friendIds.has(other.id) ? "friend" as const : "conversation" as const } : null,
         isFriend: friendIds.has(otherId),
         lastBody: row.body,
         lastSenderId: row.senderId,
