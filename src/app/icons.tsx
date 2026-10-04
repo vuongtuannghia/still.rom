@@ -34,7 +34,8 @@ type IconName =
   | "sun"
   | "leaf"
   | "sliders"
-  | "bell";
+  | "bell"
+  | "user";
 
 type IconProps = {
   name: IconName;
@@ -77,6 +78,7 @@ const glyphs: Record<IconName, ReactNode> = {
   leaf: <><path d="M20 4c-8.5 0-14 3.5-14 10a6 6 0 0 0 6 6c6.5 0 8-7 8-16Z" /><path d="M4 21c2-5 5-8 10-11" /></>,
   sliders: <><path d="M4 7h9M17 7h3M4 17h3M11 17h9" /><circle cx="15" cy="7" r="2" /><circle cx="9" cy="17" r="2" /></>,
   bell: <><path d="M6.5 9.5a5.5 5.5 0 0 1 11 0v3.2c0 1.1.4 2.1 1.2 2.9H5.3c.8-.8 1.2-1.8 1.2-2.9V9.5Z" /><path d="M10 18.5a2.2 2.2 0 0 0 4 0" /></>,
+  user: <><circle cx="12" cy="8" r="3.2" /><path d="M5.5 20c.7-3.4 3-5.2 6.5-5.2s5.8 1.8 6.5 5.2" /></>,
 };
 
 export function Icon({ name, size = 18, className }: IconProps) {
