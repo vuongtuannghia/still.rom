@@ -115,10 +115,3 @@ export function CommunityShell({ active, title, eyebrow, description, children }
     </main>
   </div>;
 }
-
-<style>
-.profile-nav-link{margin-top:2px}
-.profile-nav-link svg{flex:0 0 auto}
-.profile-nav-link{font-weight:650}
-.mobile-nav .profile-nav-link{display:inline-flex!important}
-</style>
