@@ -174,6 +174,21 @@ export default function ProfilePage() {
     }
   }
 
+  async function unfriend() {
+    if (!data || !window.confirm("Hủy kết bạn với tài khoản này?")) return;
+    try {
+      const response = await fetch("/api/friends/" + encodeURIComponent(data.profile.id), {
+        method: "DELETE", credentials: "same-origin"
+      });
+      const payload = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) throw new Error(payload.error || "Không thể hủy kết bạn.");
+      setNotice("Đã hủy kết bạn.");
+      await load();
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Không thể hủy kết bạn.");
+    }
+  }
+
   async function respondToFriend(action: "accept" | "reject") {
     if (!data?.relationshipRequestId) return;
     try {
