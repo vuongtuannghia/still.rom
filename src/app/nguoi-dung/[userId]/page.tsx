@@ -138,7 +138,7 @@ export default function ProfilePage() {
     if (!data || data.relationship !== "friend") return;
     if (!confirm("Hủy kết bạn với " + data.profile.name + "?")) return;
     try {
-      const response = await fetch("/api/friends/" + encodeURIComponent(data.profile.id), {
+      const response = await fetch("/api/friends?userId=" + encodeURIComponent(data.profile.id), {
         method: "DELETE", credentials: "same-origin",
       });
       const payload = await response.json().catch(() => ({})) as { error?: string };
@@ -163,20 +163,6 @@ export default function ProfilePage() {
       setNotice("Đã hủy lời mời kết bạn.");
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Không thể hủy lời mời.");
-    }
-  }
-
-  async function unfriend() {
-    if (!data || data.relationship !== "friend") return;
-    if (!window.confirm("Hủy kết bạn với tài khoản này?")) return;
-    try {
-      const response = await fetch("/api/friends?userId=" + encodeURIComponent(data.profile.id), { method: "DELETE", credentials: "same-origin" });
-      const payload = await response.json().catch(() => ({})) as { error?: string };
-      if (!response.ok) throw new Error(payload.error || "Không thể hủy kết bạn.");
-      await load();
-      setNotice("Đã hủy kết bạn.");
-    } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Không thể hủy kết bạn.");
     }
   }
 
@@ -356,7 +342,7 @@ export default function ProfilePage() {
       <div className="profile-actions">
         {isSelf ? <button className="button-primary" type="button" onClick={() => setEditMode(current => !current)}><Icon name="sliders" size={14} /> {editMode ? "Đang chỉnh sửa" : "Chỉnh hồ sơ"}</button>
         : data.relationship === "blocked" ? <span className="profile-blocked-label">Đã chặn / bị chặn</span>
-        : data.relationship === "friend" ? <div className="profile-action-group"><button className="button-primary" type="button" onClick={() => router.push("/tin-nhan?user=" + encodeURIComponent(data.profile.id))}><Icon name="arrow" size={14} /> Nhắn tin</button><button className="button-secondary" type="button" onClick={() => void removeFriend()}>Hủy kết bạn</button></div>
+        : data.relationship === "friend" ? <div className="profile-action-group"><button className="button-primary" type="button" onClick={() => router.push("/tin-nhan/" + encodeURIComponent(data.profile.id))}><Icon name="arrow" size={14} /> Nhắn tin</button><button className="button-secondary" type="button" onClick={() => void removeFriend()}>Hủy kết bạn</button></div>
         : data.relationship === "incoming" ? <div className="profile-action-group"><button className="button-primary" type="button" onClick={() => void respondToFriend("accept")}>Chấp nhận</button><button className="button-secondary" type="button" onClick={() => void respondToFriend("reject")}>Từ chối</button></div>
         : data.relationship === "outgoing" ? <button className="button-secondary" type="button" onClick={() => void cancelFriendRequest()}>Hủy lời mời</button>
         : <button className="button-primary" type="button" onClick={() => void sendFriendRequest()}>Kết bạn</button>}
