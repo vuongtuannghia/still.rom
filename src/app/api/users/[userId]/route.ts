@@ -51,6 +51,7 @@ export async function GET(_: Request, context: { params: Promise<{ userId: strin
       .from(focusSessions).where(eq(focusSessions.workspaceId, account.workspaceId));
 
     let relationship: "self" | "friend" | "incoming" | "outgoing" | "none" = viewer === userId ? "self" : "none";
+    let relationshipRequestId: number | null = null;
     if (viewer && viewer !== userId) {
       const [a, b] = orderedAccountPair(viewer, userId);
       const [friend] = await db.select({ id: friendships.id }).from(friendships)
@@ -59,11 +60,17 @@ export async function GET(_: Request, context: { params: Promise<{ userId: strin
       else {
         const [outgoing] = await db.select({ id: friendRequests.id }).from(friendRequests)
           .where(and(eq(friendRequests.senderId, viewer), eq(friendRequests.recipientId, userId), eq(friendRequests.status, "pending"))).limit(1);
-        if (outgoing) relationship = "outgoing";
+        if (outgoing) {
+          relationship = "outgoing";
+          relationshipRequestId = outgoing.id;
+        }
         else {
           const [incoming] = await db.select({ id: friendRequests.id }).from(friendRequests)
             .where(and(eq(friendRequests.senderId, userId), eq(friendRequests.recipientId, viewer), eq(friendRequests.status, "pending"))).limit(1);
-          if (incoming) relationship = "incoming";
+          if (incoming) {
+            relationship = "incoming";
+            relationshipRequestId = incoming.id;
+          }
         }
       }
     }
@@ -76,6 +83,7 @@ export async function GET(_: Request, context: { params: Promise<{ userId: strin
         isAdmin: account.email.toLowerCase() === ADMIN,
       },
       relationship,
+      relationshipRequestId,
       stats: { friendCount: friendIds.length, forumPostCount: posts.length, photoPostCount: photoPosts.length, focusMinutes: Number(focus[0]?.total ?? 0) },
       friends: friendAccounts.map(friend => ({ id: friend.id, name: friend.name, picture: friend.customPicture || friend.picture, bio: friend.bio })),
       forumPosts: posts.map(post => ({ ...post, createdAt: post.createdAt.toISOString() })),
