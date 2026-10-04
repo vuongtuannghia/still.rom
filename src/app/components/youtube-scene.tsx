@@ -34,8 +34,8 @@ const errorMessages: Record<number, string> = {
   153: "YouTube chưa nhận được nguồn trang trong khung preview. Thử trình phát tiêu chuẩn hoặc mở website trong tab riêng.",
 };
 
-type Props = { scene: YouTubeScene; loop: boolean; muted: boolean; onMuted: (value: boolean) => void; onFallback: () => void; onPause?: () => void; onVideoChange?: (videoId: string) => void; ambientView?: boolean; edgeToEdge?: boolean; showControls?: boolean; sessionRole?: "preview" | "room" | "persistent"; claimOwnership?: boolean; active?: boolean };
-function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVideoChange, ambientView = false, edgeToEdge = false, showControls = false, sessionRole = "room", claimOwnership = true, active = true, standard, onRetry, onStandard }: Props & { standard: boolean; onRetry: () => void; onStandard: () => void }) {
+type Props = { scene: YouTubeScene; loop: boolean; muted: boolean; onMuted: (value: boolean) => void; onFallback: () => void; onPause?: () => void; onVideoChange?: (videoId: string) => void; ambientView?: boolean; edgeToEdge?: boolean; showControls?: boolean; sessionRole?: "preview" | "room" | "persistent"; claimOwnership?: boolean };
+function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVideoChange, ambientView = false, edgeToEdge = false, showControls = false, sessionRole = "room", claimOwnership = true, standard, onRetry, onStandard }: Props & { standard: boolean; onRetry: () => void; onStandard: () => void }) {
   const root = useRef<HTMLDivElement>(null);
   const info = useRef<HTMLDivElement>(null);
   const host = useRef<HTMLDivElement>(null);
@@ -81,21 +81,6 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
   // Timer rerenders must not reset the YouTube audio preference.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progressKey]);
-
-  useEffect(() => {
-    if (!player.current || !ready) return;
-    try {
-      if (!active) {
-        player.current.pauseVideo();
-      } else {
-        if (!userMuted.current) {
-          player.current.setVolume(35);
-          player.current.unMute();
-        }
-        player.current.playVideo();
-      }
-    } catch {}
-  }, [active, ready]);
 
   useEffect(() => {
     if (!player.current || !ready) return;
@@ -199,7 +184,7 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
           }
           const resumeAt = Math.max(savedProgress.current, scene.startSeconds);
           if (resumeAt > 0 && event.target.seekTo) event.target.seekTo(resumeAt, true);
-          globalThis.requestAnimationFrame(() => { if (disposed || !document.documentElement.contains(container) || !active) return; try { event.target.playVideo(); } catch { setAutoplayBlocked(true); } });
+          globalThis.requestAnimationFrame(() => { if (disposed || !document.documentElement.contains(container)) return; try { event.target.playVideo(); } catch { setAutoplayBlocked(true); } });
           progressTimer = window.setInterval(rememberProgress, 1000);
         },
         onStateChange: (event) => {
@@ -236,7 +221,7 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
       player.current = null; container.replaceChildren();
       channel?.close();
     };
-  }, [scene.videoId, scene.playlistId, scene.startSeconds, scene.title, loop, standard, progressKey, sessionRole, claimOwnership, active]);
+  }, [scene.videoId, scene.playlistId, scene.startSeconds, scene.title, loop, standard, progressKey, sessionRole, claimOwnership]);
 
   function playPause() {
     if (ready && player.current) {
