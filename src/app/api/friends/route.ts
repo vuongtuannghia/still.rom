@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { accounts, friendRequests, friendships, notifications } from "@/db/schema";
+import { accountBlocks, accounts, friendRequests, friendships, notifications } from "@/db/schema";
 import { and, asc, desc, eq, or } from "drizzle-orm";
 import { ApiError, apiError, json, readBody } from "@/lib/server-api";
 import { requireAccount } from "@/lib/community-auth";
@@ -9,6 +9,10 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   try {
     const current = await requireAccount(request);
+    const blockedRows = await db.select({ blockerId: accountBlocks.blockerId, blockedId: accountBlocks.blockedId })
+      .from(accountBlocks).where(or(eq(accountBlocks.blockerId, current.id), eq(accountBlocks.blockedId, current.id)));
+    const blockedIds = new Set(blockedRows.flatMap(row => [row.blockerId, row.blockedId]).filter(id => id !== current.id));
+
     const friendRows = await db.select({
       id: accounts.id, name: accounts.name, email: accounts.email, picture: accounts.customPicture, googlePicture: accounts.picture,
       friendshipId: friendships.id, createdAt: friendships.createdAt,
@@ -18,7 +22,7 @@ export async function GET(request: Request) {
       .orderBy(asc(accounts.name));
 
     const friends = friendRows
-      .filter(row => row.id !== current.id)
+      .filter(row => row.id !== current.id && !blockedIds.has(row.id))
       .map(row => ({ id: row.id, name: row.name, email: row.email, picture: row.picture || row.googlePicture || null, friendshipId: row.friendshipId, createdAt: row.createdAt.toISOString() }));
 
     const incomingRows = await db.select({
@@ -37,6 +41,7 @@ export async function GET(request: Request) {
 
     return json({
       friends,
+      blocks: [...blockedIds],
       incoming: incomingRows.map(row => ({ ...row, createdAt: row.createdAt.toISOString() })),
       outgoing: outgoingRows.map(row => ({ ...row, createdAt: row.createdAt.toISOString() })),
     });
@@ -57,6 +62,12 @@ export async function POST(request: Request) {
     const [target] = await db.select().from(accounts)
       .where(email ? eq(accounts.email, email) : eq(accounts.id, userId)).limit(1);
     if (!target) throw new ApiError(404, "Không tìm thấy tài khoản.");
+    const [blocked] = await db.select({ id: accountBlocks.id }).from(accountBlocks)
+      .where(or(
+        and(eq(accountBlocks.blockerId, current.id), eq(accountBlocks.blockedId, target.id)),
+        and(eq(accountBlocks.blockerId, target.id), eq(accountBlocks.blockedId, current.id))
+      )).limit(1);
+    if (blocked) throw new ApiError(403, "Không thể gửi lời mời cho tài khoản đang bị chặn.");
 
     const [pairA, pairB] = [current.id < target.id ? current.id : target.id, current.id < target.id ? target.id : current.id];
     const [alreadyFriend] = await db.select({ id: friendships.id }).from(friendships)
