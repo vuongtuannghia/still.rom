@@ -71,7 +71,8 @@ export function PersistentYouTubePlayer() {
   }, [pathname]);
 
   const roomMode = pathname === "/hoc-chung" && Boolean(persisted?.scene);
-  const visible = Boolean(persisted?.scene) && (handoff || !isInternalDashboard(pathname));
+  const dashboardMode = isInternalDashboard(pathname) && !handoff;
+  const visible = Boolean(persisted?.scene) && !dashboardMode;
 
   useEffect(() => {
     if (!roomMode) {
@@ -131,7 +132,7 @@ export function PersistentYouTubePlayer() {
       <YouTubeScenePlayer
         scene={persisted.scene}
         loop={persisted.loop}
-        muted={persisted.muted}
+        muted={dashboardMode ? true : persisted.muted}
         onMuted={(value) => {
           setPersisted((current) => {
             if (!current) return current;
