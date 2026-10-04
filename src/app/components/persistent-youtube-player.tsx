@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { usePathname } from "next/navigation";
 import { YouTubeScenePlayer } from "./youtube-scene";
 import type { YouTubeScene } from "@/lib/scene-domain";
