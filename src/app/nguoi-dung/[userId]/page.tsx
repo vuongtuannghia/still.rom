@@ -126,6 +126,22 @@ export default function ProfilePage() {
     }
   }
 
+  async function cancelFriendRequest() {
+    if (!data?.relationshipRequestId || data.relationship !== "outgoing") return;
+    try {
+      const response = await fetch("/api/friends/requests/" + data.relationshipRequestId, {
+        method: "PATCH", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "cancel" }),
+      });
+      const payload = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) throw new Error(payload.error || "Không thể hủy lời mời.");
+      await load();
+      setNotice("Đã hủy lời mời kết bạn.");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Không thể hủy lời mời.");
+    }
+  }
+
   async function respondToFriend(action: "accept" | "reject") {
     if (!data?.relationshipRequestId) return;
     try {
@@ -299,7 +315,7 @@ export default function ProfilePage() {
           : data.relationship === "incoming"
           ? <div className="profile-action-group"><button className="button-primary" type="button" onClick={() => void respondToFriend("accept")}>Chấp nhận</button><button className="button-secondary" type="button" onClick={() => void respondToFriend("reject")}>Từ chối</button></div>
           : data.relationship === "outgoing"
-          ? <span className="relationship-label">Đã gửi lời mời</span>
+          ? <button className="button-secondary" type="button" onClick={() => void cancelFriendRequest()}>Hủy lời mời</button>
           : <button className="button-primary" type="button" onClick={() => void sendFriendRequest()}>Kết bạn</button>}
         {!isSelf && data.blockStatus !== "blocked_you" && <button className="button-secondary" type="button" onClick={() => router.push("/tin-nhan?user=" + encodeURIComponent(data.profile.id))}><Icon name="arrow" size={14} /> Nhắn riêng</button>}
         {!isSelf && data.blockStatus !== "blocked_you" && <button className="profile-block-button" type="button" onClick={() => void toggleBlock()}>{data.blockStatus === "blocked_by_me" ? "Bỏ chặn" : "Chặn"}</button>}
