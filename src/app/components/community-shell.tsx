@@ -78,6 +78,7 @@ export function CommunityShell({ active, title, eyebrow, description, children }
     { id: "study", label: "Học chung", href: "/hoc-chung", icon: "radio" },
     { id: "forum", label: "Diễn đàn", href: "/dien-dan", icon: "book" },
     { id: "messages", label: "Tin nhắn", href: "/tin-nhan", icon: "arrow" },
+    { id: "discover", label: "Khám phá", href: "/kham-pha", icon: "target" },
     { id: "analytics", label: "Thống kê", href: "/#analytics", icon: "chart" },
     { id: "habits", label: "Thói quen", href: "/#habits", icon: "habit" },
     { id: "tasks", label: "Nhiệm vụ", href: "/#tasks", icon: "tasks" },
