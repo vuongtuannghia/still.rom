@@ -13,7 +13,8 @@ const RAW_AUDIO = "https://raw.githubusercontent.com/euuuuuuan/todak-public/main
  * project. Procedural synthesis remains only for sound types without a suitable recording.
  */
 const RECORDING_SOURCES: Record<string, Recording> = {
-  roof: { src: RAW_AUDIO + "/rain_downpour.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "CC0 ambience ledger", license: "CC0" },
+  roof: { src: RAW_AUDIO + "/rain_downpour.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "bajko (re-rendered by Todak)", license: "CC0" },
+  lofi: { src: "https://cdn.jsdelivr.net/gh/euuuuuuan/todak-public@main/assets/music/lofi/Chill_lofi_inspired_loop_edit.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "OpenGameArt contributor", license: "CC0" },
   rain: { src: RAW_AUDIO + "/rain_soft.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "joedeshon (re-rendered by Todak)", license: "CC0" },
   thunder: { src: RAW_AUDIO + "/storm_far.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "nickmaysoundmusic (re-rendered by Todak)", license: "CC0" },
   ocean: { src: RAW_AUDIO + "/waves_calm.ogg", sourcePage: "https://github.com/euuuuuuan/todak-public/blob/main/CREDITS.md", author: "profispiesser (re-rendered by Todak)", license: "CC0" },
@@ -43,7 +44,7 @@ export type SoundDefinition = {
 };
 
 export const SOUND_CATALOG: SoundDefinition[] = [
-  { id: "lofi", label: "Piano lo-fi", detail: "Piano mềm · nhịp chậm · không lời", icon: "headphones", group: "Không gian" },
+  { id: "lofi", label: "Lo-fi", detail: "Nhạc nền chill · loop liền mạch", icon: "headphones", group: "Không gian", recording: recorded("lofi") },
   { id: "rain", label: "Mưa dịu", detail: "Mưa cửa sổ · nền đều, dễ tập trung", icon: "water", group: "Thiên nhiên", recording: recorded("rain") },
   { id: "roof", label: "Mưa trên mái", detail: "Hạt mưa dày · ấm và kín", icon: "water", group: "Thiên nhiên", recording: recorded("roof") },
   { id: "thunder", label: "Sấm xa", detail: "Rền rất xa · dùng ở mức thấp", icon: "moon", group: "Thiên nhiên", recording: recorded("thunder") },
