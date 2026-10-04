@@ -6,6 +6,7 @@ import "./edge-video.css";
 import "./account.css";
 import "./ui-fixes.css";
 import "./community.css";
+import "./community-overrides.css";
 import { NotificationBell } from "./components/notification-bell";
 
 export const metadata: Metadata = {
