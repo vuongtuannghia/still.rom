@@ -113,7 +113,10 @@ export function SharedStudyRoom({ account, onNotice }: {
 
     {pinned && <div className="shared-pinned">
       <div><span className="small-label">PHÒNG HỌC CHÍNH</span><strong>{pinned.title}</strong><span>{pinned.creatorName} · được quản trị viên ghim</span></div>
-      <a className="button-primary" href={pinned.meetUrl} target="_blank" rel="noreferrer"><Icon name="radio" size={15} /> Vào học</a>
+      <div className="shared-pinned-actions">
+        <a className="button-primary" href={pinned.meetUrl} target="_blank" rel="noreferrer"><Icon name="radio" size={15} /> Vào học</a>
+        {account?.email === "vuongtuannghia585@gmail.com" && <button type="button" className="button-secondary" onClick={() => void setPinned(pinned, false)}>Bỏ ghim</button>}
+      </div>
     </div>}
 
     <div className="shared-room-form">
