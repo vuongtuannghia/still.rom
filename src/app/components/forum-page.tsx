@@ -197,7 +197,7 @@ export function ForumPage() {
   </div>;
 }
 
-function PostCard({ post, account, comments, expanded, draft, replyId, onOpen, onDraft, onReply, onSend, onPin, onDelete }: {
+function PostCard({ post, account, comments, expanded, draft, replyId, onOpen, onDraft, onReply, onSend, onPin, onDelete, router }: {
   post: Post; account: DashboardData["account"]; comments: Comment[]; expanded: boolean; draft: string; replyId: number | null; router: ReturnType<typeof useRouter>;
   onOpen: () => void; onDraft: (value: string) => void; onReply: (id: number | null) => void; onSend: () => void; onPin: (pinned: boolean) => void; onDelete: () => void;
 }) {
