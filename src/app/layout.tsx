@@ -8,6 +8,7 @@ import "./ui-fixes.css";
 import "./community.css";
 import "./community-overrides.css";
 import "./admin.css";
+import "./persistent-youtube-fix.css";
 import { NotificationBell } from "./components/notification-bell";
 import { AccountLockGuard } from "./components/account-lock-guard";
 import { PersistentYouTubePlayer } from "./components/persistent-youtube-player";
