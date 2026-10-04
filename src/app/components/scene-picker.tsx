@@ -6,7 +6,6 @@ import { Icon } from "../icons";
 import { BUILTIN_SCENES, parseYouTubeLink, type RoomSettings, type YouTubeScene } from "@/lib/scene-domain";
 import { errorMessage } from "@/lib/client-api";
 import { ConfirmDialog, Dialog, type Confirmation } from "./dialogs";
-import { YouTubeScenePlayer } from "./youtube-scene";
 
 type SceneProps = { room: RoomSettings; onChange: (patch: Partial<RoomSettings>) => Promise<void> };
 export function YouTubeLinkForm({ room, onChange, onPlay, quick = false }: SceneProps & { onPlay?: () => void; quick?: boolean }) {
@@ -114,17 +113,7 @@ export function SceneBanner({ room, onChange, onEnter, onChoose }: SceneProps & 
     </div>
     {youtube ? (
       <div className="scene-banner-youtube-preview-wrap">
-        <div className="scene-banner-preview scene-banner-youtube-preview">
-          <YouTubeScenePlayer
-            scene={youtube}
-            loop={room.loop}
-            muted={room.youtubeMuted}
-            onMuted={(value) => void onChange({ youtubeMuted: value })}
-            onFallback={() => void onChange({ selectedId: "quiet-window" })}
-            ambientView
-            sessionRole="preview"
-          />
-        </div>
+        <div className="scene-banner-preview scene-banner-youtube-preview youtube-single-player-slot" data-youtube-slot="dashboard" aria-label="Video YouTube đang phát"></div>
         <div className="scene-preview-meta">
           <span>YOUTUBE SCENE · XEM NGAY</span>
           <strong>{youtube.title}</strong>
