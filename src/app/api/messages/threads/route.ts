@@ -1,7 +1,6 @@
 import { db } from "@/db";
-import { accounts, directMessages, directThreads } from "@/db/schema";
+import { accountBlocks, accounts, directMessages, directThreads, friendships } from "@/db/schema";
 import { and, asc, desc, eq, inArray, ne, or, isNull } from "drizzle-orm";
-import { friendships } from "@/db/schema";
 import { apiError, json } from "@/lib/server-api";
 import { requireAccount } from "@/lib/community-auth";
 
