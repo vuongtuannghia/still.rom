@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Icon } from "../icons";
 
 type Person = { id: string; name: string; picture: string | null };
-type Relationship = "friend" | "none" | "pending" | "incoming" | "blocked_by_me" | "blocked_you";
+type Relationship = "friend" | "none" | "pending" | "incoming" | "outgoing" | "blocked_by_me" | "blocked_you";
 
 export function ProfileActionMenu({ person, children, placement = "left", self = false }: {
   person: Person;
