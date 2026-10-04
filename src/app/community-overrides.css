@@ -222,3 +222,23 @@
   .chat-head-actions{gap:4px}.chat-block-btn{padding:6px}.message-person-profile{width:25px;height:25px}.pending-compact{margin-inline:10px}
   .profile-identity{padding-inline:5px}.profile-stats>div{padding:11px 12px}
 }
+
+/* DM final polish */
+.message-inbox-box{margin:12px 0 0;padding:11px;border:1px solid #deddd7;border-radius:12px;background:#fff}
+.messages-subheading{display:flex;align-items:center;gap:7px;justify-content:space-between;margin-bottom:6px}.messages-subheading>span:last-child{color:#999;font-size:7px}.messages-subheading strong{font-size:9px}
+.message-thread-wrap,.pending-person-wrap{display:flex;align-items:center;border-top:1px solid #e9e8e2}.message-thread-wrap:first-of-type,.pending-person-wrap:first-of-type{border-top:0}.message-thread{flex:1;display:flex;align-items:center;gap:8px;min-width:0;padding:8px 4px;border:0;background:transparent;text-align:left;cursor:pointer}.message-thread:hover,.message-thread.active{background:#f2f2ed;border-radius:7px}.thread-profile{display:grid;width:28px;height:28px;place-items:center;border:0;background:transparent;color:#888;cursor:pointer}
+.message-person{display:flex;align-items:center;gap:5px;padding:5px;border:1px solid #e2e1da!important;border-radius:8px;background:#fff!important}.message-person-main{display:flex;align-items:center;gap:8px;flex:1;min-width:0;border:0;background:transparent;text-align:left;cursor:pointer}.message-person-profile{display:grid;width:27px;height:27px;place-items:center;border-radius:6px;color:#888;text-decoration:none}.message-person-profile:hover{background:#efeee9;color:#222}
+.lookup-profile{display:flex;align-items:center;gap:8px;flex:1;min-width:0;border:0;background:transparent;text-align:left;cursor:pointer}.lookup-profile>span:last-child{display:flex;min-width:0;flex-direction:column}.lookup-profile strong{font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lookup-profile small{font-size:7px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lookup-card{display:flex;align-items:center;gap:7px;padding:8px 0;border-top:1px solid #ecebe5}.lookup-card:first-child{border-top:0}.lookup-actions{display:flex;align-items:center;gap:5px}.lookup-actions button,.relationship-action{padding:5px 7px;border:1px solid #d9d8d1;border-radius:7px;background:#fff;color:#555;font-size:8px;cursor:pointer;white-space:nowrap}.lookup-actions .button-primary{background:#222;color:#fff;border-color:#222}
+.chat-head-actions{display:flex;align-items:center;justify-content:flex-end;gap:5px;flex-wrap:wrap}.chat-head-actions>*{white-space:nowrap}.chat-avatar-button{display:grid;padding:0;border:0;background:transparent;cursor:pointer}.message-profile-name{padding:0;border:0;background:transparent;font:inherit;color:#222;font-weight:700;cursor:pointer}.message-profile-name:hover{text-decoration:underline}.chat-block-btn{padding:6px 8px;border:1px solid #d8d7d0;border-radius:7px;background:#fff;color:#6c6c66;font-size:8px;cursor:pointer}.chat-block-btn:hover{border-color:#222;color:#222}.messages-blocked-note{padding:10px 12px;border-top:1px solid #e2e1da;text-align:center;color:#888;font-size:8px}
+.profile-block-btn{padding:7px 9px;border:1px solid #d8d7d0;border-radius:8px;background:#fff;color:#777;font-size:8px;cursor:pointer}.profile-block-btn:hover{border-color:#222;color:#222}.profile-blocked-label{padding:6px 8px;border-radius:7px;background:#ecebe5;color:#777;font-size:8px}
+.profile-top-actions{margin-bottom:10px}
+@media(max-width:900px){
+  .messages-layout{grid-template-columns:1fr!important}.messages-people{order:0}.messages-chat{order:1;min-height:500px}.chat-head-actions{width:100%;justify-content:flex-start}
+  .message-inbox-box{padding:10px}.pending-compact{margin-top:8px}.profile-page{padding-bottom:24px}
+}
+@media(max-width:520px){
+  .community-shell .page-content{padding-inline:10px!important}
+  .profile-identity{padding-inline:4px}.profile-name-row h1{font-size:20px}.profile-actions{gap:5px}.profile-actions button{font-size:8px}
+  .profile-cover{height:175px}.profile-avatar.xl{width:72px;height:72px}
+  .profile-stats{margin-top:10px}.profile-composer{padding:11px}
+}
