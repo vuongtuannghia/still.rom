@@ -66,7 +66,8 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
       savedProgress.current = Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
       const muteKey = `stillroom.youtube.muted:${scene.videoId || scene.playlistId || scene.id}`;
       const storedMute = sessionStorage.getItem(muteKey);
-      if (storedMute === "1") userMuted.current = true;
+      if (sessionRole === "persistent") userMuted.current = Boolean(muted);
+      else if (storedMute === "1") userMuted.current = true;
       else if (storedMute === "0") userMuted.current = false;
       else userMuted.current = Boolean(muted);
       setPlayerMuted(userMuted.current);
