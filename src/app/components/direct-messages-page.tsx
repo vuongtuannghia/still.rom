@@ -171,8 +171,8 @@ export function DirectMessagesPage() {
 
   const primaryThreads = useMemo(() => threads.filter(thread => thread.isFriend && !blockedIds.includes(thread.other.id)), [threads, blockedIds]);
   const pendingThreads = useMemo(
-    () => threads.filter(thread => !thread.isFriend && thread.lastSenderId !== account?.id && !blockedIds.includes(thread.other.id)),
-    [threads, account?.id, blockedIds]
+    () => threads.filter(thread => !thread.isFriend && !blockedIds.includes(thread.other.id)),
+    [threads, blockedIds]
   );
   const incomingCount = incoming.length;
 
