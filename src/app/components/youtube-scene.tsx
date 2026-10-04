@@ -119,7 +119,10 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
       if (disposed) return;
       const message = event.data as { type?: string; role?: string; progress?: number } | null;
       if (!message) return;
-      if (message.type === "claim" && message.role === "room" && sessionRole === "preview" && player.current) {
+      // Do not stop the already-playing preview merely because the room player was
+      // created. The room player must actually reach PLAYING first; otherwise a
+      // browser autoplay policy would leave the user with a silent room.
+      if (message.type === "claim-playing" && message.role === "room" && sessionRole === "preview" && player.current) {
         try { rememberProgress(); player.current.pauseVideo(); } catch {}
       }
       if (message.type === "progress" && typeof message.progress === "number" && sessionRole === "room") {
@@ -157,9 +160,6 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
         enablejsapi: 1,
         origin: window.location.origin,
         autoplay: 1,
-        // Do not force-mute a player whose stored/user preference is sound-on.
-        // Browsers may still block audible autoplay; in that case onAutoplayBlocked
-        // provides the explicit in-player fallback.
         mute: userMuted.current ? 1 : 0,
         playsinline: 1,
         controls: 1,
@@ -173,7 +173,8 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
         onReady: (event) => {
           if (disposed) return;
           becameReady = true; window.clearTimeout(timeout); setReady(true); setApiNotice(""); reportVideo(event.target);
-          channel?.postMessage({ type: "claim", role: sessionRole, muted: userMuted.current });
+          const iframe = container.querySelector<HTMLIFrameElement>("iframe");
+          if (iframe) iframe.setAttribute("allow", "autoplay; encrypted-media; picture-in-picture; fullscreen");
           if (userMuted.current) event.target.mute();
           else {
             event.target.setVolume(35);
@@ -186,12 +187,20 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
         },
         onStateChange: (event) => {
           if (disposed) return;
-          if (event.data === 1) setAutoplayBlocked(false);
-          setPlaying(event.data === 1);
-          if (event.data === 1) { reportVideo(event.target); hasPlayed = true; setFatal(""); setStatus("Video đang phát"); }
-          else if (event.data === 2) { rememberProgress(); setStatus("Video đang tạm dừng"); if (hasPlayed) preferences.current.onPause?.(); }
+          if (event.data === 1) {
+            setAutoplayBlocked(false);
+            reportVideo(event.target);
+            hasPlayed = true;
+            setPlaying(true);
+            setFatal("");
+            setStatus("Video đang phát");
+            // Only now does the room take ownership of the shared scene. This keeps
+            // the preview's audio alive while the room iframe is loading.
+            if (sessionRole === "room") channel?.postMessage({ type: "claim-playing", role: "room" });
+          }
+          else if (event.data === 2) { rememberProgress(); setPlaying(false); setStatus("Video đang tạm dừng"); if (hasPlayed) preferences.current.onPause?.(); }
           else if (event.data === 3) setStatus("Đang tải video…");
-          else if (event.data === 0) { rememberProgress(); setStatus("Video đã kết thúc"); }
+          else if (event.data === 0) { rememberProgress(); setPlaying(false); setStatus("Video đã kết thúc"); }
         },
         onError: (event) => { if (!disposed) { rememberProgress(); setFatal(errorMessages[event.data ?? 0] ?? "Video chưa phát được. Thử một link khác hoặc mở trên YouTube."); setPlaying(false); } },
         onAutoplayBlocked: () => { if (!disposed) { setAutoplayBlocked(true); setStatus("Tự phát bị trình duyệt chặn. Bấm Phát video — không cần phóng to."); setPlaying(false); } },
@@ -227,7 +236,6 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
         const nextMuted = !userMuted.current; userMuted.current = nextMuted; preferences.current.muted = nextMuted; setPlayerMuted(nextMuted);
         try { sessionStorage.setItem(`stillroom.youtube.muted:${scene.videoId || scene.playlistId || scene.id}`, nextMuted ? "1" : "0"); } catch {}
         onMuted(nextMuted);
-        try { sessionStorage.setItem(`stillroom.youtube.muted:${scene.videoId || scene.playlistId || scene.id}`, nextMuted ? "1" : "0"); } catch {}
         if (ready && player.current) { if (nextMuted) player.current.mute(); else { player.current.setVolume(35); player.current.unMute(); player.current.playVideo(); audioUnlocked.current = true; } }
         else setApiNotice("Bạn có thể bật hoặc tắt tiếng bằng nút loa của YouTube trong video.");
       }}><Icon name="volume" size={15} />{playerMuted ? "Bật tiếng video" : "Tắt tiếng video"}</button></div></div>
