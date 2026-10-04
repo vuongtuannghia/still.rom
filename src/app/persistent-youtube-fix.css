@@ -1,0 +1,27 @@
+/* One authoritative YouTube iframe: the persistent player is moved visually over the room video area without remounting it. */
+html.stillroom-room-player-active .ambient-room-screen .ambient-video-area > .youtube-scene-player {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.persistent-youtube-room {
+  right: auto !important;
+  bottom: auto !important;
+  aspect-ratio: auto !important;
+  border-radius: 0 !important;
+  z-index: 1001 !important;
+}
+
+.persistent-youtube-room .youtube-scene-player,
+.persistent-youtube-room .youtube-stage {
+  border-radius: inherit !important;
+}
+
+.persistent-youtube-room .youtube-stage > iframe {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+@media (max-width: 760px) {
+  .persistent-youtube-room { border-radius: 0 !important; }
+}
