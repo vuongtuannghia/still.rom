@@ -99,6 +99,7 @@ export function CommunityShell({ active, title, eyebrow, description, children }
 
     <main className="main-shell" id="main-content">
       <div className="mobile-topbar"><a href="/" className="brand"><span className="brand-mark" aria-hidden="true"><i /><i /><i /><i /></span><span>still<span className="brand-period">.</span><small>ROOM</small></span></a></div>
+      <div className="mobile-account-control"><AccountControl data={null} onChanged={() => window.location.reload()} /></div>
       <nav className="mobile-nav" aria-label="Điều hướng trên di động">
         {links.slice(0, 3).map((item) => <a key={item.id} className={item.id === active ? "active" : ""} href={item.href}><Icon name={item.icon} size={16} />{item.label}</a>)}
       </nav>
