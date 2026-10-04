@@ -15,6 +15,7 @@ export async function GET() {
       meetUrl: sharedStudyRooms.meetUrl,
       pinned: sharedStudyRooms.pinned,
       createdAt: sharedStudyRooms.createdAt,
+      creatorId: accounts.id,
       creatorName: accounts.name,
       creatorEmail: accounts.email,
     }).from(sharedStudyRooms)
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
     }).returning();
 
     return json({
-      room: { ...room, createdAt: room.createdAt.toISOString(), creatorName: account.name, creatorEmail: account.email, admin: isWebAdmin(account.email) },
+      room: { ...room, createdAt: room.createdAt.toISOString(), creatorId: account.id, creatorName: account.name, creatorEmail: account.email, admin: isWebAdmin(account.email) },
     }, 201);
   } catch (error) {
     return apiError(error);
