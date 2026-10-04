@@ -222,8 +222,8 @@ export function DirectMessagesPage() {
       <div className="messages-layout">
         <aside className="messages-people panel">
           <div className="messages-panel-head"><div><span className="small-label">KẾT NỐI</span><h3>Bạn bè</h3></div><span>{friends.length}</span></div>
-          <div className="friend-add-heading"><div><span className="small-label">THÊM BẠN</span><strong>Kết nối bằng email</strong></div><span>Chỉ tìm khi bạn nhập email</span></div>
-          <div className="messages-search"><Icon name="target" size={14} /><input value={query} onChange={e => setQuery(e.target.value)} placeholder="email@example.com" /></div>
+          <div className="friend-add-heading"><div><span className="small-label">KHÁM PHÁ</span><strong>Tìm người</strong></div><span>Tên hoặc email</span></div>
+          <div className="messages-search"><Icon name="target" size={14} /><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Tên hoặc email…" /></div>
 
           {query.trim() && <div className="friend-lookup">
             {searchResults.length === 0 ? <span className="messages-muted">Không tìm thấy người phù hợp.</span> :
