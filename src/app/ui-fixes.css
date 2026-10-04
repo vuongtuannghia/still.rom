@@ -1,0 +1,11 @@
+/* Small production-safe UI corrections.
+ * Kept separate so responsive fixes can be tuned without touching component logic.
+ */
+.workspace-label strong,
+.workspace-label > div > span {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.workspace-label > div {
+  min-width: 0;
+}
