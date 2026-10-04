@@ -138,13 +138,13 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
             const observer = new IntersectionObserver((entries) => {
               if (entries.some((entry) => entry.isIntersecting && entry.intersectionRatio >= 0.5)) {
                 observer.disconnect();
-                window.requestAnimationFrame(startVisiblePlayback);
+                globalThis.requestAnimationFrame(startVisiblePlayback);
               }
             }, { threshold: [0, 0.5, 1] });
             observer.observe(container);
             if (observer) window.setTimeout(() => observer.disconnect(), 12000);
           } else {
-            window.requestAnimationFrame(startVisiblePlayback);
+            globalThis.requestAnimationFrame(startVisiblePlayback);
           }
           if (!ambientView && !preferences.current.muted) { event.target.setVolume(35); event.target.unMute(); }
           progressTimer = window.setInterval(rememberProgress, 1000);
@@ -169,9 +169,9 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
       document.removeEventListener("visibilitychange", saveOnVisibility);
       disposed = true; window.clearTimeout(timeout);
       try { player.current?.destroy(); } catch { /* Native frame may already be gone. */ }
-      player.current = null; frame.current = null; container.replaceChildren();
+      player.current = null; container.replaceChildren();
     };
-  }, [scene.videoId, scene.playlistId, scene.startSeconds, scene.title, loop, id, standard, progressKey]);
+  }, [scene.videoId, scene.playlistId, scene.startSeconds, scene.title, loop, standard, progressKey, ambientView]);
 
   function playPause() {
     if (ready && player.current) {
