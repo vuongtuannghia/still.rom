@@ -6,7 +6,7 @@ import { Icon } from "../icons";
 import { ProfileNavItem } from "./profile-nav-item";
 import { AdminNavItem } from "./admin-nav-item";
 
-type Section = "home" | "study" | "forum" | "messages";
+type Section = "home" | "study" | "forum" | "messages" | "admin";
 
 
 const COMMUNITY_STYLES = String.raw`
