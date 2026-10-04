@@ -48,11 +48,15 @@ export async function POST(request: Request) {
     const current = await requireAccount(request);
     const body = await readBody(request);
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
-    if (!email || !email.includes("@") || email.length > 320) throw new ApiError(400, "Hãy nhập đúng email.");
-    if (email === current.email.toLowerCase()) throw new ApiError(400, "Bạn không thể kết bạn với chính mình.");
+    const userId = typeof body.userId === "string" ? body.userId : "";
+    if (!email && !/^[0-9a-f-]{36}$/i.test(userId)) throw new ApiError(400, "Hãy chọn một tài khoản.");
+    if (email && (!email.includes("@") || email.length > 320)) throw new ApiError(400, "Hãy nhập đúng email.");
+    if (email && email === current.email.toLowerCase()) throw new ApiError(400, "Bạn không thể kết bạn với chính mình.");
+    if (userId === current.id) throw new ApiError(400, "Bạn không thể kết bạn với chính mình.");
 
-    const [target] = await db.select().from(accounts).where(eq(accounts.email, email)).limit(1);
-    if (!target) throw new ApiError(404, "Không tìm thấy tài khoản với email này.");
+    const [target] = await db.select().from(accounts)
+      .where(email ? eq(accounts.email, email) : eq(accounts.id, userId)).limit(1);
+    if (!target) throw new ApiError(404, "Không tìm thấy tài khoản.");
 
     const [pairA, pairB] = [current.id < target.id ? current.id : target.id, current.id < target.id ? target.id : current.id];
     const [alreadyFriend] = await db.select({ id: friendships.id }).from(friendships)
