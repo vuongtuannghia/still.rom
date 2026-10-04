@@ -26,9 +26,17 @@ export function ProfileActionMenu({ person, children, placement = "left", self =
     (async () => {
       try {
         const profile = await fetch("/api/users/" + encodeURIComponent(person.id), { cache: "no-store", credentials: "same-origin" });
-        const payload = await profile.json().catch(() => ({})) as { relationship?: Relationship; relationshipRequestId?: number | null };
+        const payload = await profile.json().catch(() => ({})) as {
+          relationship?: Relationship | "blocked";
+          blockStatus?: "none" | "blocked_by_me" | "blocked_you";
+          relationshipRequestId?: number | null;
+        };
         if (!cancelled && profile.ok) {
-          setRelationship(payload.relationship ?? "none");
+          setRelationship(
+            payload.blockStatus === "blocked_by_me" ? "blocked_by_me" :
+            payload.blockStatus === "blocked_you" ? "blocked_you" :
+            (payload.relationship === "blocked" ? "blocked_by_me" : payload.relationship ?? "none")
+          );
           setRequestId(payload.relationshipRequestId ?? null);
         }
       } catch {}
@@ -62,7 +70,10 @@ export function ProfileActionMenu({ person, children, placement = "left", self =
     setBusy(true);
     try {
       const response = await fetch("/api/friends/" + encodeURIComponent(person.id), { method: "DELETE", credentials: "same-origin" });
-      if (response.ok) setRelationship("none");
+      if (response.ok) {
+        setRelationship("none");
+        setOpen(false);
+      }
     } finally { setBusy(false); }
   }
 
@@ -77,7 +88,10 @@ export function ProfileActionMenu({ person, children, placement = "left", self =
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: person.id }),
       });
-      if (response.ok) setRelationship(blocked ? "none" : "blocked_by_me");
+      if (response.ok) {
+        setRelationship(blocked ? "none" : "blocked_by_me");
+        setOpen(false);
+      }
     } finally { setBusy(false); }
   }
 
