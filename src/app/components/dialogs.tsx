@@ -94,7 +94,7 @@ export function EntityDialog({ editor, onSaved, onClose }: { editor: EntityEdito
   const [error, setError] = useState("");
   const clientId = useRef<string | null>(null);
   const noun = editor.kind === "habit" ? "thói quen" : "nhiệm vụ";
-  async function save(event: FormEvent) {\n    event.preventDefault(); if (busy || !title.trim()) return;\n    setBusy(true); setError("");\n    try {\n      clientId.current ??= crypto.randomUUID();\n      try {\n        const endpoint = editor.kind === "habit" ? "/api/habits" : "/api/tasks";\n        const response = await requestJson<{ habit?: Habit; task?: Task }>(\n          endpoint + (editor.entity ? "/" + editor.entity.id : ""),\n          { method: editor.entity ? "PATCH" : "POST", body: JSON.stringify({ title: title.trim(), clientId: clientId.current }) },\n        );\n        const entity = response.habit ?? response.task;\n        if (entity) onSaved(editor.kind, entity);\n      } catch {\n        const now = new Date().toISOString();\n        if (editor.kind === "habit") {\n          const current = editor.entity as Habit | null;\n          onSaved("habit", { id: current?.id ?? Date.now(), title: title.trim(), createdAt: current?.createdAt ?? now });\n        } else {\n          const current = editor.entity as Task | null;\n    async function save(event: FormEvent) {
+  async function save(event: FormEvent) {
     event.preventDefault(); if (busy || !title.trim()) return;
     setBusy(true); setError("");
     try {
@@ -136,17 +136,6 @@ export function EntityDialog({ editor, onSaved, onClose }: { editor: EntityEdito
     } finally {
       setBusy(false);
     }
-  }
-tion: () => void | Promise<void> };
-export function ConfirmDialog({ confirmation, onClose }: { confirmation: Confirmation; onClose: () => void }) {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  async function confirm() {
-    if (busy) return;
-    setBusy(true);
-    try { await confirmation.action(); onClose(); }
-    catch (error) { setError(errorMessage(error)); }
-    finally { setBusy(false); }
   }
   return <Dialog title={confirmation.title} description={confirmation.description} onClose={onClose} busy={busy}>
     {error && <p className="form-error" role="alert">{error}</p>}<div className="dialog-footer"><button className="button-secondary" type="button" disabled={busy} onClick={onClose}>Giữ lại</button><button className={`button-primary ${confirmation.danger ? "danger-button" : ""}`} type="button" disabled={busy} onClick={() => void confirm()}>{busy ? "Đang xử lý…" : confirmation.label}</button></div>
