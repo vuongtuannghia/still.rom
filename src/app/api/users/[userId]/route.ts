@@ -101,10 +101,12 @@ export async function GET(_: Request, context: { params: Promise<{ userId: strin
       },
       relationship,
       relationshipRequestId,
-      stats: { friendCount: friendIds.length, forumPostCount: Number(forumCount?.count ?? 0), photoPostCount: Number(photoCount?.count ?? 0), focusMinutes: Number(focus[0]?.total ?? 0) },
-      friends: friendAccounts.map(friend => ({ id: friend.id, name: friend.name, picture: friend.customPicture || friend.picture, bio: friend.bio })),
-      forumPosts: posts.map(post => ({ ...post, createdAt: post.createdAt.toISOString() })),
-      profilePosts: photoPosts.map(post => ({ ...post, createdAt: post.createdAt.toISOString() })),
+      stats: blockStatus === "none"
+        ? { friendCount: friendIds.length, forumPostCount: Number(forumCount?.count ?? 0), photoPostCount: Number(photoCount?.count ?? 0), focusMinutes: Number(focus[0]?.total ?? 0) }
+        : { friendCount: 0, forumPostCount: 0, photoPostCount: 0, focusMinutes: 0 },
+      friends: blockStatus === "none" ? friendAccounts.map(friend => ({ id: friend.id, name: friend.name, picture: friend.customPicture || friend.picture, bio: friend.bio })) : [],
+      forumPosts: blockStatus === "none" ? posts.map(post => ({ ...post, createdAt: post.createdAt.toISOString() })) : [],
+      profilePosts: blockStatus === "none" ? photoPosts.map(post => ({ ...post, createdAt: post.createdAt.toISOString() })) : [],
     });
   } catch (error) { return apiError(error); }
 }
