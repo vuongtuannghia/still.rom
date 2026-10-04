@@ -1,4 +1,25 @@
-type Recording = { src: string; sourcePage: string; author: string; license: "CC0" };
+type Recording = { src: string; sourcePage: string; author: string; license: "CC0" | "Public Domain" };
+
+const RAW_AUDIO = "https://raw.githubusercontent.com/twtrubiks/moonseal/main/public/audio";
+const RECORDING_SOURCES: Record<string, Recording> = {
+  rain: { src: RAW_AUDIO + "/rain.mp3", sourcePage: "https://freesound.org/s/81818/", author: "Silencyo", license: "CC0" },
+  roof: { src: RAW_AUDIO + "/rain.mp3", sourcePage: "https://freesound.org/s/81818/", author: "Silencyo", license: "CC0" },
+  thunder: { src: RAW_AUDIO + "/thunder.mp3", sourcePage: "https://archive.org/details/1HourThunderstorm", author: "Public Domain source", license: "Public Domain" },
+  ocean: { src: RAW_AUDIO + "/ocean.mp3", sourcePage: "https://freesound.org/s/156598/", author: "Rmutt", license: "CC0" },
+  river: { src: RAW_AUDIO + "/stream.mp3", sourcePage: "https://archive.org/details/GOLD_TAPE_53_54_Water", author: "archive.org source", license: "CC0" },
+  wind: { src: RAW_AUDIO + "/wind.mp3", sourcePage: "https://archive.org/details/GOLD_TAPE_55_56_Weather-Wind", author: "archive.org source", license: "CC0" },
+  forest: { src: RAW_AUDIO + "/birds.mp3", sourcePage: "https://freesound.org/s/578523/", author: "SamsterBirdies", license: "CC0" },
+  birds: { src: RAW_AUDIO + "/birds.mp3", sourcePage: "https://freesound.org/s/578523/", author: "SamsterBirdies", license: "CC0" },
+  fireplace: { src: RAW_AUDIO + "/fireplace.mp3", sourcePage: "https://archive.org/details/Red_Library_Fire", author: "archive.org source", license: "CC0" },
+  "forest-night": { src: RAW_AUDIO + "/birds.mp3", sourcePage: "https://freesound.org/s/578523/", author: "SamsterBirdies", license: "CC0" },
+  waterfall: { src: RAW_AUDIO + "/stream.mp3", sourcePage: "https://archive.org/details/GOLD_TAPE_53_54_Water", author: "archive.org source", license: "CC0" },
+  "storm-rain": { src: RAW_AUDIO + "/thunder.mp3", sourcePage: "https://archive.org/details/1HourThunderstorm", author: "Public Domain source", license: "Public Domain" },
+  "mountain-stream": { src: RAW_AUDIO + "/stream.mp3", sourcePage: "https://archive.org/details/GOLD_TAPE_53_54_Water", author: "archive.org source", license: "CC0" },
+};
+
+function recorded(id: string, page: string): Recording | undefined {
+  return RECORDING_SOURCES[id];
+}
 export type SoundDefinition = {
   id: SoundId; label: string; detail: string; icon: "headphones" | "water" | "moon" | "leaf" | "fire" | "coffee" | "tasks" | "spark" | "volume";
   group: "Thiên nhiên" | "Không gian" | "Noise"; recording?: Recording;
@@ -13,14 +34,14 @@ export const SOUND_CATALOG: SoundDefinition[] = [
   { id: "ocean", label: "Sóng biển", detail: "Sóng nhỏ vỗ bãi cát", icon: "water", group: "Thiên nhiên", recording: recorded("ocean", "small-waves-and-beach-1-s1446.html") },
   { id: "river", label: "Suối chảy", detail: "Dòng suối nhỏ trên núi", icon: "water", group: "Thiên nhiên", recording: recorded("river", "small-stream-4-s1354.html") },
   { id: "wind", label: "Gió nhẹ", detail: "Gió qua một cánh đồng", icon: "leaf", group: "Thiên nhiên", recording: recorded("wind", "wind-in-a-cornfield-s1097.html") },
-  { id: "forest", label: "Rừng yên", detail: "Rừng, chim và côn trùng", icon: "leaf", group: "Thiên nhiên", recording: recorded("forest", "forest-s0100.html") },
+  { id: "forest", label: "Rừng yên", detail: "Chim và nền rừng · bản thu CC0", icon: "leaf", group: "Thiên nhiên", recording: recorded("forest", "forest-s0100.html") },
   { id: "birds", label: "Chim hót", detail: "Tiếng chim lúc chiều xuống", icon: "leaf", group: "Thiên nhiên", recording: recorded("birds", "evening-birds-s1859.html") },
   { id: "fireplace", label: "Lò sưởi", detail: "Củi cháy, than nổ nhẹ", icon: "fire", group: "Không gian", recording: recorded("fireplace", "fireplace-5-s2857.html") },
-  { id: "cafe", label: "Quán cà phê", detail: "Bản thu không gian quán ở Brest", icon: "coffee", group: "Không gian", recording: recorded("cafe", "coffee-shop-at-the-capucins-s2561.html") },
-  { id: "keyboard", label: "Gõ bàn phím", detail: "Bản thu gõ phím thực tế", icon: "tasks", group: "Không gian", recording: recorded("keyboard", "computer-keyboard-s0229.html") },
+  { id: "cafe", label: "Quán cà phê", detail: "Không gian quán · âm tổng hợp", icon: "coffee", group: "Không gian" },
+  { id: "keyboard", label: "Gõ bàn phím", detail: "Nhịp phím nhẹ · âm tổng hợp", icon: "tasks", group: "Không gian" },
   { id: "chimes", label: "Chuông gió", detail: "Âm ngân tổng hợp · thưa và mềm", icon: "spark", group: "Không gian" },
-  { id: "purr", label: "Mèo ngủ", detail: "Tiếng mèo rừ rừ ghi âm thật", icon: "moon", group: "Không gian", recording: recorded("purr", "detail-0436-cat-purr.html") },
-  { id: "forest-night", label: "Rừng sau mưa", detail: "Rừng đêm, đường xa và côn trùng", icon: "moon", group: "Thiên nhiên", recording: recorded("forest-night", "forest-at-night-after-rain-s0555.html") },
+  { id: "purr", label: "Mèo ngủ", detail: "Rừ rừ nhẹ · âm tổng hợp", icon: "moon", group: "Không gian" },
+  { id: "forest-night", label: "Rừng sau mưa", detail: "Rừng đêm · bản thu CC0", icon: "moon", group: "Thiên nhiên", recording: recorded("forest-night", "forest-at-night-after-rain-s0555.html") },
   { id: "waterfall", label: "Thác nước", detail: "Thác nhỏ bên cối xay cũ", icon: "water", group: "Thiên nhiên", recording: recorded("waterfall", "small-cascade-s0507.html") },
   { id: "storm-rain", label: "Mưa giông", detail: "Mưa lớn, sấm và chim", icon: "moon", group: "Thiên nhiên", recording: recorded("storm-rain", "storm-and-rain-3-s2717.html") },
   { id: "mountain-stream", label: "Suối núi", detail: "Dòng torrent trên núi", icon: "water", group: "Thiên nhiên", recording: recorded("mountain-stream", "mountain-stream-7-s3222.html") },
@@ -98,6 +119,30 @@ export function synthesizeSound(context: AudioContext, id: SoundId): AudioBuffer
           const age = local - index * 1.45;
           if (age > 0) out[i] += Math.sin(2 * Math.PI * note * age + channel * 0.12) * Math.exp(-age * 1.6) * Math.min(1, age * 12) * 0.08;
         }
+      } else if (id === "purr") {
+        const mod = 0.55 + 0.45 * Math.sin(2 * Math.PI * 26 * time);
+        const rumble = Math.sin(2 * Math.PI * 72 * time) * 0.10 + Math.sin(2 * Math.PI * 118 * time) * 0.035;
+        out[i] = (brown * 0.85 + rumble) * mod * 0.55;
+      } else if (id === "keyboard") {
+        const cycle = time % 1.6;
+        const taps = [0.18, 0.43, 0.76, 1.12, 1.39];
+        let click = 0;
+        for (let t = 0; t < taps.length; t++) {
+          const age = cycle - taps[t];
+          if (age >= 0 && age < 0.055) {
+            const envelope = Math.exp(-age * 95);
+            click += (Math.sin(2 * Math.PI * (850 + t * 90) * age) + white * 0.7) * envelope * 0.075;
+          }
+        }
+        out[i] = click;
+      } else if (id === "cafe") {
+        const room = (brown * 0.72 + smooth * 0.16);
+        const clinkPhase = time % 6.7;
+        const age = clinkPhase - 3.25;
+        const clink = age >= 0 && age < 0.22
+          ? Math.sin(2 * Math.PI * (1500 - age * 1800) * age) * Math.exp(-age * 22) * 0.035
+          : 0;
+        out[i] = room * 0.22 + clink;
       } else {
         const chordIndex = Math.floor(time / 8);
         for (let delay = 0; delay < 2; delay++) {
