@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
 import "./experience.css";
@@ -8,6 +8,12 @@ import "./ui-fixes.css";
 import "./community.css";
 import "./community-overrides.css";
 import { NotificationBell } from "./components/notification-bell";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 export const metadata: Metadata = {
   title: "still. room — Tập trung & tiến độ",
