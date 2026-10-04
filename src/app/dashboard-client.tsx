@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { Icon } from "./icons";
 import { useFocusTimer } from "./use-focus-timer";
 import { FocusPanel } from "./components/focus-panel";
@@ -40,6 +41,7 @@ const NAV_ITEMS = [
 const PREVIEW_WORKSPACE_ID = "00000000-0000-4000-8000-000000000001";
 const PREVIEW_TODAY = dateKey(new Date());
 const LOCAL_DATA_KEY = "stillroom.progress.v4";
+const PERSISTENT_YOUTUBE_KEY = "stillroom.youtube.persistent.v1";
 function readLocalDashboard(): DashboardData | null {
   try {
     const raw = localStorage.getItem(LOCAL_DATA_KEY);
@@ -98,6 +100,7 @@ export default function DashboardClient() {
   const [pendingChecks, setPendingChecks] = useState<Set<string>>(new Set());
   const [addingTask, setAddingTask] = useState(false);
   const [toast, setToast] = useState<{ id: number; text: string; error: boolean } | null>(null);
+  const router = useRouter();
   const locks = useRef(new Set<string>());
   const epoch = useRef(0);
   const requestGeneration = useRef(0);
@@ -178,6 +181,23 @@ export default function DashboardClient() {
     try { localStorage.setItem("stillroom.preview.data", JSON.stringify(data)); } catch { /* Preview storage may be unavailable. */ }
   }, [data]);
   useEffect(() => {
+    if (!data) return;
+    const scene = data.room.scenes.find((item) => item.id === data.room.selectedId);
+    try {
+      if (scene) {
+        localStorage.setItem(PERSISTENT_YOUTUBE_KEY, JSON.stringify({
+          scene,
+          loop: data.room.loop,
+          muted: data.room.youtubeMuted,
+        }));
+      } else {
+        localStorage.removeItem(PERSISTENT_YOUTUBE_KEY);
+      }
+    } catch {}
+    window.dispatchEvent(new CustomEvent("stillroom-youtube-sync"));
+  }, [data?.room]);
+
+  useEffect(() => {
     if (!storageReady || !data?.account) return;
     const timer = window.setTimeout(() => {
       const backup = {
@@ -250,10 +270,23 @@ export default function DashboardClient() {
   }, [dataReady, preferences.widgets]);
 
   function navigate(id: string) {
-    if (id === "study-room") { window.location.href = "/hoc-chung"; return; }
-    if (id === "forum") { window.location.href = "/dien-dan"; return; }
-    if (id === "messages") { window.location.href = "/tin-nhan"; return; }
-    if (id === "leaderboard") { window.location.href = "/xep-hang"; return; }
+    const routes: Record<string, string> = {
+      "study-room": "/hoc-chung",
+      forum: "/dien-dan",
+      messages: "/tin-nhan",
+      leaderboard: "/xep-hang",
+    };
+    const route = routes[id];
+    if (route) {
+      const scene = data?.room.scenes.find((item) => item.id === data.room.selectedId);
+      if (scene) {
+        const detail = { scene, loop: data.room.loop, muted: data.room.youtubeMuted };
+        try { localStorage.setItem(PERSISTENT_YOUTUBE_KEY, JSON.stringify(detail)); } catch {}
+        window.dispatchEvent(new CustomEvent("stillroom-youtube-handoff", { detail }));
+      }
+      router.push(route);
+      return;
+    }
     if (id === "profile") {
       if (data?.account?.id) { window.location.href = "/nguoi-dung/" + encodeURIComponent(data.account.id); }
       else { setActiveNav("profile"); notice("Đăng nhập Google để mở trang cá nhân.", true); }
@@ -540,7 +573,7 @@ export default function DashboardClient() {
       <section className="hero-grid" id="overview"><FocusPanel {...focusProps} /><article className="goal-card"><div className="goal-top"><span className="eyebrow">MỤC TIÊU HÔM NAY</span><Icon name="target" size={22} /></div><h2>Một ngày<br />đủ đầy.</h2><p>Mỗi phút hiện diện đều đáng giá.</p><div className="goal-visual"><div className="goal-ring" style={{ "--goal-progress": `${goalProgress * 360}deg` } as CSSProperties}><div><strong>{Math.round(goalProgress * 100)}<small>%</small></strong><span>HOÀN THÀNH</span></div></div><div><strong>{formatMinutes(stats.minutes)}</strong><span>trên {formatMinutes(preferences.dailyGoalMinutes)}</span></div></div><div className="goal-bottom"><Icon name={goalProgress === 1 ? "check" : "spark"} size={16} /><span>{goalProgress === 1 ? "Bạn đã chạm mục tiêu. Làm tốt lắm." : `Còn ${formatMinutes(preferences.dailyGoalMinutes - stats.minutes)} để chạm mục tiêu.`}</span></div></article></section>
       {loading ? <div className="dashboard-skeleton" role="status" aria-label="Đang tải dữ liệu"><div /><div /><div /></div> : data && today && <>
         <section className="metric-grid" aria-label="Tiến độ hôm nay"><article className="panel metric-card"><span className="stat-icon"><Icon name="clock" size={20} /></span><div><span className="small-label">TẬP TRUNG HÔM NAY</span><strong data-testid="today-minutes">{formatMinutes(stats.minutes)}</strong><small>Chỉ tính phiên đã hoàn thành</small></div></article><article className="panel metric-card"><span className="stat-icon"><Icon name="target" size={20} /></span><div><span className="small-label">PHIÊN HOÀN THÀNH</span><strong data-testid="today-sessions">{stats.sessions}<em> phiên</em></strong><small>{stats.doneTasks} nhiệm vụ đã xong hôm nay</small></div></article><article className="panel metric-card"><span className="stat-icon"><Icon name="fire" size={20} /></span><div><span className="small-label">CHUỖI TẬP TRUNG</span><strong>{stats.streak}<em> ngày</em></strong><small>{stats.streak ? "Giữ một nhịp cho mỗi ngày" : "Phiên đầu tiên là một khởi đầu"}</small></div></article></section>
-        <SceneBanner room={data.room} onChange={saveRoom} onEnter={() => setImmersive(true)} onChoose={() => setScenesOpen(true)} />
+        <SceneBanner room={data.room} onChange={saveRoom} onEnter={enterStudyRoom} onChoose={() => setScenesOpen(true)} />
         {widgets.chart && <ProgressCharts sessions={data.sessions} habits={data.habits} checkIns={data.checkIns} today={today} goal={preferences.dailyGoalMinutes} onExport={exportCsv} />}
         {widgets.habits && <HabitMatrix habits={data.habits} checkIns={data.checkIns} today={today} pending={pendingChecks} onToggle={(habit, day, completed) => void checkHabit(habit, day, completed)} onAdd={() => setEditor({ kind: "habit", entity: null })} onEdit={(habit) => setEditor({ kind: "habit", entity: habit })} onDelete={(habit) => deleteEntity("habit", habit)} />}
         {(widgets.tasks || widgets.sound) && <div className={`lower-grid ${!(widgets.tasks && widgets.sound) ? "single" : ""}`}>
@@ -560,7 +593,7 @@ export default function DashboardClient() {
     {confirmation && <ConfirmDialog confirmation={confirmation} onClose={() => setConfirmation(null)} />}
     {logOpen && data && <SessionLogDialog workspaceId={data.workspaceId} onClose={() => setLogOpen(false)} onSaved={(session) => { addSession(session); notice("Đã lưu phiên thủ công vào biểu đồ."); }} />}
     {helpOpen && <Dialog title="Làm ít hơn. Hiện diện nhiều hơn." description="Các điều khiển nhanh cho một không gian yên tĩnh." onClose={() => setHelpOpen(false)}><div className="shortcut-list">{[["Space", "Chạy / tạm dừng đồng hồ"], ["R", "Đặt lại đồng hồ, có xác nhận"], ["1 / 2 / 3", "Tập trung / nghỉ ngắn / nghỉ dài"], ["F", "Mở / đóng phòng tập trung"], ["Esc", "Đóng cửa sổ"], ["?", "Mở hướng dẫn này"]].map(([key, label]) => <div key={key}><kbd>{key}</kbd><span>{label}</span></div>)}</div><p className="privacy-note"><Icon name="book" size={18} /><span><strong>Về dữ liệu của bạn</strong>Dữ liệu được lưu trong không gian riêng tư của trình duyệt này. Bản sao JSON được tạo trực tiếp từ dữ liệu hiện tại, không phụ thuộc máy chủ.</span></p><button className="button-secondary backup-download" type="button" disabled={!data} onClick={exportBackup}><Icon name="arrow" size={16} /> Tải bản sao dữ liệu JSON</button></Dialog>}
-    {scenesOpen && data && <ScenePickerDialog room={data.room} onChange={saveRoom} onClose={() => setScenesOpen(false)} onEnter={() => { setScenesOpen(false); setImmersive(true); }} />}
+    {scenesOpen && data && <ScenePickerDialog room={data.room} onChange={saveRoom} onClose={() => setScenesOpen(false)} onEnter={() => { setScenesOpen(false); enterStudyRoom(); }} />}
     {immersive && data && <StudyRoom room={data.room} onChange={saveRoom} onClose={() => setImmersive(false)} focusProps={focusProps} mixer={mixer} time={clock.time} date={today ? labelDate(today, { weekday: "long", day: "numeric", month: "long" }) : "Hôm nay"} tasksPanel={<div className="task-list">{data.tasks.length ? data.tasks.slice().sort((a, b) => Number(a.completed) - Number(b.completed)).map(renderTask) : <p className="empty-chart-note">Chưa có nhiệm vụ. Thêm một việc ở dashboard rồi quay lại đây nhé.</p>}</div>} />}
     {toast && <div className={`toast-message ${toast.error ? "error" : ""}`} role={toast.error ? "alert" : "status"} aria-live={toast.error ? "assertive" : "polite"}><Icon name={toast.error ? "signal" : "check"} size={18} /><span>{toast.text}</span><button type="button" aria-label="Đóng thông báo" onClick={() => setToast(null)}><Icon name="close" size={15} /></button></div>}
     <span className="sr-only" aria-live="off">{dialogOpen ? "Cửa sổ đang mở" : "Dashboard"}</span>
