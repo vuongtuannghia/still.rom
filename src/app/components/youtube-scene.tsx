@@ -2,11 +2,16 @@
 
 import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import { Icon } from "../icons";
-import { buildYouTubeEmbed, isVideoId, youtubeWatchUrl, type YouTubeScene } from "@/lib/scene-domain";
+import { isVideoId, youtubeWatchUrl, type YouTubeScene } from "@/lib/scene-domain";
 
 type Player = { playVideo: () => void; pauseVideo: () => void; mute: () => void; unMute: () => void; setVolume: (value: number) => void; destroy: () => void; getCurrentTime?: () => number; seekTo?: (seconds: number, allowSeekAhead?: boolean) => void; getVideoData?: () => { video_id?: string } };
+type PlayerOptions = {
+  videoId?: string;
+  playerVars?: Record<string, number | string>;
+  events: { onReady: (event: PlayerEvent) => void; onError: (event: PlayerEvent) => void; onStateChange: (event: PlayerEvent) => void; onAutoplayBlocked: () => void };
+};
 type PlayerEvent = { target: Player; data?: number };
-type YouTubeAPI = { Player: new (element: HTMLElement, options: { events: { onReady: (event: PlayerEvent) => void; onError: (event: PlayerEvent) => void; onStateChange: (event: PlayerEvent) => void; onAutoplayBlocked: () => void } }) => Player };
+type YouTubeAPI = { Player: new (element: HTMLElement, options: PlayerOptions) => Player };
 type YouTubeWindow = Window & { YT?: YouTubeAPI; onYouTubeIframeAPIReady?: () => void };
 let apiPromise: Promise<YouTubeAPI> | null = null;
 function loadYouTubeAPI() {
@@ -84,13 +89,8 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
   useEffect(() => {
     const container = host.current; if (!container) return;
     let disposed = false, becameReady = false, hasPlayed = false;
-    const iframe = document.createElement("iframe");
-    iframe.id = `youtube-${id}`; iframe.title = `Quang cảnh YouTube: ${scene.title}`;
-    iframe.src = buildYouTubeEmbed({ id, title: scene.title, videoId: scene.videoId, startSeconds: scene.startSeconds, playlistId: scene.playlistId }, window.location.origin, loop, muted, standard);
-    iframe.referrerPolicy = "strict-origin-when-cross-origin";
-    iframe.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
-    iframe.allowFullscreen = true; frame.current = iframe; container.appendChild(iframe);
-    const timeout = window.setTimeout(() => { if (!disposed && !becameReady) setApiNotice("Điều khiển nhanh đang tải chậm. Bạn có thể nhấn ▶ trực tiếp trong video, không cần chờ nút phía dưới."); }, 11000);
+    container.replaceChildren();
+    const timeout = window.setTimeout(() => { if (!disposed && !becameReady) setApiNotice("YouTube đang tải chậm. Bạn có thể nhấn ▶ trực tiếp trong video phía trên."); }, 11000);
     function reportVideo(target: Player) {
       try { const videoId = target.getVideoData?.().video_id; if (isVideoId(videoId)) preferences.current.onVideoChange?.(videoId); } catch { /* Playlist may not expose an id immediately. */ }
     }
@@ -103,7 +103,25 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
     let progressTimer = 0;
     void loadYouTubeAPI().then((api) => {
       if (disposed) return;
-      player.current = new api.Player(iframe, { events: {
+      const playerVars: Record<string, number | string> = {
+        enablejsapi: 1,
+        origin: window.location.origin,
+        autoplay: 1,
+        mute: 1,
+        playsinline: 1,
+        controls: 1,
+        rel: 0,
+        hl: "vi",
+        start: scene.startSeconds,
+      };
+      if (!scene.videoId && scene.playlistId) {
+        playerVars.list = scene.playlistId;
+        playerVars.listType = "playlist";
+      } else if (loop && scene.videoId) {
+        playerVars.loop = 1;
+        playerVars.playlist = scene.videoId;
+      }
+      player.current = new api.Player(container, { videoId: scene.videoId || undefined, playerVars, events: {
         onReady: (event) => {
           if (disposed) return;
           becameReady = true; window.clearTimeout(timeout); setReady(true); setApiNotice("");
@@ -129,9 +147,12 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
         onAutoplayBlocked: () => { if (!disposed) { setStatus("Tự phát bị chặn. Nhấn Phát video hoặc ▶ trực tiếp trong video."); setPlaying(false); } },
       } });
     }).catch((reason) => { if (!disposed) setApiNotice(reason instanceof Error ? reason.message : "Bạn có thể nhấn ▶ trực tiếp trong video."); });
+    const saveOnVisibility = () => { if (document.visibilityState === "hidden") rememberProgress(); };
+    document.addEventListener("visibilitychange", saveOnVisibility);
     return () => {
       rememberProgress();
       if (progressTimer) window.clearInterval(progressTimer);
+      document.removeEventListener("visibilitychange", saveOnVisibility);
       disposed = true; window.clearTimeout(timeout);
       try { player.current?.destroy(); } catch { /* Native frame may already be gone. */ }
       player.current = null; frame.current = null; container.replaceChildren();
@@ -146,7 +167,7 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
         player.current.playVideo();
       }
     } else {
-      frame.current?.focus();
+      host.current?.querySelector("iframe")?.focus();
       setApiNotice("Bấm nút ▶ của YouTube trong vùng video phía trên. Nếu khung B chặn YouTube, hãy thử Mở website riêng.");
     }
   }
