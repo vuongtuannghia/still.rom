@@ -759,3 +759,123 @@ body.account-is-locked { overflow: hidden; }
   .study-feature-main h3 { font-size: 16px !important; }
   .study-feature-actions > * { min-width: 0; }
 }
+
+
+/* Final pinned-room card: clean, high-contrast, still-room style */
+.study-feature-room {
+  display: grid !important;
+  position: relative !important;
+  grid-template-columns: auto minmax(0,1fr) auto !important;
+  align-items: center !important;
+  gap: 18px !important;
+  min-height: 112px !important;
+  margin: 18px 0 26px !important;
+  padding: 20px 20px 20px 18px !important;
+  overflow: hidden !important;
+  border: 1px solid #cfcfc8 !important;
+  border-radius: 16px !important;
+  background: #f1f1ec !important;
+  color: #1f1f1d !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,.07) !important;
+}
+.study-feature-room::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 auto 0 0 !important;
+  width: 4px !important;
+  border-radius: 16px 0 0 16px !important;
+  background: #1f1f1d !important;
+}
+.study-feature-room::after {
+  content: "ĐƯỢC GHIM" !important;
+  position: absolute !important;
+  top: 12px !important;
+  right: 14px !important;
+  padding: 4px 7px !important;
+  border: 1px solid #d4d4ce !important;
+  border-radius: 999px !important;
+  background: #e7e7e1 !important;
+  color: #6c6c66 !important;
+  font-size: 7px !important;
+  font-weight: 800 !important;
+  letter-spacing: .12em !important;
+}
+.study-feature-room > * { position: relative !important; z-index: 1 !important; }
+.study-feature-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 36px !important;
+  padding: 0 11px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: #1f1f1d !important;
+  color: #f7f7f3 !important;
+  font-size: 8px !important;
+  font-weight: 800 !important;
+  letter-spacing: .10em !important;
+  box-shadow: none !important;
+}
+.study-feature-main {
+  min-width: 0 !important;
+  padding: 0 62px 0 0 !important;
+}
+.study-feature-main h3 {
+  margin: 0 !important;
+  color: #1f1f1d !important;
+  font-size: 19px !important;
+  line-height: 1.1 !important;
+  font-weight: 650 !important;
+  letter-spacing: -.035em !important;
+}
+.study-feature-main p {
+  margin: 6px 0 0 !important;
+  color: #777770 !important;
+  font-size: 9px !important;
+  line-height: 1.5 !important;
+}
+.study-feature-actions {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+}
+.study-feature-actions > * {
+  min-height: 38px !important;
+  border-radius: 9px !important;
+}
+.study-feature-actions .button-primary {
+  padding: 0 15px !important;
+  border: 1px solid #1f1f1d !important;
+  background: #1f1f1d !important;
+  color: #f7f7f3 !important;
+  font-size: 10px !important;
+  font-weight: 750 !important;
+  box-shadow: 0 6px 16px rgba(0,0,0,.12) !important;
+}
+.study-feature-actions .button-secondary {
+  padding: 0 13px !important;
+  border: 1px solid #d1d0c9 !important;
+  background: #fafaf7 !important;
+  color: #33332f !important;
+  font-size: 10px !important;
+}
+.study-feature-actions .button-secondary:hover {
+  background: #e9e9e3 !important;
+  border-color: #bdbdb5 !important;
+}
+.study-feature-room:hover {
+  border-color: #bdbdb5 !important;
+  box-shadow: 0 14px 34px rgba(0,0,0,.09) !important;
+}
+@media (max-width: 760px) {
+  .study-feature-room {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    min-height: 0 !important;
+    padding: 16px !important;
+  }
+  .study-feature-main { padding-right: 0 !important; }
+  .study-feature-main h3 { font-size: 17px !important; }
+  .study-feature-actions > * { flex: 1 1 auto !important; }
+}
