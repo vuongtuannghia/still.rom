@@ -2,7 +2,7 @@ import { db } from "@/db";
 import { accounts, sharedStudyRooms } from "@/db/schema";
 import { accountForWorkspace } from "@/lib/account-sessions";
 import { apiError, ApiError, getWorkspace, json, readBody, positiveId } from "@/lib/server-api";
-import { isWebAdmin } from "@/lib/study-room";
+import { isAdminAccount } from "@/lib/admin";
 import { eq } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ async function currentAccount(request: Request) {
 export async function PATCH(request: Request, context: { params: Promise<{ roomId: string }> }) {
   try {
     const account = await currentAccount(request);
-    if (!isWebAdmin(account.email)) throw new ApiError(403, "Chỉ quản trị viên mới được ghim phòng học.");
+    if (!isAdminAccount(account)) throw new ApiError(403, "Chỉ quản trị viên mới được ghim phòng học.");
     const roomId = positiveId((await context.params).roomId);
     const body = await readBody(request);
     if (typeof body.pinned !== "boolean") throw new ApiError(400, "Trạng thái ghim không hợp lệ.");
@@ -41,7 +41,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ roomI
 export async function DELETE(request: Request, context: { params: Promise<{ roomId: string }> }) {
   try {
     const account = await currentAccount(request);
-    if (!isWebAdmin(account.email)) throw new ApiError(403, "Chỉ quản trị viên mới được xóa phòng học.");
+    if (!isAdminAccount(account)) throw new ApiError(403, "Chỉ quản trị viên mới được xóa phòng học.");
     const roomId = positiveId((await context.params).roomId);
     const [deleted] = await db.delete(sharedStudyRooms).where(eq(sharedStudyRooms.id, roomId)).returning({ id: sharedStudyRooms.id });
     if (!deleted) throw new ApiError(404, "Không tìm thấy phòng học.");
