@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Icon } from "../icons";
 
@@ -19,6 +20,7 @@ export function ProfileActionMenu({ person, children, placement = "left", self =
   const [relationship, setRelationship] = useState<Relationship>("none");
   const [requestId, setRequestId] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
+  const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
     if (!open || self) return;
@@ -46,12 +48,33 @@ export function ProfileActionMenu({ person, children, placement = "left", self =
 
   useEffect(() => {
     if (!open) return;
+
+    const updatePosition = () => {
+      const trigger = ref.current?.querySelector<HTMLElement>(".profile-action-trigger");
+      if (!trigger) return;
+      const rect = trigger.getBoundingClientRect();
+      const width = 210;
+      const gap = 8;
+      const left = placement === "left"
+        ? Math.max(8, rect.right - width)
+        : Math.min(window.innerWidth - width - 8, rect.left);
+      const top = Math.min(window.innerHeight - 12, rect.bottom + gap);
+      setPopoverPosition({ top, left });
+    };
+
+    updatePosition();
     const close = (event: PointerEvent) => {
       if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
     };
     document.addEventListener("pointerdown", close);
-    return () => document.removeEventListener("pointerdown", close);
-  }, [open]);
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    return () => {
+      document.removeEventListener("pointerdown", close);
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [open, placement, person.id]);
 
   async function sendFriendRequest() {
     if (busy) return;
@@ -144,7 +167,12 @@ export function ProfileActionMenu({ person, children, placement = "left", self =
       {children}
     </span>
 
-    {open && <div className={"profile-action-popover " + placement} role="menu">
+    {open && typeof document !== "undefined" && createPortal(
+      <div
+        className={"profile-action-popover " + placement}
+        role="menu"
+        style={{ position: "fixed", top: popoverPosition.top, left: popoverPosition.left, zIndex: 9999 }}
+      >
       <div className="profile-action-person">
         <strong>{person.name}</strong>
         <span>Tùy chọn nhanh</span>
