@@ -164,6 +164,7 @@ export function PersistentYouTubePlayer() {
         onFallback={() => setHandoff(false)}
         ambientView
         sessionRole="persistent"
+        claimOwnership={!dashboardMode}
       />
       {roomMode && <span className="persistent-youtube-room-label">YouTube · đang phát</span>}
     </div>
