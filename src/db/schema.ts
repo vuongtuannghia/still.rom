@@ -154,6 +154,17 @@ export const friendships = pgTable("friendships", {
   index("friendships_account_b_idx").on(table.accountBId),
 ]);
 
+export const accountBlocks = pgTable("account_blocks", {
+  id: serial("id").primaryKey(),
+  blockerId: uuid("blocker_id").notNull().references(() => accounts.id, { onDelete: "cascade" }),
+  blockedId: uuid("blocked_id").notNull().references(() => accounts.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("account_blocks_pair_idx").on(table.blockerId, table.blockedId),
+  index("account_blocks_blocker_idx").on(table.blockerId, table.createdAt),
+  index("account_blocks_blocked_idx").on(table.blockedId, table.createdAt),
+]);
+
 export const notifications = pgTable("notifications", {
   id: serial("id").primaryKey(),
   accountId: uuid("account_id").notNull().references(() => accounts.id, { onDelete: "cascade" }),
