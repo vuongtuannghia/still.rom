@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { accounts, directMessages, directThreads } from "@/db/schema";
 import { and, asc, desc, eq, inArray, ne, or, isNull } from "drizzle-orm";
+import { friendships } from "@/db/schema";
 import { apiError, json } from "@/lib/server-api";
 import { requireAccount } from "@/lib/community-auth";
 
@@ -36,6 +37,13 @@ export async function GET(request: Request) {
       ? await db.select({ id: accounts.id, name: accounts.name, email: accounts.email, picture: accounts.picture })
           .from(accounts).where(inArray(accounts.id, otherIds))
       : [];
+
+    const friendshipRows = otherIds.length
+      ? await db.select({ a: friendships.accountAId, b: friendships.accountBId })
+          .from(friendships)
+          .where(or(eq(friendships.accountAId, current.id), eq(friendships.accountBId, current.id)))
+      : [];
+    const friendIds = new Set(friendshipRows.flatMap(row => [row.a, row.b]).filter(id => id !== current.id));
     const peopleById = new Map(people.map(person => [person.id, person]));
 
     const threadIds = latestRows.map(row => row.threadId);
@@ -57,7 +65,8 @@ export async function GET(request: Request) {
       const other = peopleById.get(otherId);
       return {
         threadId: row.threadId,
-        other: other ? { ...other, relationship: "conversation" as const } : null,
+        other: other ? { ...other, relationship: friendIds.has(other.id) ? "friend" as const : "conversation" as const } : null,
+        isFriend: friendIds.has(otherId),
         lastBody: row.body,
         lastSenderId: row.senderId,
         lastCreatedAt: row.createdAt.toISOString(),
