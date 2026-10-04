@@ -1,5 +1,7 @@
 import { db } from "@/db";
 import { focusSessions } from "@/db/schema";
+import { requireAccount } from "@/lib/community-auth";
+import { assertAdmin } from "@/lib/admin";
 import { and, eq } from "drizzle-orm";
 import { ApiError, apiError, getWorkspace, json, readBody } from "@/lib/server-api";
 import { isUuid } from "@/lib/focus-domain";
@@ -9,6 +11,10 @@ export async function POST(request: Request) {
   try {
     const body = await readBody(request);
     const workspace = await getWorkspace(request);
+    if (body.manual === true) {
+      const account = await requireAccount(request);
+      assertAdmin(account);
+    }
     if (body.workspaceId !== workspace.id) throw new ApiError(409, "Phiên này thuộc một không gian khác. Hãy tải lại trang.");
     if (!isUuid(body.clientId)) throw new ApiError(400, "Mã phiên không hợp lệ.");
     const seconds = body.durationSeconds;
