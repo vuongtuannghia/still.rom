@@ -82,6 +82,21 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
   }, [progressKey]);
 
   useEffect(() => {
+    if (!player.current || !ready) return;
+    if (muted === userMuted.current) return;
+    userMuted.current = muted;
+    setPlayerMuted(muted);
+    try {
+      if (muted) player.current.mute();
+      else {
+        player.current.setVolume(35);
+        player.current.unMute();
+        player.current.playVideo();
+      }
+    } catch { /* YouTube may require a direct player gesture in restricted autoplay cases. */ }
+  }, [muted, ready]);
+
+  useEffect(() => {
     const container = host.current; if (!container) return;
     let disposed = false, becameReady = false, hasPlayed = false;
     container.replaceChildren();
