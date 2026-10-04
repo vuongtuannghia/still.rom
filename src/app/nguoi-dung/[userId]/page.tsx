@@ -397,7 +397,7 @@ export default function ProfilePage() {
       ? <section className="profile-feed">
           {data.profilePosts.length === 0 ? <div className="profile-empty">Chưa có bài đăng cá nhân.</div> :
             data.profilePosts.map(post => <article className="profile-post-card" key={post.id}>
-              <div className="profile-post-top">{avatar(data.profile.name, displayPicture, "small")}<div><strong>{data.profile.name}</strong><span>{timeLabel(post.createdAt)}</span></div>{isSelf && <button type="button" className="profile-delete-btn" onClick={() => void deletePhotoPost(post.id)}><Icon name="close" size={14} /></button>}</div>
+              <div className="profile-post-top">{!isSelf ? <ProfileActionMenu person={{ id: data.profile.id, name: data.profile.name, picture: displayPicture }}>{avatar(data.profile.name, displayPicture, "small")}</ProfileActionMenu> : avatar(data.profile.name, displayPicture, "small")}<div><strong>{data.profile.name}</strong><span>{timeLabel(post.createdAt)}</span></div>{isSelf && <button type="button" className="profile-delete-btn" onClick={() => void deletePhotoPost(post.id)}><Icon name="close" size={14} /></button>}</div>
               {post.body && <p>{post.body}</p>}
               {post.imageData && <img className="profile-post-image" src={post.imageData} alt="" />}
             </article>)}
@@ -407,7 +407,7 @@ export default function ProfilePage() {
             {activity.length === 0 ? <div className="profile-empty">Chưa có hoạt động để hiển thị.</div> :
               activity.map(item => item.kind === "photo"
                 ? <article className="profile-post-card" key={"photo-" + item.post.id}>
-                    <div className="profile-post-top">{avatar(data.profile.name, displayPicture, "small")}<div><strong>{data.profile.name}</strong><span>{timeLabel(item.post.createdAt)}</span></div></div>
+                    <div className="profile-post-top">{!isSelf ? <ProfileActionMenu person={{ id: data.profile.id, name: data.profile.name, picture: displayPicture }}>{avatar(data.profile.name, displayPicture, "small")}</ProfileActionMenu> : avatar(data.profile.name, displayPicture, "small")}<div><strong>{data.profile.name}</strong><span>{timeLabel(item.post.createdAt)}</span></div></div>
                     {item.post.body && <p>{item.post.body}</p>}
                     {item.post.imageData && <img className="profile-post-image" src={item.post.imageData} alt="" />}
                   </article>
