@@ -188,7 +188,7 @@ export function DirectMessagesPage({ initialUserId }: { initialUserId?: string }
   async function unfriend(userId: string) {
     if (!window.confirm("Hủy kết bạn với tài khoản này?")) return;
     try {
-      const response = await fetch("/api/friends?userId=" + encodeURIComponent(userId), { method: "DELETE", credentials: "same-origin" });
+      const response = await fetch("/api/friends/" + encodeURIComponent(userId), { method: "DELETE", credentials: "same-origin" });
       const payload = await response.json().catch(() => ({})) as { error?: string };
       if (!response.ok) throw new Error(payload.error || "Không thể hủy kết bạn.");
       await loadFriends();
