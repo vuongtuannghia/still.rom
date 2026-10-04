@@ -418,3 +418,51 @@
 @media (max-width: 760px) {
   .scene-banner-youtube-preview { min-height: 235px; }
 }
+
+
+/* YouTube preview: keep the player unobstructed and the same 16:9 geometry as the room player. */
+.scene-banner-youtube-preview {
+  position: relative !important;
+  display: block !important;
+  min-height: 0 !important;
+  aspect-ratio: 16 / 9 !important;
+  overflow: hidden !important;
+  background: #111 !important;
+}
+.scene-banner-youtube-preview > iframe {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  border: 0 !important;
+}
+.scene-banner-youtube-preview .scene-preview-caption {
+  top: 12px !important;
+  right: 12px !important;
+  bottom: auto !important;
+  left: auto !important;
+  width: min(270px, calc(100% - 24px)) !important;
+  grid-template-columns: minmax(0,1fr) !important;
+  pointer-events: none !important;
+  padding: 8px 10px !important;
+  opacity: .9 !important;
+  background: rgba(22,22,20,.82) !important;
+  backdrop-filter: blur(7px) !important;
+}
+.scene-banner-youtube-preview .scene-preview-caption > div {
+  min-width: 0 !important;
+  grid-column: 1 !important;
+}
+.scene-banner-youtube-preview .scene-preview-caption > button {
+  display: none !important;
+}
+.scene-banner-youtube-preview .scene-preview-caption > span {
+  font-size: 7px !important;
+}
+.scene-banner-youtube-preview .scene-preview-caption > strong {
+  font-size: 11px !important;
+}
+@media (max-width: 760px) {
+  .scene-banner-youtube-preview { aspect-ratio: 16 / 9 !important; min-height: 0 !important; }
+}
