@@ -47,7 +47,7 @@ export async function GET(request: Request) {
       week: periodStart("week", now),
       month: periodStart("month", now),
     };
-    const earliest = starts.month;
+    const earliest = new Date(Math.min(starts.day.getTime(), starts.week.getTime(), starts.month.getTime()));
 
     const rows = await db.select({
       accountId: accounts.id,
