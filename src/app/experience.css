@@ -466,3 +466,88 @@
 @media (max-width: 760px) {
   .scene-banner-youtube-preview { aspect-ratio: 16 / 9 !important; min-height: 0 !important; }
 }
+
+
+/* Final YouTube preview rule: absolutely nothing may sit above the iframe. */
+.scene-banner-youtube-preview-wrap {
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  overflow: hidden !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  background: #111 !important;
+}
+.scene-banner-youtube-preview-wrap .scene-banner-youtube-preview {
+  position: relative !important;
+  min-height: 0 !important;
+  height: auto !important;
+  aspect-ratio: 16 / 9 !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.scene-banner-youtube-preview-wrap .scene-banner-youtube-preview > .youtube-scene-player {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  overflow: hidden !important;
+  background: #000 !important;
+}
+.scene-banner-youtube-preview-wrap .scene-banner-youtube-preview .youtube-stage {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  aspect-ratio: auto !important;
+  overflow: hidden !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.scene-banner-youtube-preview-wrap .scene-banner-youtube-preview .youtube-stage > iframe {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  border: 0 !important;
+}
+.scene-banner-youtube-preview-wrap .scene-preview-meta {
+  display: flex !important;
+  min-width: 0 !important;
+  min-height: 38px !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  padding: 8px 11px !important;
+  border-top: 1px solid rgba(255,255,255,.12) !important;
+  background: #171715 !important;
+  color: #f5f5ef !important;
+}
+.scene-banner-youtube-preview-wrap .scene-preview-meta > span {
+  color: #a7a79f !important;
+  font-size: 7px !important;
+  font-weight: 700 !important;
+  letter-spacing: .10em !important;
+}
+.scene-banner-youtube-preview-wrap .scene-preview-meta > strong {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  color: #fff !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
