@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { accounts, meetRoomComments, sharedStudyRooms } from "@/db/schema";
+import { accounts, meetRoomComments, notifications, sharedStudyRooms } from "@/db/schema";
 import { and, asc, eq } from "drizzle-orm";
 import { ApiError, apiError, json, positiveId, readBody } from "@/lib/server-api";
 import { requireAccount } from "@/lib/community-auth";
@@ -32,6 +32,12 @@ export async function POST(request: Request, context: { params: Promise<{ roomId
       parentId = value;
     }
     const [comment] = await db.insert(meetRoomComments).values({ roomId, accountId: account.id, parentId, body: body.body.trim() }).returning();
+    if (parentId) {
+      const [parent] = await db.select({ accountId: meetRoomComments.accountId }).from(meetRoomComments).where(eq(meetRoomComments.id, parentId)).limit(1);
+      if (parent && parent.accountId !== account.id) {
+        await db.insert(notifications).values({ accountId: parent.accountId, actorId: account.id, type: "comment_reply", title: "Có người trả lời bạn", body: account.name + " đã trả lời bình luận của bạn." });
+      }
+    }
     return json({ comment: { ...comment, createdAt: comment.createdAt.toISOString(), authorId: account.id, authorName: account.name, authorPicture: account.picture } }, 201);
   } catch (error) { return apiError(error); }
 }
