@@ -163,7 +163,7 @@ export function ForumPage() {
       <span className="community-kicker light"><span /> STILL / DISCUSS</span>
       <h2>Nói chuyện.<br /><em>Hỏi nhau. Học cùng nhau.</em></h2>
       <p>Chia sẻ kinh nghiệm học, đặt câu hỏi, rủ nhau vào phòng học và kết nối với những người cùng nhịp.</p>
-      <div className="forum-hero-actions"><a className="button-primary" href="/hoc-chung"><Icon name="radio" size={15} /> Phòng học chung</a><a className="forum-hero-link" href="/tin-nhan"><Icon name="arrow" size={14} /> Tin nhắn riêng</a></div>
+      <div className="forum-hero-actions"><a className="button-primary" href="/hoc-chung"><Icon name="radio" size={15} /> Phòng học chung</a></div>
     </section>
 
     <div className="forum-layout">
@@ -191,7 +191,6 @@ export function ForumPage() {
 
       <aside className="forum-sidebar">
         <section className="forum-side-card dark-card"><span className="small-label">CỘNG ĐỒNG</span><strong>Học đều.<br />Nói thật.</strong><p>Không spam. Không quảng cáo. Tôn trọng nhịp học của người khác.</p></section>
-        <a className="forum-side-card side-link-card" href="/tin-nhan"><div><span className="small-label">TIN NHẮN RIÊNG</span><strong>Nhắn với bạn bè</strong><span>Tìm người bằng email chính xác hoặc chọn bạn bè.</span></div><Icon name="arrow" size={16} /></a>
         <a className="forum-side-card side-link-card" href="/hoc-chung"><div><span className="small-label">GOOGLE MEET</span><strong>Vào phòng học</strong><span>Bật camera và học cùng mọi người.</span></div><Icon name="radio" size={16} /></a>
       </aside>
     </div>
