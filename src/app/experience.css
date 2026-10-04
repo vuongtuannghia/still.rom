@@ -696,3 +696,57 @@ html.stillroom-room-player-active .persistent-youtube-slot-player {
     height: calc(100dvh - 12px) !important;
   }
 }
+
+
+/* Single YouTube iframe shared by dashboard preview and study-room. */
+.shared-youtube-player {
+  position: fixed !important;
+  overflow: hidden !important;
+  border-radius: 12px !important;
+  background: #050505 !important;
+  box-shadow: 0 16px 48px rgba(0,0,0,.2) !important;
+  pointer-events: auto !important;
+}
+.shared-youtube-player .youtube-scene-player {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: inherit !important;
+  overflow: hidden !important;
+  background: #000 !important;
+}
+.shared-youtube-player .youtube-stage {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  aspect-ratio: auto !important;
+  border-radius: inherit !important;
+  overflow: hidden !important;
+}
+.shared-youtube-player .youtube-stage > iframe {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  border: 0 !important;
+}
+.shared-youtube-player .youtube-player-info {
+  display: none !important;
+}
+.shared-youtube-player-dashboard {
+  z-index: 32 !important;
+}
+.shared-youtube-player-room {
+  z-index: 1002 !important;
+}
+@media (max-width: 760px) {
+  .shared-youtube-player { border-radius: 10px !important; }
+}
