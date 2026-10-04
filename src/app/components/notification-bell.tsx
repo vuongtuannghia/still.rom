@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "../icons";
+import { ProfileActionMenu } from "./profile-action-menu";
 
 type NotificationItem = {
   id: number;
@@ -85,7 +86,7 @@ export function NotificationBell() {
               else if (item.type === "friend_request" || item.type === "friend_accepted") window.location.href = item.actorId ? "/nguoi-dung/" + encodeURIComponent(item.actorId) : "/tin-nhan";
               else if (item.actorId) window.location.href = "/nguoi-dung/" + encodeURIComponent(item.actorId);
             }}>
-            <span className="notification-avatar">{item.actorPicture ? <img src={item.actorPicture} alt="" /> : (item.actorName?.slice(0,1) ?? "!")}</span>
+            {item.actorId && item.actorName ? <ProfileActionMenu person={{ id: item.actorId, name: item.actorName, picture: item.actorPicture }} placement="left"><span className="notification-avatar">{item.actorPicture ? <img src={item.actorPicture} alt="" /> : (item.actorName.slice(0,1) ?? "!")}</span></ProfileActionMenu> : <span className="notification-avatar">{item.actorPicture ? <img src={item.actorPicture} alt="" /> : (item.actorName?.slice(0,1) ?? "!")}</span>}
             <span><strong>{item.title}</strong><small>{item.body ?? ""}</small><em>{timeLabel(item.createdAt)}</em></span>
           </button>)
         }
