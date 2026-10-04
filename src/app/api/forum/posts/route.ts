@@ -9,13 +9,13 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     const rows = await db.select({
-      id: forumPosts.id, title: forumPosts.title, body: forumPosts.body, meetRoomId: forumPosts.meetRoomId,
+      id: forumPosts.id, title: forumPosts.title, body: forumPosts.body, meetRoomId: forumPosts.meetRoomId, pinned: forumPosts.pinned,
       createdAt: forumPosts.createdAt, updatedAt: forumPosts.updatedAt,
-      authorId: accounts.id, authorName: accounts.name, authorPicture: accounts.picture,
+      authorId: accounts.id, authorName: accounts.name, authorEmail: accounts.email, authorPicture: accounts.picture,
       meetTitle: sharedStudyRooms.title, meetUrl: sharedStudyRooms.meetUrl,
     }).from(forumPosts).innerJoin(accounts, eq(accounts.id, forumPosts.accountId))
       .leftJoin(sharedStudyRooms, eq(sharedStudyRooms.id, forumPosts.meetRoomId))
-      .orderBy(desc(forumPosts.createdAt)).limit(50);
+      .orderBy(desc(forumPosts.pinned), desc(forumPosts.createdAt)).limit(50);
     const ids = rows.map(row => row.id);
     const comments = ids.length ? await db.select({ postId: forumComments.postId })
       .from(forumComments).where(inArray(forumComments.postId, ids)) : [];
@@ -40,6 +40,6 @@ export async function POST(request: Request) {
       meetRoomId = value;
     }
     const [post] = await db.insert(forumPosts).values({ accountId: account.id, title, body: body.body.trim(), meetRoomId }).returning();
-    return json({ post: { id: post.id, title: post.title, body: post.body, meetRoomId: post.meetRoomId, createdAt: post.createdAt.toISOString(), updatedAt: post.updatedAt.toISOString(), authorId: account.id, authorName: account.name, authorPicture: account.picture, commentCount: 0 } }, 201);
+    return json({ post: { id: post.id, title: post.title, body: post.body, meetRoomId: post.meetRoomId, createdAt: post.createdAt.toISOString(), updatedAt: post.updatedAt.toISOString(), authorId: account.id, authorName: account.name, authorEmail: account.email, authorPicture: account.picture, pinned: false, commentCount: 0 } }, 201);
   } catch (error) { return apiError(error); }
 }
