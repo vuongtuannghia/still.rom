@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { YouTubeScenePlayer } from "./youtube-scene";
 import type { YouTubeScene } from "@/lib/scene-domain";
 
@@ -31,10 +31,29 @@ function isInternalDashboard(pathname: string | null) {
 
 export function PersistentYouTubePlayer() {
   const pathname = usePathname();
+  const router = useRouter();
   const [persisted, setPersisted] = useState<Persisted | null>(null);
   const [handoff, setHandoff] = useState(false);
   const [roomRect, setRoomRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
   const lastRoute = useRef(pathname);
+
+  useEffect(() => {
+    const onClick = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const target = (event.target as Element | null)?.closest("a");
+      if (!target || target.target === "_blank" || target.hasAttribute("download")) return;
+      const href = target.getAttribute("href");
+      if (!href || href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:")) return;
+      try {
+        const url = new URL(href, window.location.href);
+        if (url.origin !== window.location.origin) return;
+        event.preventDefault();
+        router.push(url.pathname + url.search + url.hash);
+      } catch {}
+    };
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, [router]);
 
   useEffect(() => {
     const sync = () => setPersisted(readPersisted());
