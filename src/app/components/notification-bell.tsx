@@ -79,7 +79,12 @@ export function NotificationBell() {
       <div className="notification-head"><div><span className="small-label">CẬP NHẬT</span><strong>Thông báo</strong></div><button type="button" onClick={() => void markAllRead()} disabled={!payload?.unreadCount}>Đọc hết</button></div>
       <div className="notification-list">
         {!payload?.notifications.length ? <div className="notification-empty">Chưa có thông báo.</div> :
-          payload.notifications.slice(0, 20).map(item => <button type="button" key={item.id} className={item.readAt ? "notification-item" : "notification-item unread"} onClick={() => { void markRead(item.id); if (item.type === "message" || item.type === "friend_request" || item.type === "friend_accepted") window.location.href = "/tin-nhan"; }}>
+          payload.notifications.slice(0, 20).map(item => <button type="button" key={item.id} className={item.readAt ? "notification-item" : "notification-item unread"} onClick={() => {
+              void markRead(item.id);
+              if (item.type === "message") window.location.href = item.actorId ? "/tin-nhan?user=" + encodeURIComponent(item.actorId) : "/tin-nhan";
+              else if (item.type === "friend_request" || item.type === "friend_accepted") window.location.href = item.actorId ? "/nguoi-dung/" + encodeURIComponent(item.actorId) : "/tin-nhan";
+              else if (item.actorId) window.location.href = "/nguoi-dung/" + encodeURIComponent(item.actorId);
+            }}>
             <span className="notification-avatar">{item.actorPicture ? <img src={item.actorPicture} alt="" /> : (item.actorName?.slice(0,1) ?? "!")}</span>
             <span><strong>{item.title}</strong><small>{item.body ?? ""}</small><em>{timeLabel(item.createdAt)}</em></span>
           </button>)
