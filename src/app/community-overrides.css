@@ -141,3 +141,6 @@
   .community-shell .main-shell{margin-left:0!important;padding-inline:13px!important}
   .community-shell .page-content{width:100%!important;max-width:none!important;padding:16px 0 35px!important}
 }
+
+.friend-add-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;margin:12px 13px 0}.friend-add-heading>div{display:flex;min-width:0;flex-direction:column;gap:3px}.friend-add-heading strong{font-size:11px}.friend-add-heading>span{color:#999;font-size:7px;text-align:right}
+@media(max-width:600px){.friend-add-heading{margin-inline:10px}.friend-add-heading>span{display:none}}
