@@ -67,10 +67,20 @@ export function SharedStudyPage() {
     try {
       const response = await fetch(`/api/study-rooms/${roomId}/comments`, { cache: "no-store" });
       if (!response.ok) throw new Error();
-      setComments((current) => ({ ...current, [roomId]: await response.json() as Comment[] }));
+      const next = await response.json() as Comment[];
+      setComments((current) => ({ ...current, [roomId]: next }));
     } catch {
       setNotice("Chưa tải được bình luận.");
     } finally { setLoadingComments(null); }
+  }
+
+  async function refreshComments(roomId: number) {
+    try {
+      const response = await fetch(`/api/study-rooms/${roomId}/comments`, { cache: "no-store" });
+      if (!response.ok) throw new Error();
+      const next = await response.json() as Comment[];
+      setComments((current) => ({ ...current, [roomId]: next }));
+    } catch {}
   }
 
   async function addRoom() {
@@ -156,7 +166,7 @@ export function SharedStudyPage() {
       <div className="study-feature-badge"><Icon name="target" size={13} /> PHÒNG HỌC CHÍNH</div>
       <div className="study-feature-main"><h3>{pinned.title}</h3><p>{pinned.creatorName} · được quản trị viên ghim</p></div>
       <div className="study-feature-actions"><a className="button-primary" href={pinned.meetUrl} target="_blank" rel="noreferrer"><Icon name="radio" size={15} /> Vào học</a><button className="button-secondary" type="button" onClick={() => void toggleComments(pinned.id)}><Icon name="book" size={14} /> Bình luận</button>{account?.email === ADMIN && <button className="button-secondary" type="button" onClick={() => void pin(pinned.id, false)}>Bỏ ghim</button>}</div>
-      {openComments === pinned.id && <CommentThread account={account} roomId={pinned.id} comments={comments[pinned.id] ?? []} loading={loadingComments === pinned.id} draft={drafts[pinned.id] ?? ""} replyId={replyingTo[pinned.id] ?? null} onDraft={(value) => setDrafts((current) => ({ ...current, [pinned.id]: value }))} onReply={(id) => setReplyingTo((current) => ({ ...current, [pinned.id]: id }))} onSend={() => void addComment(pinned.id)} onRefresh={() => void (async () => { try { const response = await fetch(`/api/study-rooms/${pinned.id}/comments`, { cache: "no-store" }); if (response.ok) setComments((current) => ({ ...current, [pinned.id]: await response.json() as Comment[] })); } catch {} })()} />}</section>}
+      {openComments === pinned.id && <CommentThread account={account} roomId={pinned.id} comments={comments[pinned.id] ?? []} loading={loadingComments === pinned.id} draft={drafts[pinned.id] ?? ""} replyId={replyingTo[pinned.id] ?? null} onDraft={(value) => setDrafts((current) => ({ ...current, [pinned.id]: value }))} onReply={(id) => setReplyingTo((current) => ({ ...current, [pinned.id]: id }))} onSend={() => void addComment(pinned.id)} onRefresh={() => void refreshComments(pinned.id)} />}</section>}
 
     <section className="study-room-list-section">
       <div className="community-section-heading"><div><span className="small-label">MỌI NGƯỜI ĐANG HỌC</span><h3>Phòng đang mở</h3></div><span>Chia sẻ một link · người khác vào học</span></div>
@@ -167,7 +177,7 @@ export function SharedStudyPage() {
           <div className="study-room-person"><span className="community-avatar">{avatar(room.creatorName, null)}</span><div><h4>{room.title}</h4><p>{room.creatorName}</p></div></div>
           <div className="study-room-card-actions"><a className="button-primary" href={room.meetUrl} target="_blank" rel="noreferrer"><Icon name="radio" size={14} /> Vào học</a><button className="button-secondary" type="button" onClick={() => void toggleComments(room.id)}><Icon name="book" size={14} /> Bình luận{comments[room.id]?.length ? ` · ${comments[room.id].length}` : ""}</button></div>
           {account?.email === ADMIN && <div className="admin-room-actions"><button type="button" onClick={() => void pin(room.id, true)}><Icon name="target" size={13} /> Ghim</button><button type="button" onClick={() => void remove(room.id)}><Icon name="close" size={13} /> Xóa</button></div>}
-          {openComments === room.id && <CommentThread account={account} roomId={room.id} comments={comments[room.id] ?? []} loading={loadingComments === room.id} draft={drafts[room.id] ?? ""} replyId={replyingTo[room.id] ?? null} onDraft={(value) => setDrafts((current) => ({ ...current, [room.id]: value }))} onReply={(id) => setReplyingTo((current) => ({ ...current, [room.id]: id }))} onSend={() => void addComment(room.id)} onRefresh={() => void (async () => { try { const response = await fetch(`/api/study-rooms/${room.id}/comments`, { cache: "no-store" }); if (response.ok) setComments((current) => ({ ...current, [room.id]: await response.json() as Comment[] })); } catch {} })()} />}</article>)}</div>}
+          {openComments === room.id && <CommentThread account={account} roomId={room.id} comments={comments[room.id] ?? []} loading={loadingComments === room.id} draft={drafts[room.id] ?? ""} replyId={replyingTo[room.id] ?? null} onDraft={(value) => setDrafts((current) => ({ ...current, [room.id]: value }))} onReply={(id) => setReplyingTo((current) => ({ ...current, [room.id]: id }))} onSend={() => void addComment(room.id)} onRefresh={() => void refreshComments(room.id)} />}</article>)}</div>}
 
     </section>
 
