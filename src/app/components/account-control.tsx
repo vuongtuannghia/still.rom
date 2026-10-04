@@ -214,7 +214,7 @@ export function AccountControl({ data, onChanged }: {
       <a className="account-user-meta account-profile-link" href={"/nguoi-dung/" + activeAccount.id}><strong>{activeAccount.name}</strong><span>{activeAccount.email}</span>{activeAccount.role === "admin" && <b className="account-admin-badge">♛ QUẢN TRỊ VIÊN</b>}<small><Icon name="check" size={12} /> Đã sao lưu tiến độ</small></a>
       <button type="button" className="button-secondary account-logout" disabled={busy} onClick={() => void logout()}>{busy ? "Đang đăng xuất…" : "Đăng xuất"}</button>
     </div> : <div className="account-sidebar-login">
-      <div><strong>Sao lưu tiến độ</strong><span>{configured ? "Đăng nhập Google để dùng trên mọi thiết bị." : "Cần cấu hình Google OAuth để bật đăng nhập."}</span></div>
+      <div><strong>Sao lưu tiến độ</strong><span>{configured ? "Đăng nhập bằng Google để dùng trên mọi thiết bị." : "Cần cấu hình Google OAuth để bật đăng nhập."}</span><small className="account-google-disclosure">Xác thực được xử lý bởi Google OAuth. still.room không yêu cầu hoặc lưu mật khẩu Google.</small></div>
       {configured && <div ref={buttonRef} className="google-signin-button" aria-label="Đăng nhập bằng Google" />}
       {!configured && <button type="button" className="button-secondary" disabled={busy} onClick={rememberGuestBackup}>Đăng nhập Google</button>}
     </div>}
