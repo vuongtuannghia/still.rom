@@ -181,10 +181,7 @@ export function DirectMessagesPage() {
 
     {!account ? <div className="messages-login-card"><div className="messages-big-icon"><Icon name="signal" size={23} /></div><h2>Đăng nhập để nhắn tin.</h2><p>Kết bạn, nhận tin nhắn chờ và trò chuyện riêng.</p></div> :
       <div className="messages-inbox-page">
-        <header className="messages-inbox-hero">
-          <div><span className="community-kicker"><span /> STILL / MESSAGES</span><h2>Tin nhắn.</h2><p>Bạn bè ở hộp thư chính. Người lạ sẽ đi vào Tin nhắn chờ.</p></div>
-          <div className="messages-hero-mark">01<br />/—/</div>
-        </header>
+
 
         <div className="messages-inbox-layout">
           <main className="messages-inbox-main">
