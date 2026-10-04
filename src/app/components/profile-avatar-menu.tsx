@@ -42,7 +42,7 @@ export function ProfileAvatarMenu({
     </button>
     {open && <div className="avatar-action-popover" onClick={event => event.stopPropagation()}>
       <strong>{name}</strong>
-      {!self && <button type="button" onClick={() => router.push("/tin-nhan?user=" + encodeURIComponent(id))}><Icon name="arrow" size={13} /> Nhắn tin riêng</button>}
+      {!self && <button type="button" onClick={() => router.push("/tin-nhan/" + encodeURIComponent(id))}><Icon name="arrow" size={13} /> Nhắn tin riêng</button>}
       <button type="button" onClick={() => router.push("/nguoi-dung/" + encodeURIComponent(id))}><Icon name="sliders" size={13} /> Xem trang cá nhân</button>
     </div>}
   </div>;
