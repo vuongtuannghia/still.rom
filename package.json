@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "if [ -n \"$DATABASE_URL\" ]; then npx drizzle-kit push --force; fi && next start",
+    "start": "node scripts/start-with-supabase.mjs",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit"
   },
