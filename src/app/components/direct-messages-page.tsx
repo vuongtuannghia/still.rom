@@ -104,18 +104,30 @@ export function DirectMessagesPage() {
     if (!account || (!id && !email)) return;
     (async () => {
       try {
-        const response = await fetch(`/api/messages/users?q=${encodeURIComponent(email)}`, { cache: "no-store", credentials: "same-origin" });
-        if (response.ok) {
-          const found = (await response.json() as Person[]).find(item => !id || item.id === id);
-          if (found) {
-            if (!found.relationship) found.relationship = "lookup";
-            void openConversation(found);
-            return;
-          }
-        }
         if (id) {
           const thread = threads.find(item => item.other.id === id);
-          if (thread) void openConversation({ ...thread.other, relationship: "conversation" });
+          if (thread) {
+            void openConversation({ ...thread.other, relationship: thread.isFriend ? "friend" : "conversation" });
+            return;
+          }
+          const profileResponse = await fetch(`/api/users/${encodeURIComponent(id)}`, { cache: "no-store", credentials: "same-origin" });
+          if (profileResponse.ok) {
+            const profile = await profileResponse.json() as { profile: { id: string; name: string; email: string | null; picture: string | null } };
+            if (profile.profile) {
+              void openConversation({ id: profile.profile.id, name: profile.profile.name, email: profile.profile.email ?? "", picture: profile.profile.picture, relationship: "lookup" });
+              return;
+            }
+          }
+        }
+        if (email) {
+          const response = await fetch(`/api/messages/users?q=${encodeURIComponent(email)}`, { cache: "no-store", credentials: "same-origin" });
+          if (response.ok) {
+            const found = (await response.json() as Person[]).find(item => !id || item.id === id);
+            if (found) {
+              if (!found.relationship) found.relationship = "lookup";
+              void openConversation(found);
+            }
+          }
         }
       } catch {}
     })();
