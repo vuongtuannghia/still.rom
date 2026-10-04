@@ -35,10 +35,19 @@ export async function GET(request: Request) {
 
     const people = otherIds.length
       ? await db.select({ id: accounts.id, name: accounts.name, email: accounts.email, picture: accounts.customPicture, googlePicture: accounts.picture })
-          .from(accounts).where(inArray(accounts.id, otherIds))
+          .from(accounts).where(inArray(accounts.id, availableOtherIds))
       : [];
 
-    const friendshipRows = otherIds.length
+    const blockRows = otherIds.length
+      ? await db.select({ blockerId: accountBlocks.blockerId, blockedId: accountBlocks.blockedId })
+          .from(accountBlocks)
+          .where(or(eq(accountBlocks.blockerId, current.id), eq(accountBlocks.blockedId, current.id)))
+      : [];
+    const blockedIds = new Set(blockRows.flatMap(row => [row.blockerId, row.blockedId]).filter(id => id !== current.id));
+
+    const availableOtherIds = otherIds.filter(id => !blockedIds.has(id));
+
+    const friendshipRows = availableOtherIds.length
       ? await db.select({ a: friendships.accountAId, b: friendships.accountBId })
           .from(friendships)
           .where(or(eq(friendships.accountAId, current.id), eq(friendships.accountBId, current.id)))
@@ -46,7 +55,8 @@ export async function GET(request: Request) {
     const friendIds = new Set(friendshipRows.flatMap(row => [row.a, row.b]).filter(id => id !== current.id));
     const peopleById = new Map(people.map(person => [person.id, person]));
 
-    const threadIds = latestRows.map(row => row.threadId);
+    const visibleRows = latestRows.filter(row => !blockedIds.has(row.accountAId === current.id ? row.accountBId : row.accountAId));
+    const threadIds = visibleRows.map(row => row.threadId);
     const unreadRows = threadIds.length
       ? await db.select({ threadId: directMessages.threadId, count: directMessages.id })
           .from(directMessages)
@@ -60,7 +70,7 @@ export async function GET(request: Request) {
     const unreadCounts = new Map<number, number>();
     for (const row of unreadRows) unreadCounts.set(row.threadId, (unreadCounts.get(row.threadId) ?? 0) + 1);
 
-    return json(latestRows.map(row => {
+    return json(visibleRows.map(row => {
       const otherId = row.accountAId === current.id ? row.accountBId : row.accountAId;
       const other = peopleById.get(otherId);
       return {
