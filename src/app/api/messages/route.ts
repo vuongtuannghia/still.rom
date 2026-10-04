@@ -18,19 +18,11 @@ async function getOther(recipientId: string, currentId: string) {
 
 async function canMessage(currentId: string, otherId: string) {
   if (currentId === otherId) return false;
-  const [blocked] = await db.select({ id: accountBlocks.id }).from(accountBlocks)
-    .where(or(
-      and(eq(accountBlocks.blockerId, currentId), eq(accountBlocks.blockedId, otherId)),
-      and(eq(accountBlocks.blockerId, otherId), eq(accountBlocks.blockedId, currentId))
-    )).limit(1);
-  if (blocked) return false;
-
-  const [a, b] = orderedAccountPair(currentId, otherId);
-  const [friend] = await db.select({ id: friendships.id }).from(friendships)
-    .where(and(eq(friendships.accountAId, a), eq(friendships.accountBId, b))).limit(1);
-  // Friends and non-friends can both message. The client separates non-friend threads
-  // into the "Tin nhắn chờ" inbox to make unsolicited conversations visible.
-  return Boolean(friend) || Boolean(otherId);
+  const [blocked] = await db.select({ id: accountBlocks.id }).from(accountBlocks).where(or(
+    and(eq(accountBlocks.blockerId, currentId), eq(accountBlocks.blockedId, otherId)),
+    and(eq(accountBlocks.blockerId, otherId), eq(accountBlocks.blockedId, currentId)),
+  )).limit(1);
+  return !blocked;
 }
 
 export async function GET(request: Request) {
@@ -42,7 +34,7 @@ export async function GET(request: Request) {
     if (!validAccountId(recipientId)) throw new ApiError(400, "Người nhận không hợp lệ.");
     const other = await getOther(recipientId, current.id);
     if (!(await canMessage(current.id, other.id))) {
-      throw new ApiError(403, "Không thể mở cuộc trò chuyện.");
+      throw new ApiError(403, "Không thể mở cuộc trò chuyện với tài khoản này.");
     }
 
     const [a, b] = orderedAccountPair(current.id, other.id);
@@ -72,7 +64,7 @@ export async function POST(request: Request) {
     if (!validAccountId(recipientId)) throw new ApiError(400, "Người nhận không hợp lệ.");
     const other = await getOther(recipientId as string, current.id);
     if (!(await canMessage(current.id, other.id))) {
-      throw new ApiError(403, "Không thể gửi tin nhắn.");
+      throw new ApiError(403, "Bạn không thể nhắn tin với tài khoản này.");
     }
     const messageBody = typeof body.body === "string" ? body.body.trim() : "";
     if (!messageBody || messageBody.length > 4000) {
