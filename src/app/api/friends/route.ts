@@ -130,28 +130,3 @@ export async function DELETE(request: Request) {
     return apiError(error);
   }
 }
-
-
-export async function DELETE(request: Request) {
-  try {
-    const current = await requireAccount(request);
-    const userId = new URL(request.url).searchParams.get("userId") ?? "";
-    if (!/^[0-9a-f-]{36}$/i.test(userId) || userId === current.id) {
-      throw new ApiError(400, "Tài khoản không hợp lệ.");
-    }
-    const [a, b] = current.id < userId ? [current.id, userId] : [userId, current.id];
-    const [friendship] = await db.select({ id: friendships.id }).from(friendships)
-      .where(and(eq(friendships.accountAId, a), eq(friendships.accountBId, b))).limit(1);
-    if (!friendship) throw new ApiError(404, "Hai tài khoản không phải bạn bè.");
-    await db.transaction(async tx => {
-      await tx.delete(friendships).where(eq(friendships.id, friendship.id));
-      await tx.delete(notifications).where(or(
-        and(eq(notifications.accountId, current.id), eq(notifications.actorId, userId), eq(notifications.type, "friend_accepted")),
-        and(eq(notifications.accountId, userId), eq(notifications.actorId, current.id), eq(notifications.type, "friend_accepted"))
-      ));
-    });
-    return json({ ok: true });
-  } catch (error) {
-    return apiError(error);
-  }
-}
