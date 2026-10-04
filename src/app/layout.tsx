@@ -5,6 +5,7 @@ import "./experience.css";
 import "./edge-video.css";
 import "./account.css";
 import "./ui-fixes.css";
+import "./community.css";
 
 export const metadata: Metadata = {
   title: "still. room — Tập trung & tiến độ",
