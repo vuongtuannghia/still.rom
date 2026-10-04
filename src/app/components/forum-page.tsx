@@ -178,13 +178,13 @@ export function ForumPage() {
 
         {pinnedPosts.length > 0 && <section className="forum-pinned-list">
           <div className="forum-section-title"><div><span>ĐƯỢC GHIM</span><h3>Thông tin nổi bật</h3></div><small>Quản trị viên chọn</small></div>
-          {pinnedPosts.map(post => <PostCard key={post.id} post={post} account={account} comments={comments[post.id] ?? []} router={router} expanded={expandedPost === post.id} draft={drafts[post.id] ?? ""} replyId={replyTo[post.id] ?? null} onOpen={() => void openComments(post.id)} onDraft={text => setDrafts(current => ({ ...current, [post.id]: text }))} onReply={id => setReplyTo(current => ({ ...current, [post.id]: id }))} onSend={() => void addComment(post.id)} onPin={pinned => void pinPost(post, pinned)} onDelete={() => void deletePost(post)} router={router} />)}
+          {pinnedPosts.map(post => <PostCard key={post.id} post={post} account={account} comments={comments[post.id] ?? []} router={router} expanded={expandedPost === post.id} draft={drafts[post.id] ?? ""} replyId={replyTo[post.id] ?? null} onOpen={() => void openComments(post.id)} onDraft={text => setDrafts(current => ({ ...current, [post.id]: text }))} onReply={id => setReplyTo(current => ({ ...current, [post.id]: id }))} onSend={() => void addComment(post.id)} onPin={pinned => void pinPost(post, pinned)} onDelete={() => void deletePost(post)} />)}
         </section>}
 
         <section className="forum-feed">
           <div className="forum-section-title"><div><span>MỚI NHẤT</span><h3>Cuộc trò chuyện</h3></div><small>{posts.length} chủ đề</small></div>
           {normalPosts.length === 0 ? <div className="forum-empty"><div className="empty-orbit">+</div><strong>Hãy là người mở đầu.</strong><p>Chia sẻ câu hỏi hoặc kinh nghiệm học đầu tiên.</p></div> :
-            normalPosts.map(post => <PostCard key={post.id} post={post} account={account} comments={comments[post.id] ?? []} expanded={expandedPost === post.id} draft={drafts[post.id] ?? ""} replyId={replyTo[post.id] ?? null} onOpen={() => void openComments(post.id)} onDraft={text => setDrafts(current => ({ ...current, [post.id]: text }))} onReply={id => setReplyTo(current => ({ ...current, [post.id]: id }))} onSend={() => void addComment(post.id)} onPin={pinned => void pinPost(post, pinned)} onDelete={() => void deletePost(post)} />)}
+            normalPosts.map(post => <PostCard key={post.id} post={post} account={account} comments={comments[post.id] ?? []} router={router} expanded={expandedPost === post.id} draft={drafts[post.id] ?? ""} replyId={replyTo[post.id] ?? null} onOpen={() => void openComments(post.id)} onDraft={text => setDrafts(current => ({ ...current, [post.id]: text }))} onReply={id => setReplyTo(current => ({ ...current, [post.id]: id }))} onSend={() => void addComment(post.id)} onPin={pinned => void pinPost(post, pinned)} onDelete={() => void deletePost(post)} />)}
         </section>
       </main>
 
