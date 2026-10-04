@@ -53,6 +53,38 @@ export function ProfileActionMenu({ person, children, placement = "left", self =
     return () => document.removeEventListener("pointerdown", close);
   }, [open]);
 
+  async function sendFriendRequest() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const response = await fetch("/api/friends", {
+        method: "POST", credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: person.id }),
+      });
+      const payload = await response.json().catch(() => ({})) as { request?: { id?: number }; error?: string };
+      if (!response.ok) throw new Error(payload.error || "Không thể gửi lời mời.");
+      setRelationship("outgoing");
+      setRequestId(payload.request?.id ?? null);
+    } finally { setBusy(false); }
+  }
+
+  async function respondRequest(action: "accept" | "reject") {
+    if (!requestId || busy) return;
+    setBusy(true);
+    try {
+      const response = await fetch("/api/friends/requests/" + requestId, {
+        method: "PATCH", credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      if (response.ok) {
+        setRelationship(action === "accept" ? "friend" : "none");
+        setRequestId(null);
+      }
+    } finally { setBusy(false); }
+  }
+
   async function cancelRequest() {
     if (!requestId || busy) return;
     setBusy(true);
@@ -124,6 +156,14 @@ export function ProfileActionMenu({ person, children, placement = "left", self =
         <button type="button" role="menuitem" onClick={() => router.push("/nguoi-dung/" + encodeURIComponent(person.id))}>
           <Icon name="layout" size={14} /> Xem trang cá nhân
         </button>
+        {relationship === "none" && <button type="button" role="menuitem" disabled={busy} onClick={() => void sendFriendRequest()}>
+          <Icon name="plus" size={14} /> Kết bạn
+        </button>}
+        {relationship === "incoming" && <><button type="button" role="menuitem" className="profile-action-primary" disabled={busy} onClick={() => void respondRequest("accept")}>
+          <Icon name="check" size={14} /> Chấp nhận kết bạn
+        </button><button type="button" role="menuitem" disabled={busy} onClick={() => void respondRequest("reject")}>
+          <Icon name="close" size={14} /> Từ chối lời mời
+        </button></>}
         {relationship === "friend" && <button type="button" role="menuitem" className="profile-action-danger" disabled={busy} onClick={() => void unfriend()}>
           <Icon name="close" size={14} /> Hủy kết bạn
         </button>}
