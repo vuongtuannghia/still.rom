@@ -21,11 +21,12 @@ export async function PATCH(request: Request, context: { params: Promise<{ roomI
     const roomId = positiveId((await context.params).roomId);
     const body = await readBody(request);
     if (typeof body.pinned !== "boolean") throw new ApiError(400, "Trạng thái ghim không hợp lệ.");
+    const pinned = body.pinned;
 
     const room = await db.transaction(async (tx) => {
-      if (body.pinned) await tx.update(sharedStudyRooms).set({ pinned: false });
+      if (pinned) await tx.update(sharedStudyRooms).set({ pinned: false });
       const [updated] = await tx.update(sharedStudyRooms)
-        .set({ pinned: body.pinned })
+        .set({ pinned })
         .where(eq(sharedStudyRooms.id, roomId))
         .returning();
       if (!updated) throw new ApiError(404, "Không tìm thấy phòng học.");
