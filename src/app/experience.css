@@ -373,3 +373,48 @@
   .room-dock-tabs > button { min-height: 31px; }
 }
 @media (prefers-reduced-motion: reduce) { .scene-banner-preview > img { transition: none; } }
+
+
+/* Real playable YouTube preview in the dashboard */
+.scene-banner-youtube-preview {
+  position: relative;
+  display: block;
+  min-height: 310px;
+  overflow: hidden;
+  background: #161616;
+}
+.scene-banner-youtube-preview > iframe {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.scene-banner-youtube-preview .scene-preview-caption {
+  pointer-events: none;
+  align-items: center;
+}
+.scene-banner-youtube-preview .scene-preview-caption > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+.scene-banner-youtube-preview .scene-preview-caption > button {
+  pointer-events: auto;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid #bdbdb3;
+  border-radius: 50%;
+  background: #22221fed;
+  color: #fff;
+}
+.scene-banner-youtube-preview .scene-preview-caption > button:hover {
+  background: #fff;
+  color: #222;
+}
+@media (max-width: 760px) {
+  .scene-banner-youtube-preview { min-height: 235px; }
+}
