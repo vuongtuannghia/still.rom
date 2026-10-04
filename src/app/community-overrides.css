@@ -277,3 +277,19 @@
 @media(max-width:600px){
   .avatar-action-popover{width:175px}.avatar-action-popover>button{padding:10px 8px;font-size:9px}
 }
+
+.pending-message-section{margin-top:12px;padding-top:1px}
+.pending-message-section .message-list-title{padding-top:10px}
+.pending-message-section .message-row{min-height:56px}
+.pending-message-section .message-row.pending{background:#fbfbf8}
+.pending-message-section .message-row.pending:hover{background:#f1f1eb}
+.pending-message-section .message-row-copy small{color:#777;font-size:8px}
+.profile-action-menu{position:relative;display:inline-flex;flex:0 0 auto}
+.profile-action-trigger{display:inline-flex;cursor:pointer}
+.profile-action-popover{position:absolute;z-index:1200;top:calc(100% + 7px);left:0;width:205px;padding:7px;border:1px solid #d9d8d1;border-radius:11px;background:#fff;box-shadow:0 14px 35px rgba(0,0,0,.12)}
+.profile-action-popover.left{right:0;left:auto}.profile-action-popover.right{left:0}
+.profile-action-person{display:flex;flex-direction:column;gap:2px;padding:8px}.profile-action-person strong{font-size:10px}.profile-action-person span{font-size:7px;color:#999}
+.profile-action-popover button{display:flex;align-items:center;gap:8px;width:100%;padding:8px;border:0;border-radius:7px;background:transparent;color:#222;font-size:9px;text-align:left;cursor:pointer}
+.profile-action-popover button:hover{background:#f1f1ec}
+.profile-friend-info{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:1;min-width:0;border:0;background:transparent;text-align:left;cursor:pointer}
+.profile-friend-info>span{display:flex;min-width:0;flex-direction:column;gap:3px}.profile-friend-info strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}.profile-friend-info small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#8c8c85;font-size:8px}
