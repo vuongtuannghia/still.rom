@@ -90,7 +90,8 @@ export function ForumPage() {
     try {
       const response = await fetch(`/api/forum/posts/${postId}/comments`, { cache: "no-store" });
       if (!response.ok) throw new Error();
-      setComments((current) => ({ ...current, [postId]: await response.json() as Comment[] }));
+      const next = await response.json() as Comment[];
+      setComments((current) => ({ ...current, [postId]: next }));
     } catch { setNotice("Chưa tải được bình luận."); }
   }
 
