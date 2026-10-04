@@ -34,8 +34,8 @@ const errorMessages: Record<number, string> = {
   153: "YouTube chưa nhận được nguồn trang trong khung preview. Thử trình phát tiêu chuẩn hoặc mở website trong tab riêng.",
 };
 
-type Props = { scene: YouTubeScene; loop: boolean; muted: boolean; onMuted: (value: boolean) => void; onFallback: () => void; onPause?: () => void; onVideoChange?: (videoId: string) => void; ambientView?: boolean; edgeToEdge?: boolean; showControls?: boolean; sessionRole?: "preview" | "room" | "persistent" };
-function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVideoChange, ambientView = false, edgeToEdge = false, showControls = false, sessionRole = "room", standard, onRetry, onStandard }: Props & { standard: boolean; onRetry: () => void; onStandard: () => void }) {
+type Props = { scene: YouTubeScene; loop: boolean; muted: boolean; onMuted: (value: boolean) => void; onFallback: () => void; onPause?: () => void; onVideoChange?: (videoId: string) => void; ambientView?: boolean; edgeToEdge?: boolean; showControls?: boolean; sessionRole?: "preview" | "room" | "persistent"; claimOwnership?: boolean };
+function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVideoChange, ambientView = false, edgeToEdge = false, showControls = false, sessionRole = "room", claimOwnership = true, standard, onRetry, onStandard }: Props & { standard: boolean; onRetry: () => void; onStandard: () => void }) {
   const root = useRef<HTMLDivElement>(null);
   const info = useRef<HTMLDivElement>(null);
   const host = useRef<HTMLDivElement>(null);
@@ -197,7 +197,7 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
             setStatus("Video đang phát");
             // Only now does the room take ownership of the shared scene. This keeps
             // the preview's audio alive while the room iframe is loading.
-            if (sessionRole === "room") channel?.postMessage({ type: "claim-playing", role: "room" });
+            if (claimOwnership) channel?.postMessage({ type: "claim-playing", role: sessionRole });
           }
           else if (event.data === 2) { rememberProgress(); setPlaying(false); setStatus("Video đang tạm dừng"); if (hasPlayed) preferences.current.onPause?.(); }
           else if (event.data === 3) setStatus("Đang tải video…");
@@ -220,7 +220,7 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
       player.current = null; container.replaceChildren();
       channel?.close();
     };
-  }, [scene.videoId, scene.playlistId, scene.startSeconds, scene.title, loop, standard, progressKey, sessionRole]);
+  }, [scene.videoId, scene.playlistId, scene.startSeconds, scene.title, loop, standard, progressKey, sessionRole, claimOwnership]);
 
   function playPause() {
     if (ready && player.current) {
