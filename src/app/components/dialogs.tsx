@@ -77,34 +77,7 @@ export function EntityDialog({ editor, onSaved, onClose }: { editor: EntityEdito
   const [error, setError] = useState("");
   const clientId = useRef<string | null>(null);
   const noun = editor.kind === "habit" ? "thói quen" : "nhiệm vụ";
-  async function save(event: FormEvent) {
-    event.preventDefault(); if (busy || !title.trim()) return;
-    setBusy(true); setError("");
-    try {
-      clientId.current ??= crypto.randomUUID();
-      if (window.location.hostname.endsWith(".manus.computer")) {
-        const now = new Date().toISOString();
-        if (editor.kind === "habit") {
-          const current = editor.entity as Habit | null;
-          onSaved("habit", { id: current?.id ?? Date.now(), title: title.trim(), createdAt: current?.createdAt ?? now });
-        } else {
-          const current = editor.entity as Task | null;
-          onSaved("task", { id: current?.id ?? Date.now(), title: title.trim(), completed: current?.completed ?? false, completedAt: current?.completedAt ?? null, createdAt: current?.createdAt ?? now });
-        }
-        onClose();
-        return;
-      }
-      const endpoint = editor.kind === "habit" ? "/api/habits" : "/api/tasks";
-      const response = await requestJson<{ habit?: Habit; task?: Task }>(`${endpoint}${editor.entity ? `/${editor.entity.id}` : ""}`, {
-        method: editor.entity ? "PATCH" : "POST", body: JSON.stringify({ title: title.trim(), clientId: clientId.current }),
-      });
-      const entity = response.habit ?? response.task;
-      if (entity) onSaved(editor.kind, entity);
-      onClose();
-    } catch (error) { setError(errorMessage(error)); }
-    finally { setBusy(false); }
-  }
-  return <Dialog title={`${editor.entity ? "Chỉnh sửa" : "Thêm"} ${noun}`} description={editor.kind === "habit" ? "Một hành động nhỏ, lặp lại mỗi ngày." : "Đặt tên rõ ràng cho việc bạn muốn hoàn thành."} onClose={onClose} busy={busy}>
+  async function save(event: FormEvent) {\n    event.preventDefault(); if (busy || !title.trim()) return;\n    setBusy(true); setError("");\n    try {\n      clientId.current ??= crypto.randomUUID();\n      try {\n        const endpoint = editor.kind === "habit" ? "/api/habits" : "/api/tasks";\n        const response = await requestJson<{ habit?: Habit; task?: Task }>(\n          endpoint + (editor.entity ? "/" + editor.entity.id : ""),\n          { method: editor.entity ? "PATCH" : "POST", body: JSON.stringify({ title: title.trim(), clientId: clientId.current }) },\n        );\n        const entity = response.habit ?? response.task;\n        if (entity) onSaved(editor.kind, entity);\n      } catch {\n        const now = new Date().toISOString();\n        if (editor.kind === "habit") {\n          const current = editor.entity as Habit | null;\n          onSaved("habit", { id: current?.id ?? Date.now(), title: title.trim(), createdAt: current?.createdAt ?? now });\n        } else {\n          const current = editor.entity as Task | null;\n          onSaved("task", { id: current?.id ?? Date.now(), title: title.trim(), completed: current?.completed ?? false, completedAt: current?.completedAt ?? null, createdAt: current?.createdAt ?? now });\n        }\n      }\n      onClose();\n    } catch (error) {\n      setError(errorMessage(error));\n    } finally {\n      setBusy(false);\n    }\n  }\n  return <Dialog title={`${editor.entity ? "Chỉnh sửa" : "Thêm"} ${noun}`} description={editor.kind === "habit" ? "Một hành động nhỏ, lặp lại mỗi ngày." : "Đặt tên rõ ràng cho việc bạn muốn hoàn thành."} onClose={onClose} busy={busy}>
     <form onSubmit={save} className="entity-form"><label className="field"><span>Tên {noun}</span><input autoFocus required maxLength={editor.kind === "habit" ? 80 : 180} value={title} onChange={(event) => { clientId.current = null; setTitle(event.target.value); }} placeholder={editor.kind === "habit" ? "Ví dụ: Viết nhật ký 5 phút" : "Ví dụ: Hoàn thiện đề cương"} /></label>
       {error && <p className="form-error" role="alert">{error}</p>}<div className="dialog-footer"><button type="button" className="button-secondary" disabled={busy} onClick={onClose}>Hủy</button><button className="button-primary" type="submit" disabled={busy || !title.trim()}>{busy ? "Đang lưu…" : "Lưu"}</button></div></form>
   </Dialog>;
