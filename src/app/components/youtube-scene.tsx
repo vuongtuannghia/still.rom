@@ -97,20 +97,25 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
     function rememberProgress() {
       try {
         const current = player.current?.getCurrentTime?.() ?? 0;
-        if (Number.isFinite(current) && current > 0) sessionStorage.setItem(progressKey, String(Math.floor(current)));
+        if (Number.isFinite(current) && current >= 0) sessionStorage.setItem(progressKey, String(Math.floor(current)));
       } catch { /* Storage is optional. */ }
     }
+    let progressTimer = 0;
     void loadYouTubeAPI().then((api) => {
       if (disposed) return;
       player.current = new api.Player(iframe, { events: {
         onReady: (event) => {
           if (disposed) return;
           becameReady = true; window.clearTimeout(timeout); setReady(true); setApiNotice("");
-          reportVideo(event.target); event.target.mute();
+          reportVideo(event.target);
+          // Ambient video always starts muted so it can autoplay without requiring fullscreen
+          // or a fresh click. Sound is enabled only after an explicit user action.
+          event.target.mute();
           const resumeAt = Math.max(savedProgress.current, scene.startSeconds);
           if (resumeAt > 0 && event.target.seekTo) event.target.seekTo(resumeAt, true);
           event.target.playVideo();
-          if (!preferences.current.muted) { event.target.setVolume(35); event.target.unMute(); }
+          if (!ambientView && !preferences.current.muted) { event.target.setVolume(35); event.target.unMute(); }
+          progressTimer = window.setInterval(rememberProgress, 1000);
         },
         onStateChange: (event) => {
           if (disposed) return;
@@ -126,6 +131,7 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
     }).catch((reason) => { if (!disposed) setApiNotice(reason instanceof Error ? reason.message : "Bạn có thể nhấn ▶ trực tiếp trong video."); });
     return () => {
       rememberProgress();
+      if (progressTimer) window.clearInterval(progressTimer);
       disposed = true; window.clearTimeout(timeout);
       try { player.current?.destroy(); } catch { /* Native frame may already be gone. */ }
       player.current = null; frame.current = null; container.replaceChildren();
@@ -133,13 +139,28 @@ function VideoSession({ scene, loop, muted, onMuted, onFallback, onPause, onVide
   }, [scene.videoId, scene.playlistId, scene.startSeconds, scene.title, loop, id, standard, progressKey]);
 
   function playPause() {
-    if (ready && player.current) { if (playing) player.current.pauseVideo(); else player.current.playVideo(); }
-    else { frame.current?.focus(); setApiNotice("Bấm nút ▶ của YouTube trong vùng video phía trên. Nếu khung B chặn YouTube, hãy thử Mở website riêng."); }
+    if (ready && player.current) {
+      if (playing) player.current.pauseVideo();
+      else {
+        if (!muted) { player.current.setVolume(35); player.current.unMute(); }
+        player.current.playVideo();
+      }
+    } else {
+      frame.current?.focus();
+      setApiNotice("Bấm nút ▶ của YouTube trong vùng video phía trên. Nếu khung B chặn YouTube, hãy thử Mở website riêng.");
+    }
   }
   return <div ref={root} className={`youtube-scene-player ${ambientView ? "ambient-player" : edgeToEdge ? "edge-player" : ""}`} style={ambientView && fit.width ? { "--ambient-frame-width": `${fit.width}px`, "--ambient-frame-height": `${fit.height}px` } as CSSProperties : undefined} data-player-view={ambientView ? "ambient" : edgeToEdge ? "edge" : "studio"}>
     <div className="youtube-stage" ref={host} data-video-id={scene.videoId} />
     <div ref={info} className="youtube-player-info" hidden={(edgeToEdge || ambientView) && !showControls && !fatal && !apiNotice}>
-      <div className="youtube-controls"><span className="youtube-status" role="status"><span className={playing ? "live-dot" : "tiny-dot"} />{status}</span><div><button type="button" className="button-secondary" disabled={Boolean(fatal)} onClick={playPause}><Icon name={playing ? "pause" : "play"} size={15} />{playing ? "Dừng video" : "Phát video"}</button><button type="button" className="button-secondary" aria-pressed={!muted} onClick={() => { onMuted(!muted); if (!ready) setApiNotice("Bạn có thể bật hoặc tắt tiếng bằng nút loa của YouTube trong video."); }}><Icon name="volume" size={15} />{muted ? "Bật tiếng video" : "Tắt tiếng video"}</button></div></div>
+      <div className="youtube-controls"><span className="youtube-status" role="status"><span className={playing ? "live-dot" : "tiny-dot"} />{status}</span><div><button type="button" className="button-secondary" disabled={Boolean(fatal)} onClick={playPause}><Icon name={playing ? "pause" : "play"} size={15} />{playing ? "Dừng video" : "Phát video"}</button><button type="button" className="button-secondary" aria-pressed={!muted} onClick={() => {
+        const nextMuted = !muted;
+        onMuted(nextMuted);
+        if (ready && player.current) {
+          if (nextMuted) player.current.mute();
+          else { player.current.setVolume(35); player.current.unMute(); player.current.playVideo(); }
+        } else setApiNotice("Bạn có thể bật hoặc tắt tiếng bằng nút loa của YouTube trong video.");
+      }}><Icon name="volume" size={15} />{muted ? "Bật tiếng video" : "Tắt tiếng video"}</button></div></div>
       {apiNotice && !fatal && <p className="youtube-api-notice" role="status">{apiNotice}</p>}
       {fatal && <div className="youtube-error" role="alert"><p>{fatal}</p><div><button type="button" className="button-secondary" onClick={onRetry}>Thử lại</button>{!standard && <button type="button" className="button-secondary" onClick={onStandard}>Thử trình phát tiêu chuẩn</button>}<button type="button" className="button-secondary" onClick={onFallback}>Dùng cảnh tĩnh</button></div></div>}
       <div className="youtube-external-actions"><a href={youtubeWatchUrl(scene)} target="_blank" rel="noopener" className="text-button">Mở trên YouTube <Icon name="arrow" size={13} /><span className="sr-only">, tab mới</span></a><a href="/" target="_blank" rel="noopener" className="text-button">Mở website riêng <Icon name="arrow" size={13} /><span className="sr-only">, tab mới</span></a></div>
