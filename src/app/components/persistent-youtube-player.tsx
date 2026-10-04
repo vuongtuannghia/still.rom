@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
 import { YouTubeScenePlayer } from "./youtube-scene";
 import type { YouTubeScene } from "@/lib/scene-domain";
 
 type Persisted = { scene: YouTubeScene; loop: boolean; muted: boolean };
+type Rect = { left: number; top: number; width: number; height: number };
 const STORAGE_KEY = "stillroom.youtube.persistent.v1";
 
 function readPersisted(): Persisted | null {
@@ -26,69 +27,94 @@ function readPersisted(): Persisted | null {
 
 export function PersistentYouTubePlayer() {
   const pathname = usePathname();
-  const router = useRouter();
   const [persisted, setPersisted] = useState<Persisted | null>(null);
-  const [roomPresent, setRoomPresent] = useState(false);
+  const [target, setTarget] = useState<"dashboard" | "room" | "mini">("mini");
+  const [rect, setRect] = useState<Rect | null>(null);
 
   useEffect(() => {
     const sync = () => setPersisted(readPersisted());
     sync();
+    const onSync = () => sync();
     const onStorage = (event: StorageEvent) => {
       if (event.key === STORAGE_KEY) sync();
     };
-    const onSync = () => sync();
     const onHandoff = (event: Event) => {
       const detail = (event as CustomEvent<Persisted>).detail;
       if (!detail?.scene) return;
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(detail)); } catch {}
       setPersisted(detail);
     };
-    window.addEventListener("storage", onStorage);
     window.addEventListener("stillroom-youtube-sync", onSync);
+    window.addEventListener("storage", onStorage);
     window.addEventListener("stillroom-youtube-handoff", onHandoff);
     return () => {
-      window.removeEventListener("storage", onStorage);
       window.removeEventListener("stillroom-youtube-sync", onSync);
+      window.removeEventListener("storage", onStorage);
       window.removeEventListener("stillroom-youtube-handoff", onHandoff);
     };
   }, []);
 
-  // Keep Next.js client navigation so the player stays mounted between sections.
   useEffect(() => {
-    const onClick = (event: MouseEvent) => {
-      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      const target = (event.target as Element | null)?.closest("a");
-      if (!target || target.target === "_blank" || target.hasAttribute("download")) return;
-      const href = target.getAttribute("href");
-      if (!href || href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:")) return;
-      try {
-        const url = new URL(href, window.location.href);
-        if (url.origin !== window.location.origin) return;
-        event.preventDefault();
-        router.push(url.pathname + url.search + url.hash);
-      } catch {}
-    };
-    document.addEventListener("click", onClick, true);
-    return () => document.removeEventListener("click", onClick, true);
-  }, [router]);
+    const measure = () => {
+      const roomSlot = document.querySelector<HTMLElement>('[data-youtube-slot="room"]');
+      const dashboardSlot = document.querySelector<HTMLElement>('[data-youtube-slot="dashboard"]');
+      const slot = roomSlot ?? dashboardSlot;
 
-  // A study-room dialog is top-layer content, so the background player must yield
-  // to the local player inside that dialog instead of trying to overlay it.
-  useEffect(() => {
-    const update = () => setRoomPresent(Boolean(document.querySelector(".ambient-room-screen")));
-    update();
-    const observer = new MutationObserver(update);
+      if (roomSlot) setTarget("room");
+      else if (dashboardSlot && pathname === "/") setTarget("dashboard");
+      else setTarget("mini");
+
+      if (!slot) {
+        setRect(null);
+        return;
+      }
+
+      const next = slot.getBoundingClientRect();
+      if (next.width > 0 && next.height > 0) {
+        setRect({ left: next.left, top: next.top, width: next.width, height: next.height });
+      }
+    };
+
+    const observer = new MutationObserver(measure);
     observer.observe(document.body, { childList: true, subtree: true });
-    return () => observer.disconnect();
+    window.addEventListener("resize", measure);
+    window.addEventListener("scroll", measure, true);
+    const frame = window.requestAnimationFrame(measure);
+    const timer = window.setInterval(measure, 350);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("scroll", measure, true);
+      window.cancelAnimationFrame(frame);
+      window.clearInterval(timer);
+    };
   }, [pathname]);
 
-  const dashboard = pathname === "/" || pathname === null;
-  const active = Boolean(persisted?.scene) && !dashboard && !roomPresent;
+  const style = useMemo<React.CSSProperties | undefined>(() => {
+    if ((target === "dashboard" || target === "room") && rect) {
+      return {
+        position: "fixed",
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
+      };
+    }
+    return undefined;
+  }, [target, rect]);
 
   if (!persisted?.scene) return null;
 
+  const visible = target === "mini" || Boolean(rect);
+
   return (
-    <div className={"persistent-youtube-player persistent-youtube-mini" + (active ? " is-visible" : " is-hidden")} aria-hidden={!active}>
+    <div
+      className={`persistent-youtube-player ${target === "mini" ? "persistent-youtube-mini" : "persistent-youtube-slot-player"} ${visible ? "is-visible" : "is-hidden"}`}
+      style={style}
+      aria-hidden={!visible}
+      data-youtube-owner={target}
+    >
       <YouTubeScenePlayer
         scene={persisted.scene}
         loop={persisted.loop}
@@ -97,7 +123,10 @@ export function PersistentYouTubePlayer() {
           setPersisted((current) => {
             if (!current) return current;
             const next = { ...current, muted: value };
-            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch {}
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+              localStorage.setItem(`stillroom.youtube.muted:${next.scene.videoId || next.scene.playlistId || next.scene.id}`, value ? "1" : "0");
+            } catch {}
             window.dispatchEvent(new CustomEvent("stillroom-youtube-sync"));
             return next;
           });
@@ -106,7 +135,6 @@ export function PersistentYouTubePlayer() {
         ambientView
         sessionRole="persistent"
         claimOwnership={false}
-        active={active}
       />
     </div>
   );
