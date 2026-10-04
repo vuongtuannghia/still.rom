@@ -108,12 +108,12 @@ export function SharedStudyRoom({ account, onNotice }: {
         <h2>Phòng học cùng nhau</h2>
         <p>Bật camera, mic và học trực tiếp với mọi người. still.room chỉ lưu link — cuộc gọi chạy trên Google Meet.</p>
       </div>
-      <span className="stat-icon"><Icon name="video" size={20} /></span>
+      <span className="stat-icon"><Icon name="radio" size={20} /></span>
     </div>
 
     {pinned && <div className="shared-pinned">
       <div><span className="small-label">PHÒNG HỌC CHÍNH</span><strong>{pinned.title}</strong><span>{pinned.creatorName} · được quản trị viên ghim</span></div>
-      <a className="button-primary" href={pinned.meetUrl} target="_blank" rel="noreferrer"><Icon name="video" size={15} /> Vào học</a>
+      <a className="button-primary" href={pinned.meetUrl} target="_blank" rel="noreferrer"><Icon name="radio" size={15} /> Vào học</a>
     </div>}
 
     <div className="shared-room-form">
@@ -122,7 +122,7 @@ export function SharedStudyRoom({ account, onNotice }: {
       <button type="button" className="button-secondary shared-submit" onClick={() => void submit()} disabled={!account || posting}>{posting ? "Đang thêm…" : "Đăng phòng học"}</button>
     </div>
 
-    {!account && <p className="shared-signin-note"><Icon name="lock" size={14} /> Đăng nhập Google để đăng link phòng học.</p>}
+    {!account && <p className="shared-signin-note"><Icon name="signal" size={14} /> Đăng nhập Google để đăng link phòng học.</p>}
 
     <div className="shared-room-list">
       {loading ? <p className="empty-chart-note">Đang tải phòng học…</p> : publicRooms.length === 0 ? <p className="empty-chart-note">Chưa có phòng nào. Hãy tạo phòng Google Meet rồi chia sẻ link cho mọi người.</p> :
@@ -132,7 +132,7 @@ export function SharedStudyRoom({ account, onNotice }: {
             <span>{room.creatorName}</span>
           </div>
           <div className="shared-room-actions">
-            <a className="button-secondary" href={room.meetUrl} target="_blank" rel="noreferrer"><Icon name="video" size={14} /> Vào</a>
+            <a className="button-secondary" href={room.meetUrl} target="_blank" rel="noreferrer"><Icon name="radio" size={14} /> Vào</a>
             {account && account.email === "vuongtuannghia585@gmail.com" && <>
               <button type="button" className="icon-button" title="Ghim phòng này" onClick={() => void setPinned(room, true)}><Icon name="target" size={15} /></button>
               <button type="button" className="icon-button" title="Xóa phòng này" onClick={() => void remove(room)}><Icon name="close" size={15} /></button>
