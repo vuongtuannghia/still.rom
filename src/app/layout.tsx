@@ -26,6 +26,12 @@ export const metadata: Metadata = {
   },
   description: "still.room là không gian tập trung đen trắng để học, theo dõi Pomodoro, tiến độ, thói quen và học cùng nhau qua Google Meet.",
   alternates: { canonical: "/" },
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/favicon.svg",
+  },
   robots: {
     index: true,
     follow: true,
@@ -41,6 +47,7 @@ export const metadata: Metadata = {
     google: "jRrDLgQsTU50xF6QiUY5cqm8tuLjXkKiK403BweeE7Y",
   },
 };
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return <html lang="vi"><body>{children}<NotificationBell /><AccountLockGuard /></body></html>;
 }
