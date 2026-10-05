@@ -1,0 +1,19 @@
+name: Keep Render Awake
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping still-room-original
+        run: |
+          curl --fail --silent --show-error --location \
+            --max-time 30 \
+            --retry 2 \
+            --retry-delay 5 \
+            https://still-room-original.onrender.com/ \
+            -o /dev/null
