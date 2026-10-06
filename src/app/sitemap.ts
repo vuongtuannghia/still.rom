@@ -22,6 +22,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return [
     { url: `${SITE_URL}/`, lastModified: now, changeFrequency: "daily", priority: 1 },
+    { url: `${SITE_URL}/thu-thach-25-phut`, lastModified: now, changeFrequency: "daily", priority: 0.95 },
     ...SLUGS.map((slug) => ({
       url: `${SITE_URL}/cong-cu/${slug}`,
       lastModified: now,
