@@ -8,6 +8,7 @@ type Guide = {
   eyebrow: string;
   intro: string;
   keywords: string[];
+  sections?: { title: string; body: string }[];
   steps: string[];
   faq: { q: string; a: string }[];
 };
@@ -215,6 +216,17 @@ export default async function GuidePage({
           </h1>
           <p style={{ fontSize: 20, lineHeight: 1.6, color: "#666", margin: 0 }}>{guide.intro}</p>
         </header>
+
+        {guide.sections && guide.sections.length > 0 && (
+          <section style={{ marginTop: 26, display: "grid", gap: 16 }}>
+            {guide.sections.map((section) => (
+              <article key={section.title} style={{ background: "#fff", border: "1px solid #ddd", borderRadius: 22, padding: 26 }}>
+                <h2 style={{ margin: "0 0 10px", fontSize: 24 }}>{section.title}</h2>
+                <p style={{ margin: 0, lineHeight: 1.78, color: "#555" }}>{section.body}</p>
+              </article>
+            ))}
+          </section>
+        )}
 
         <section style={{ marginTop: 42, display: "grid", gap: 18 }}>
           <div style={{ background: "#fff", border: "1px solid #ddd", borderRadius: 24, padding: 28 }}>
