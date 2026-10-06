@@ -63,12 +63,21 @@ export const metadata: Metadata = {
     title: "still. room — Không gian tập trung & học cùng nhau",
     description:
       "Pomodoro, focus timer, thói quen, thống kê và phòng học cùng nhau trong một không gian tối giản.",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "still. room — Tập trung hơn. Học cùng nhau.",
+      },
+    ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "still. room — Không gian tập trung & học cùng nhau",
     description:
       "Một không gian tối giản để tập trung, học và theo dõi tiến độ mỗi ngày.",
+    images: ["/twitter-image"],
   },
   verification: {
     google: "jRrDLgQsTU50xF6QiUY5cqm8tuLjXkKiK403BweeE7Y",
@@ -97,16 +106,18 @@ const structuredData = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="vi">
-      <body>
-        {children}
-        <NotificationBell />
-        <AccountLockGuard />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-        />
-      </body>
-    </html>
+    <>
+      <html lang="vi">
+        <body>
+          {children}
+          <NotificationBell />
+          <AccountLockGuard />
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+          />
+        </body>
+      </html>
+    </>
   );
 }
