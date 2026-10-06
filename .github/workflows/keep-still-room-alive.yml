@@ -1,8 +1,11 @@
 name: Keep Still Room Alive
 
 on:
+  push:
+    branches:
+      - main
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 jobs:
