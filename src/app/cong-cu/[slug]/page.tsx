@@ -112,7 +112,7 @@ const GUIDES: Record<string, Guide> = {
         a: "Trang có focus timer, ambient sound, YouTube study room, nhiệm vụ và thống kê tiến độ.",
       },
     ],
-  },,
+  },
   "aesthetic-study-timer": {
     title: "Aesthetic Study Timer online",
     description: "Aesthetic Study Timer tối giản cho những buổi học cần một không gian đẹp, ít xao nhãng và có timer tập trung.",
