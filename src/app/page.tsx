@@ -1,5 +1,18 @@
 import DashboardClient from "./dashboard-client";
 
+const links = [
+  ["/cong-cu/pomodoro", "Pomodoro Timer"],
+  ["/cong-cu/focus-timer", "Focus Timer"],
+  ["/cong-cu/hoc-cung-nhau", "Học cùng nhau"],
+  ["/cong-cu/study-with-me", "Study With Me"],
+  ["/cong-cu/study-timer", "Study Timer"],
+  ["/cong-cu/lofi-focus", "Lo-fi Focus"],
+  ["/cong-cu/body-doubling", "Body Doubling"],
+  ["/cong-cu/phong-hoc-online", "Phòng học online"],
+  ["/cong-cu/timer-on-thi", "Timer ôn thi"],
+  ["/cong-cu/habit-tracker", "Habit Tracker"],
+] as const;
+
 export default function HomePage() {
   return (
     <>
@@ -12,18 +25,16 @@ export default function HomePage() {
           padding: "18px 24px 56px",
           color: "#666",
           fontSize: 13,
-          lineHeight: 1.7,
+          lineHeight: 1.9,
         }}
       >
         <strong style={{ color: "#111" }}>still. room guides</strong>
-        <span style={{ margin: "0 8px", color: "#aaa" }}>·</span>
-        <a href="/cong-cu/pomodoro" style={{ color: "#333" }}>Pomodoro Timer</a>
-        <span style={{ margin: "0 8px", color: "#aaa" }}>·</span>
-        <a href="/cong-cu/focus-timer" style={{ color: "#333" }}>Focus Timer</a>
-        <span style={{ margin: "0 8px", color: "#aaa" }}>·</span>
-        <a href="/cong-cu/hoc-cung-nhau" style={{ color: "#333" }}>Học cùng nhau online</a>
-        <span style={{ margin: "0 8px", color: "#aaa" }}>·</span>
-        <a href="/cong-cu/study-with-me" style={{ color: "#333" }}>Study With Me</a>
+        {links.map(([href, label]) => (
+          <span key={href}>
+            <span style={{ margin: "0 8px", color: "#aaa" }}>·</span>
+            <a href={href} style={{ color: "#333" }}>{label}</a>
+          </span>
+        ))}
       </section>
     </>
   );
