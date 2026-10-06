@@ -32,7 +32,7 @@ function message(id: string, speaker: ChatMessage["speaker"], name: string, text
 async function askGemini(prompt: string): Promise<AgentResult> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return { role: "research", provider: "unavailable", ok: false, text: "", error: "GEMINI_API_KEY chưa được cấu hình trong Render." };
+    return { role: "research", provider: "unavailable", ok: false, text: "", error: "Gemini chưa được cấu hình." };
   }
 
   try {
@@ -84,11 +84,12 @@ async function askOpenRouter(role: AgentRole, prompt: string): Promise<AgentResu
   }
 
   const systemByRole: Record<AgentRole, string> = {
-    research: "Bạn là Research AI. Trả lời BOSS.",
+    research:
+      "Bạn là RESEARCH AI của STILL. ROOM. Nghiên cứu, kiểm chứng giả định và đưa ra dữ kiện/hành động cụ thể. Trả lời như đang nhắn trực tiếp trong group với BOSS.",
     marketing:
-      "Bạn là MARKETING AI của STILL. ROOM. Bạn nhận brief và các báo cáo trước đó từ những thành viên khác. Tập trung SEO, content, phân phối hữu cơ và tăng người dùng thật. Không spam, không giả tương tác, không mua traffic. Trả lời như đang trao đổi trực tiếp trong group công ty.",
+      "Bạn là MARKETING AI của STILL. ROOM. Tập trung SEO, content, phân phối hữu cơ và tăng người dùng thật. Không spam, không giả tương tác, không mua traffic. Trả lời như đang trao đổi trực tiếp trong group công ty.",
     engineering:
-      "Bạn là ENGINEERING AI của STILL. ROOM. Bạn nhận brief và báo cáo nghiên cứu từ thành viên trước. Tập trung code, kiến trúc, reliability, security, performance và cách triển khai an toàn. Trả lời như đang trao đổi trực tiếp trong group công ty.",
+      "Bạn là ENGINEERING AI của STILL. ROOM. Tập trung code, kiến trúc, reliability, security, performance và triển khai an toàn. Trả lời như đang trao đổi trực tiếp trong group công ty.",
   };
 
   try {
@@ -130,10 +131,16 @@ async function askOpenRouter(role: AgentRole, prompt: string): Promise<AgentResu
   }
 }
 
-function fallbackBoss(task: string, results: AgentResult[]) {
+async function askResearch(prompt: string) {
+  if (process.env.GEMINI_API_KEY) return askGemini(prompt);
+  return askOpenRouter("research", `${prompt}
+Lưu ý: Gemini chưa được cấu hình, nên bạn đang làm Research dự phòng qua OpenRouter.`);
+}
+
+function buildBossDecision(task: string, results: AgentResult[]) {
   const successful = results.filter((item) => item.ok);
   if (!successful.length) {
-    return "Chưa thể triển khai: chưa có AI thành viên nào được kết nối. Hãy cấu hình GEMINI_API_KEY và/hoặc OPENROUTER_API_KEY trong Render.";
+    return "Chưa thể triển khai: chưa có AI thành viên nào được kết nối. Hãy cấu hình OPENROUTER_API_KEY trong Render.";
   }
 
   return [
@@ -142,9 +149,9 @@ function fallbackBoss(task: string, results: AgentResult[]) {
     `Mục tiêu: ${task}`,
     "",
     "Quyết định điều phối:",
-    "• Ưu tiên việc có tác động trực tiếp nhất tới tăng khả năng được tìm thấy và tăng người dùng thật.",
-    "• Thực hiện thay đổi nhỏ, deploy, đo kết quả rồi mới mở rộng.",
-    "• Không dùng spam hoặc traffic giả.",
+    "• Ưu tiên việc có tác động trực tiếp nhất tới mục tiêu.",
+    "• Triển khai nhỏ → đo kết quả → mới mở rộng.",
+    "• Không spam, không traffic giả, không mua tương tác.",
     "",
     "Báo cáo đã nhận:",
     successful.map((item) => `— ${item.role}: ${item.text.slice(0, 500)}`).join("\n"),
@@ -159,7 +166,7 @@ export async function runAiCompany(task: string) {
     message("boss-1", "boss", "BOSS", `Mọi người, nhiệm vụ mới: ${cleanTask}`),
   ];
 
-  const research = await askGemini(`Nhiệm vụ: ${cleanTask}
+  const research = await askResearch(`Nhiệm vụ: ${cleanTask}
 Hãy gửi báo cáo nghiên cứu đầu tiên cho BOSS.`);
   chat.push(
     research.ok
@@ -167,48 +174,48 @@ Hãy gửi báo cáo nghiên cứu đầu tiên cho BOSS.`);
       : message("research-1", "research", "RESEARCH", research.error || "Không kết nối được.", research.provider, "error")
   );
 
-  const engineeringPrompt = [
-    `Nhiệm vụ: ${cleanTask}`,
-    "RESEARCH vừa báo cáo:",
-    research.ok ? research.text : "(Research offline)",
-    "",
-    "Bây giờ BOSS giao ENGINEERING đưa ra phương án triển khai kỹ thuật.",
-  ].join("\n");
-  const engineering = await askOpenRouter("engineering", engineeringPrompt);
+  const engineering = await askOpenRouter(
+    "engineering",
+    [
+      `Nhiệm vụ: ${cleanTask}`,
+      "RESEARCH vừa báo cáo:",
+      research.ok ? research.text : "(Research offline)",
+      "",
+      "BOSS giao ENGINEERING đưa ra phương án triển khai kỹ thuật.",
+    ].join("\n")
+  );
   chat.push(
     engineering.ok
       ? message("engineering-1", "engineering", "ENGINEERING", engineering.text, engineering.provider)
       : message("engineering-1", "engineering", "ENGINEERING", engineering.error || "Không kết nối được.", engineering.provider, "error")
   );
 
-  const marketingPrompt = [
-    `Nhiệm vụ: ${cleanTask}`,
-    "RESEARCH báo cáo:",
-    research.ok ? research.text : "(Research offline)",
-    "",
-    "ENGINEERING báo cáo:",
-    engineering.ok ? engineering.text : "(Engineering offline)",
-    "",
-    "BOSS giao MARKETING xây chiến dịch/việc cần làm dựa trên các báo cáo trên.",
-  ].join("\n");
-  const marketing = await askOpenRouter("marketing", marketingPrompt);
+  const marketing = await askOpenRouter(
+    "marketing",
+    [
+      `Nhiệm vụ: ${cleanTask}`,
+      "RESEARCH báo cáo:",
+      research.ok ? research.text : "(Research offline)",
+      "",
+      "ENGINEERING báo cáo:",
+      engineering.ok ? engineering.text : "(Engineering offline)",
+      "",
+      "BOSS giao MARKETING xây chiến dịch/việc cần làm dựa trên các báo cáo trên.",
+    ].join("\n")
+  );
   chat.push(
     marketing.ok
       ? message("marketing-1", "marketing", "MARKETING", marketing.text, marketing.provider)
       : message("marketing-1", "marketing", "MARKETING", marketing.error || "Không kết nối được.", marketing.provider, "error")
   );
 
-  chat.push(message(
-    "boss-2",
-    "boss",
-    "BOSS",
-    fallbackBoss(cleanTask, [research, engineering, marketing])
-  ));
+  const results = [research, engineering, marketing];
+  const boss = buildBossDecision(cleanTask, results);
+  chat.push(message("boss-2", "boss", "BOSS", boss));
 
-  const results = [research, marketing, engineering];
   return {
     task: cleanTask,
-    boss: fallbackBoss(cleanTask, results),
+    boss,
     chat,
     agents: results.map((item) => ({
       role: item.role,
@@ -223,30 +230,34 @@ Hãy gửi báo cáo nghiên cứu đầu tiên cho BOSS.`);
 }
 
 export function getAiCompanyStatus() {
+  const openRouterReady = Boolean(process.env.OPENROUTER_API_KEY);
+  const geminiReady = Boolean(process.env.GEMINI_API_KEY);
+
   return {
     boss: { enabled: true, mode: "orchestrator" },
     agents: {
       research: {
-        provider: "Gemini",
-        configured: Boolean(process.env.GEMINI_API_KEY),
-        model: GEMINI_MODEL,
-        pricingMode: "free-tier-if-account-allows",
-        envKey: "GEMINI_API_KEY",
+        provider: geminiReady ? "Gemini" : "OpenRouter fallback",
+        configured: openRouterReady || geminiReady,
+        model: geminiReady ? GEMINI_MODEL : OPENROUTER_MODEL,
+        pricingMode: geminiReady ? "gemini-free-tier-if-available" : "openrouter-free-router",
+        envKey: geminiReady ? "GEMINI_API_KEY" : "OPENROUTER_API_KEY",
       },
       marketing: {
         provider: "OpenRouter",
-        configured: Boolean(process.env.OPENROUTER_API_KEY),
+        configured: openRouterReady,
         model: OPENROUTER_MODEL,
         pricingMode: OPENROUTER_MODEL === "openrouter/free" ? "free-model-router" : "check-model-pricing",
         envKey: "OPENROUTER_API_KEY",
       },
       engineering: {
         provider: "OpenRouter",
-        configured: Boolean(process.env.OPENROUTER_API_KEY),
+        configured: openRouterReady,
         model: OPENROUTER_MODEL,
         pricingMode: OPENROUTER_MODEL === "openrouter/free" ? "free-model-router" : "check-model-pricing",
         envKey: "OPENROUTER_API_KEY",
       },
     },
+    minimumSetup: "OPENROUTER_API_KEY",
   };
 }
