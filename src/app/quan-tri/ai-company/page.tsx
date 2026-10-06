@@ -25,6 +25,7 @@ type CompanyResult = {
   boss: string;
   chat: ChatMessage[];
   agents: Agent[];
+  bossModel: string | null;
   freeMode: boolean;
 };
 
@@ -35,7 +36,7 @@ const roleMeta: Record<string, { title: string; avatar: string; hint: string }> 
 };
 
 export default function AiCompanyPage() {
-  const [task, setTask] = useState("Lập kế hoạch quảng bá still. room trong 30 ngày bằng các kênh miễn phí.");
+  const [task, setTask] = useState("Quảng bá still. room trong 30 ngày bằng các kênh miễn phí.");
   const [result, setResult] = useState<CompanyResult | null>(null);
   const [status, setStatus] = useState<any>(null);
   const [busy, setBusy] = useState(false);
@@ -52,10 +53,12 @@ export default function AiCompanyPage() {
       .catch((e) => setNotice(e instanceof Error ? e.message : "Không tải được trạng thái."));
   }, []);
 
-  const connectedCount = useMemo(
-    () => Object.values(status?.agents || {}).filter((a: any) => a?.configured).length,
-    [status]
-  );
+  const connectedCount = useMemo(() => {
+    const agents = status?.agents || {};
+    return Object.values(agents).filter((a: any) => a?.configured).length;
+  }, [status]);
+
+  const teamOnline = Boolean(status?.boss?.configured);
 
   async function run() {
     if (!task.trim() || busy) return;
@@ -86,9 +89,9 @@ export default function AiCompanyPage() {
           <div style={{ display: "flex", alignItems: "end", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
             <div>
               <h1 style={{ margin: "10px 0 8px", fontSize: "clamp(42px, 7vw, 78px)", letterSpacing: "-.065em", lineHeight: .9 }}>BOSS ROOM</h1>
-              <p style={{ margin: 0, color: "#666", maxWidth: 760 }}>Một phòng chat chung: BOSS giao việc, các AI trao đổi với nhau, rồi BOSS chốt quyết định.</p>
+              <p style={{ margin: 0, color: "#666", maxWidth: 760 }}>Bạn giao việc cho BOSS. BOSS chia việc cho các AI, nhận báo cáo của nhau và chốt phương án ngay trong cùng một cuộc trò chuyện.</p>
             </div>
-            <div style={{ fontSize: 12, color: "#666" }}>{connectedCount}/3 AI đã kết nối</div>
+            <div style={{ fontSize: 12, color: teamOnline ? "#111" : "#999" }}>{teamOnline ? "TEAM ONLINE" : "TEAM OFFLINE"} · {connectedCount}/3 nhân viên</div>
           </div>
         </header>
 
@@ -96,12 +99,12 @@ export default function AiCompanyPage() {
 
         <section style={{ display: "grid", gridTemplateColumns: "300px minmax(0,1fr)", gap: 14, alignItems: "stretch" }}>
           <aside style={{ background: "#fff", border: "1px solid #ddd", borderRadius: 22, padding: 16, position: "sticky", top: 18, alignSelf: "start" }}>
-            <div style={{ fontSize: 11, color: "#777", letterSpacing: ".16em", fontWeight: 800 }}>TEAM</div>
+            <div style={{ fontSize: 11, color: "#777", letterSpacing: ".16em", fontWeight: 800 }}>COMPANY</div>
             <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
               <div style={{ background: "#111", color: "#fff", borderRadius: 16, padding: 14 }}>
                 <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                   <div style={{ width: 34, height: 34, borderRadius: "50%", background: "#fff", color: "#111", display: "grid", placeItems: "center", fontWeight: 900 }}>B</div>
-                  <div><strong>BOSS</strong><div style={{ color: "#999", fontSize: 12 }}>Điều phối & quyết định</div></div>
+                  <div><strong>BOSS AI</strong><div style={{ color: "#999", fontSize: 12 }}>Nhận nhiệm vụ · phân công · chốt</div></div>
                 </div>
               </div>
 
@@ -132,39 +135,40 @@ export default function AiCompanyPage() {
 
             {showSetup && (
               <div style={{ marginTop: 10, padding: 12, borderRadius: 14, background: "#f4f4f0", color: "#666", fontSize: 12, lineHeight: 1.6 }}>
-                <strong style={{ color: "#111" }}>Kết nối AI</strong>
-                <p style={{ margin: "8px 0" }}>Thêm key vào Render → Environment Variables:</p>
-                <code style={{ display: "block", background: "#fff", border: "1px solid #ddd", borderRadius: 10, padding: 9, color: "#333" }}>GEMINI_API_KEY</code>
-                <code style={{ display: "block", background: "#fff", border: "1px solid #ddd", borderRadius: 10, padding: 9, color: "#333", marginTop: 6 }}>OPENROUTER_API_KEY</code>
-                <p style={{ margin: "8px 0 0" }}>Không dán key vào giao diện chat công khai. Sau khi lưu key, reload trang.</p>
+                <strong style={{ color: "#111" }}>Chỉ cần 1 key để chạy cả đội</strong>
+                <p style={{ margin: "8px 0" }}>Render → Environment Variables → thêm:</p>
+                <code style={{ display: "block", background: "#fff", border: "1px solid #ddd", borderRadius: 10, padding: 9, color: "#333" }}>OPENROUTER_API_KEY</code>
+                <p style={{ margin: "8px 0 0" }}>Hệ thống dùng OpenRouter Free Router cho BOSS, Engineering và Marketing. Gemini là nhân viên Research tùy chọn; không có Gemini vẫn chạy được.</p>
               </div>
             )}
           </aside>
 
           <section style={{ background: "#fff", border: "1px solid #ddd", borderRadius: 22, overflow: "hidden", minHeight: 650 }}>
             <div style={{ padding: "14px 18px", borderBottom: "1px solid #e4e4e4", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-              <div><strong>still. room — AI team</strong><div style={{ color: "#999", fontSize: 11, marginTop: 2 }}>Private work chat · BOSS điều phối</div></div>
-              <div style={{ width: 9, height: 9, borderRadius: "50%", background: busy ? "#111" : "#bbb" }} />
+              <div><strong>still. room — AI team</strong><div style={{ color: "#999", fontSize: 11, marginTop: 2 }}>Private work chat · BOSS điều phối · AI thấy báo cáo của nhau</div></div>
+              <div style={{ width: 9, height: 9, borderRadius: "50%", background: busy ? "#111" : (teamOnline ? "#222" : "#bbb") }} />
             </div>
 
-            <div style={{ minHeight: 420, maxHeight: 600, overflowY: "auto", padding: "22px 18px", background: "#f8f8f5" }}>
+            <div style={{ minHeight: 420, maxHeight: 620, overflowY: "auto", padding: "22px 18px", background: "#f8f8f5" }}>
               {!result && !busy && (
                 <div style={{ maxWidth: 700, margin: "38px auto", textAlign: "center", color: "#888" }}>
                   <div style={{ fontSize: 12, letterSpacing: ".15em", fontWeight: 800 }}>BOSS CHAT</div>
-                  <h2 style={{ color: "#111", fontSize: 34, margin: "10px 0" }}>Giao một nhiệm vụ.</h2>
-                  <p style={{ margin: 0, lineHeight: 1.7 }}>Sau khi bạn bấm “Giao nhiệm vụ”, các thành viên sẽ trả lời theo thứ tự và thấy báo cáo của nhau.</p>
+                  <h2 style={{ color: "#111", fontSize: 34, margin: "10px 0" }}>Giao việc cho BOSS.</h2>
+                  <p style={{ margin: 0, lineHeight: 1.7 }}>BOSS sẽ gọi từng thành viên, chuyển báo cáo cho thành viên tiếp theo và cuối cùng chốt phương án cho bạn.</p>
                 </div>
               )}
 
               {busy && (
                 <div style={{ maxWidth: 760, margin: "0 auto", display: "grid", gap: 10 }}>
                   {[
-                    ["BOSS", "Giao nhiệm vụ cho Research…", true],
-                    ["RESEARCH", "Đang phân tích…", false],
-                    ["ENGINEERING", "Chờ báo cáo Research…", false],
-                    ["MARKETING", "Chờ báo cáo đội kỹ thuật…", false],
-                  ].map(([name, text, active]) => (
-                    <div key={String(name)} style={{ display: "flex", gap: 10, justifyContent: name === "BOSS" ? "flex-end" : "flex-start" }}>
+                    ["BOSS", "Tôi đang nhận nhiệm vụ và chia việc…", true],
+                    ["RESEARCH", "Đang nghiên cứu…", false],
+                    ["ENGINEERING", "Đang đọc báo cáo Research…", false],
+                    ["MARKETING", "Đang đọc báo cáo của đội…", false],
+                    ["BOSS", "Đang phản biện và chốt…", true],
+                  ].map(([name, text, active], i) => (
+                    <div key={String(name) + i} style={{ display: "flex", gap: 10, justifyContent: name === "BOSS" ? "flex-end" : "flex-start" }}>
+                      {name !== "BOSS" && <div style={{ flex: "0 0 32px", width: 32, height: 32, borderRadius: "50%", border: "1px solid #ddd", background: "#fff", display: "grid", placeItems: "center", fontSize: 12, fontWeight: 900 }}>{name === "RESEARCH" ? "R" : name === "ENGINEERING" ? "E" : "M"}</div>}
                       <div style={{ maxWidth: "82%", padding: "11px 13px", borderRadius: 16, background: name === "BOSS" ? "#111" : "#fff", color: name === "BOSS" ? "#fff" : "#444", border: name === "BOSS" ? "0" : "1px solid #e1e1e1" }}>
                         <div style={{ fontSize: 10, letterSpacing: ".08em", opacity: .65, marginBottom: 4 }}>{name}</div>
                         <div>{text}</div>
@@ -179,7 +183,9 @@ export default function AiCompanyPage() {
                 <div style={{ display: "grid", gap: 14 }}>
                   {result.chat.map((m) => {
                     const mine = m.speaker === "boss";
-                    const meta = m.speaker === "boss" ? { avatar: "B", title: "BOSS" } : { avatar: roleMeta[m.speaker]?.avatar || "A", title: roleMeta[m.speaker]?.title || m.name };
+                    const meta = m.speaker === "boss"
+                      ? { avatar: "B", title: "BOSS AI" }
+                      : { avatar: roleMeta[m.speaker]?.avatar || "A", title: roleMeta[m.speaker]?.title || m.name };
                     return (
                       <div key={m.id} style={{ display: "flex", gap: 10, alignItems: "flex-end", justifyContent: mine ? "flex-end" : "flex-start" }}>
                         {!mine && <div style={{ flex: "0 0 32px", width: 32, height: 32, borderRadius: "50%", border: "1px solid #ddd", background: "#fff", display: "grid", placeItems: "center", fontSize: 12, fontWeight: 900 }}>{meta.avatar}</div>}
@@ -203,7 +209,7 @@ export default function AiCompanyPage() {
                   value={task}
                   onChange={(e) => setTask(e.target.value)}
                   rows={3}
-                  placeholder="Nhắn cho cả đội…"
+                  placeholder="Giao nhiệm vụ cho BOSS…"
                   style={{ width: "100%", boxSizing: "border-box", resize: "vertical", border: "1px solid #ddd", borderRadius: 16, padding: 12, outline: "none", fontSize: 14, lineHeight: 1.5 }}
                 />
                 <button
@@ -211,7 +217,7 @@ export default function AiCompanyPage() {
                   disabled={busy || !task.trim()}
                   style={{ border: 0, borderRadius: 999, padding: "12px 18px", background: "#111", color: "#fff", fontWeight: 800, cursor: busy ? "wait" : "pointer", opacity: busy || !task.trim() ? .55 : 1 }}
                 >
-                  {busy ? "Đang làm…" : "Giao nhiệm vụ"}
+                  {busy ? "Đang họp…" : "Giao cho BOSS"}
                 </button>
               </div>
             </div>
