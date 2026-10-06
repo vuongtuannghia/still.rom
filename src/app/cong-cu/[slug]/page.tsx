@@ -112,7 +112,41 @@ const GUIDES: Record<string, Guide> = {
         a: "Trang có focus timer, ambient sound, YouTube study room, nhiệm vụ và thống kê tiến độ.",
       },
     ],
+  },,
+  "aesthetic-study-timer": {
+    title: "Aesthetic Study Timer online",
+    description: "Aesthetic Study Timer tối giản cho những buổi học cần một không gian đẹp, ít xao nhãng và có timer tập trung.",
+    eyebrow: "AESTHETIC STUDY",
+    intro: "Giao diện đẹp chỉ có ích khi nó làm bạn muốn quay lại bàn học. Aesthetic Study Timer của still. room tập trung vào bối cảnh yên, timer và các công cụ hỗ trợ học tập.",
+    keywords: ["aesthetic study timer", "aesthetic timer", "study timer", "aesthetic study"],
+    sections: [
+      { title: "Một timer đẹp cần làm được gì?", body: "Timer nên giúp bạn bắt đầu nhanh, nhìn thời gian rõ và không cạnh tranh sự chú ý với tài liệu. Phần thẩm mỹ chỉ nên tạo bối cảnh, không biến thành một nguồn xao nhãng mới." },
+      { title: "Tạo một góc học có thể lặp lại", body: "Chọn cùng một cảnh nền, âm thanh và cách bắt đầu cho những buổi học tương tự. Một setup nhất quán giúp giảm số quyết định trước khi bạn ngồi xuống." },
+      { title: "Kết hợp timer với nhiệm vụ", body: "Đừng chỉ đặt mục tiêu 60 phút. Hãy ghi rõ bạn sẽ hoàn thành gì trong phiên để cuối buổi có một kết quả kiểm tra được." },
+    ],
+    steps: ["Chọn bối cảnh học.", "Viết mục tiêu của phiên.", "Bật timer và tập trung.", "Ghi lại kết quả."],
+    faq: [
+      { q: "Aesthetic Study Timer có khác Study Timer thường không?", a: "Chức năng cốt lõi vẫn là quản lý thời gian. Điểm khác nằm ở bối cảnh giao diện và các yếu tố ambient giúp tạo một không gian học ổn định." },
+      { q: "Nên ưu tiên đẹp hay ít xao nhãng?", a: "Ưu tiên ít xao nhãng. Giao diện đẹp chỉ nên hỗ trợ việc bắt đầu và duy trì phiên học." },
+    ],
   },
+  "forest-alternative": {
+    title: "Forest alternative miễn phí cho học tập",
+    description: "Tìm một Forest alternative miễn phí thiên về study room, focus timer, thói quen và thống kê thay vì chỉ trồng cây.",
+    eyebrow: "FOREST ALTERNATIVE",
+    intro: "Nếu bạn thích ý tưởng tập trung bằng một nghi thức trực quan nhưng muốn kết hợp thêm phòng học chung, nhiệm vụ và thống kê, still. room đi theo hướng khác.",
+    keywords: ["forest alternative", "forest app alternative", "focus timer alternative", "study app alternative"],
+    sections: [
+      { title: "Điểm khác của still. room", body: "still. room không cố tái tạo mọi cơ chế của Forest. Thay vào đó, nó gom focus timer, nhiệm vụ, habits, thống kê, ambient sound và study room vào một không gian dành cho việc học." },
+      { title: "Khi nào nên chọn một công cụ khác?", body: "Nếu bạn chỉ cần một timer cực đơn giản, một ứng dụng chuyên biệt có thể đã đủ. still. room phù hợp hơn khi bạn muốn timer trở thành trung tâm của một hệ thống học tập có cộng đồng." },
+      { title: "Dùng thử theo một phiên", body: "Đừng quyết định dựa trên danh sách tính năng. Hãy mở một phiên tập trung, hoàn thành một nhiệm vụ và xem bạn có muốn quay lại công cụ này vào ngày mai hay không." },
+    ],
+    steps: ["Mở still. room.", "Chọn một mục tiêu học.", "Chạy một phiên tập trung.", "Đánh giá trải nghiệm và tiến độ."],
+    faq: [
+      { q: "still. room có phải bản sao của Forest không?", a: "Không. Đây là một không gian tập trung khác, với trọng tâm vào học tập, study room, nhiệm vụ, habits và thống kê." },
+      { q: "Forest alternative có miễn phí không?", a: "still. room hiện có thể sử dụng các tính năng web cốt lõi mà không cần mua ứng dụng. Chính sách và tính năng có thể thay đổi theo thời gian." },
+    ],
+  }
 };
 
 export const dynamicParams = false;
