@@ -13,18 +13,15 @@ const SLUGS = [
   "phong-hoc-online",
   "timer-on-thi",
   "habit-tracker",
+  "aesthetic-study-timer",
+  "forest-alternative",
 ] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
 
   return [
-    {
-      url: `${SITE_URL}/`,
-      lastModified: now,
-      changeFrequency: "daily",
-      priority: 1,
-    },
+    { url: `${SITE_URL}/`, lastModified: now, changeFrequency: "daily", priority: 1 },
     ...SLUGS.map((slug) => ({
       url: `${SITE_URL}/cong-cu/${slug}`,
       lastModified: now,
