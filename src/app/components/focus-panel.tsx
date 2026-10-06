@@ -15,7 +15,23 @@ export function FocusPanel({ timer, preferences, tasks, activeTaskId, onTask, on
   const lockedTask = value.runId !== null;
   const activeTitle = lockedTask ? value.taskTitle : tasks.find((task) => task.id === activeTaskId)?.title ?? null;
   const dots = value.mode === "focus" ? value.cycleCount % preferences.longBreakEvery : (value.cycleCount - 1) % preferences.longBreakEvery + 1;
-  const buttonText = timer.running ? "Tạm dừng" : value.runId !== null ? "Tiếp tục" : value.mode === "focus" ? "Bắt đầu tập trung" : "Bắt đầu nghỉ";\n  async function shareStillRoom() {\n    const url = new URL(window.location.origin + "/cong-cu/hoc-cung-nhau");\n    url.searchParams.set("ref", "focus-room");\n    const shareData = {\n      title: "still. room — học cùng nhau",\n      text: "Vào học cùng mình trên still. room — có timer tập trung và phòng học chung.",\n      url: url.toString(),\n    };\n    try {\n      if (navigator.share) { await navigator.share(shareData); return; }\n    } catch {}\n    try {\n      await navigator.clipboard.writeText(url.toString());\n    } catch {}\n  }\n
+  const buttonText = timer.running ? "Tạm dừng" : value.runId !== null ? "Tiếp tục" : value.mode === "focus" ? "Bắt đầu tập trung" : "Bắt đầu nghỉ";
+  async function shareStillRoom() {
+    const url = new URL(window.location.origin + "/cong-cu/hoc-cung-nhau");
+    url.searchParams.set("ref", "focus-room");
+    const shareData = {
+      title: "still. room — học cùng nhau",
+      text: "Vào học cùng mình trên still. room — có timer tập trung và phòng học chung.",
+      url: url.toString(),
+    };
+    try {
+      if (navigator.share) { await navigator.share(shareData); return; }
+    } catch {}
+    try {
+      await navigator.clipboard.writeText(url.toString());
+    } catch {}
+  }
+
   return <article className={`focus-panel ${expanded ? "expanded" : "panel"}`} aria-label="Đồng hồ Pomodoro">
     <div className="focus-panel-top"><span className="eyebrow"><span className={timer.running ? "live-dot" : "tiny-dot"} /> FOCUS ROOM</span><div><button type="button" className="icon-button" onClick={onExpand} aria-label={expanded ? "Thu nhỏ phòng tập trung" : "Mở phòng tập trung toàn màn hình"} title="Toàn màn hình (F)"><Icon name={expanded ? "close" : "move"} size={17} /></button><button type="button" className="icon-button" onClick={onSettings} aria-label="Cài đặt Pomodoro"><Icon name="sliders" size={17} /></button></div></div>
     <div className="focus-content"><div className="timer-controls">
